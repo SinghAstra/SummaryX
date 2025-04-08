@@ -1,26 +1,31 @@
 import Providers from "@/components/providers/provider";
-import { Toaster } from "@/components/ui/toaster";
 import { siteConfig } from "@/config/site";
-import Header from "@/layouts/header";
 import type { Metadata } from "next";
 import NextTopLoader from "nextjs-toploader";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteConfig.url),
   title: {
     default: siteConfig.name,
     template: `%s | ${siteConfig.name}`,
   },
   description: siteConfig.description,
   keywords: [
-    "Campus Placement",
-    "Employability Insights",
-    "University Recruitment",
-    "Corporate Access",
-    "Centralized Data",
-    "Job Market Analysis",
-    "Government Policy",
-    "Tech Education",
+    "GitHub repository summarizer",
+    "repo file summary",
+    "LLM code summarizer",
+    "GitHub code analysis",
+    "copy GitHub summaries",
+    "AI code understanding tool",
+    "repo insight tool",
+    "GitHub project overview",
+    "developer tool for repos",
+    "analyze GitHub codebase",
+    "repo summary generator",
+    "LLM prompt helper",
+    "code summarizer for AI",
   ],
   authors: [
     {
@@ -36,18 +41,24 @@ export const metadata: Metadata = {
     title: siteConfig.name,
     description: siteConfig.description,
     siteName: siteConfig.name,
+    images: [
+      {
+        url: "/assets/landing.png",
+        width: 1200,
+        height: 630,
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: siteConfig.name,
     description: siteConfig.description,
-    images: [`${siteConfig.url}/assets/images/og.jpg`],
+    images: ["/assets/landing.png"],
     creator: "@singhastra",
   },
   icons: {
-    icon: "/assets/images/favicon.ico",
+    icon: "/favicon.ico",
   },
-  // manifest: `${siteConfig.url}/site.webmanifest`,
 };
 
 export default function RootLayout({
@@ -57,14 +68,23 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`bg-gradient-light dark:bg-gradient min-h-screen relative flex flex-col text-foreground antialiased !font-default overflow-x-hidden`}
-      >
+      <body className="antialiased min-h-screen bg-background">
         <Providers>
           <NextTopLoader color="hsl(var(--primary))" showSpinner={false} />
-          <Header />
           {children}
-          <Toaster />
+          <Toaster
+            theme="dark"
+            toastOptions={{
+              style: {
+                fontFamily: "Space Grotesk, monospace",
+                background: "hsl(var(--muted) / 0.2)",
+                color: "hsl(var(--foreground))",
+                border: "1px solid hsl(var(--border))",
+                letterSpacing: "0.01em",
+                fontSize: ".95rem",
+              },
+            }}
+          />
         </Providers>
       </body>
     </html>

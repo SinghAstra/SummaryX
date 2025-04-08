@@ -1,13 +1,13 @@
-import { SiteConfig } from "@/types";
+import { SiteConfig } from "@/interfaces/site";
 
 export const siteConfig: SiteConfig = {
-  name: "SinghAstra",
-  description:
-    "A centralized platform interlinking campus placement data nationwide to empower policy makers and corporates with insights and access for tackling unemployability.",
-  url: "https://gradhirex.vercel.app",
+  name: "SummaryX",
+  description: "Understand any codebase at a glance using file summary.",
+  tagline: "Understand any codebase at a glance.",
+  url: "https://summaryx.vercel.app",
   links: {
     twitter: "https://x.com/XSinghAstra",
-    github: "https://github.com/SinghAstra/GradHireX",
-    linkedIn: "https://www.linkedin.com/in/singhastra",
+    githubRepo: "https://github.com/SinghAstra/summaryx",
+    github: "https://github.com/SinghAstra",
   },
 };
