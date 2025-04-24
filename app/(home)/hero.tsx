@@ -39,7 +39,7 @@ const HeroSection = ({ isAuthenticated }: HeroSectionProps) => {
             delay={0.1}
           >
             <GradientButton onClick={handleGetStarted}>
-              🚀 Start Exploring a Repo
+              🚀 Start Exploring Repo
             </GradientButton>
 
             <h1 className="text-foreground text-center py-6 text-5xl font-medium text-balance sm:text-6xl md:text-7xl lg:text-8xl  w-full">
