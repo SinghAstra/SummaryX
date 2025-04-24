@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { buttonVariants } from "../../ui/button";
+import { siteConfig } from "@/config/site";
 
 const EmptyRepositoriesSidebarRepoList = () => {
   return (
@@ -11,7 +12,7 @@ const EmptyRepositoriesSidebarRepoList = () => {
       </div>
       <h3 className="font-medium mb-2">No repositories yet</h3>
       <p className="text-sm text-muted-foreground text-center mb-4">
-        Connect your first repository to get started with version control
+        Connect your first repository to get started with {siteConfig.name}
       </p>
       <Link
         className={cn(buttonVariants({ variant: "outline" }))}
