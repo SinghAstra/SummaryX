@@ -2,6 +2,7 @@ import Providers from "@/components/providers/provider";
 import { siteConfig } from "@/config/site";
 import type { Metadata } from "next";
 import NextTopLoader from "nextjs-toploader";
+import { ReactNode } from "react";
 import { Toaster } from "sonner";
 import "./globals.css";
 
@@ -64,7 +65,7 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: ReactNode;
 }>) {
   return (
     <html lang="en">
@@ -82,6 +83,8 @@ export default function RootLayout({
                 border: "1px solid hsl(var(--border))",
                 letterSpacing: "0.01em",
                 fontSize: ".95rem",
+                backdropFilter: "blur(20px)",
+                WebkitBackdropFilter: "blur(20px)",
               },
             }}
           />
