@@ -1,9 +1,5 @@
 import { Octokit } from "@octokit/rest";
 
-const octokit = new Octokit({
-  auth: process.env.GITHUB_ACCESS_TOKEN,
-});
-
 export function parseGithubUrl(url: string) {
   const regex = /github\.com\/([^\/]+)\/([^\/]+)/;
 
@@ -37,6 +33,15 @@ export function parseGithubUrl(url: string) {
 
 export async function fetchGitHubRepoMetaData(owner: string, repo: string) {
   try {
+    const GITHUB_ACCESS_TOKEN = process.env.GITHUB_ACCESS_TOKEN;
+    console.log("GITHUB_ACCESS_TOKEN is ", GITHUB_ACCESS_TOKEN);
+    if (!GITHUB_ACCESS_TOKEN) {
+      throw new Error("GITHUB_ACCESS_TOKEN is required.");
+    }
+
+    const octokit = new Octokit({
+      auth: GITHUB_ACCESS_TOKEN,
+    });
     const { data } = await octokit.repos.get({ owner, repo });
 
     return {
