@@ -1,0 +1,131 @@
+import { StructuredRepository } from "@/app/repository/[id]/repo-explorer";
+import { siteConfig } from "@/config/site";
+import { DirectoryWithRelations } from "@/interfaces/github";
+import { Copy } from "lucide-react";
+import { User } from "next-auth";
+import Link from "next/link";
+import React, { useCallback } from "react";
+import { toast } from "sonner";
+import { Avatar, AvatarImage } from "../ui/avatar";
+import { AvatarMenu } from "../ui/avatar-menu";
+import { Button } from "../ui/button";
+
+interface RepoDetailsNavbarProps {
+  repository: StructuredRepository;
+  user: User;
+  showAllSummaries: boolean;
+  toggleAllSummaries: () => void;
+}
+
+const Navbar = ({
+  repository,
+  user,
+  toggleAllSummaries,
+  showAllSummaries,
+}: RepoDetailsNavbarProps) => {
+  // Function to generate the full structured summary
+  const generateFullSummary = useCallback(() => {
+    let summary = `# Repository: ${repository.name} (${repository.owner})\n\n`;
+
+    const processDirectory = (dir: DirectoryWithRelations, depth: number) => {
+      const indent = "  ".repeat(depth);
+      summary += `${indent}## Directory: ${dir.path}\n`;
+
+      // Process files in this directory
+      dir.files.forEach((file) => {
+        summary += `${indent}- File: ${file.path}\n`;
+        if (file.summary) {
+          summary += `${indent}  Summary: ${file.summary}\n\n`;
+        } else {
+          summary += `${indent}  No summary available.\n\n`;
+        }
+      });
+
+      // Process subdirectories
+      dir.children.forEach((childDir) => {
+        processDirectory(childDir, depth + 1);
+      });
+    };
+
+    // Process root directories
+    repository.directories.forEach((dir) => {
+      processDirectory(dir, 1);
+    });
+
+    // Process root files
+    if (repository.rootFiles.length > 0) {
+      summary += `## Root Files\n`;
+      repository.rootFiles.forEach((file) => {
+        summary += `- File: ${file.path}\n`;
+        if (file.summary) {
+          summary += `  Summary: ${file.summary}\n\n`;
+        } else {
+          summary += `  No summary available.\n\n`;
+        }
+      });
+    }
+
+    return summary;
+  }, [repository]);
+
+  const copyFullSummary = useCallback(() => {
+    const summary = generateFullSummary();
+    navigator.clipboard
+      .writeText(summary)
+      .then(() => {
+        toast(
+          "The full repository summary has been copied and is ready to use in an LLM prompt."
+        );
+      })
+      .catch((err) => {
+        toast("There was an error copying the summary. Please try again.");
+        console.error("Copy failed:", err);
+      });
+  }, [generateFullSummary]);
+  return (
+    <header className=" px-4 py-2 flex items-center justify-between fixed top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="flex gap-2 items-center">
+        <Link
+          href="/dashboard"
+          className=" hover:opacity-80 transition-opacity"
+        >
+          <span className="tracking-wide text-2xl font-medium">
+            {siteConfig.name}
+          </span>
+        </Link>
+        <a
+          href={repository?.url}
+          target="_blank"
+          className="flex gap-2 items-center border p-2  rounded-lg w-fit cursor-pointer hover:bg-secondary transition-colors duration-150 group"
+        >
+          <Avatar className="w-8 h-8">
+            <AvatarImage src={repository.avatarUrl} />
+          </Avatar>
+          <div className="flex gap-1">
+            <span className="text-foreground">{repository.owner}</span>
+            <span className="text-muted group-hover:text-muted-foreground ">
+              {"/"}
+            </span>
+            <span className="text-foreground">{repository.name}</span>
+          </div>
+        </a>
+      </div>
+      <div className="flex gap-2 items-center">
+        <Button variant="outline" onClick={toggleAllSummaries}>
+          {showAllSummaries ? "Collapse All Summaries" : "Expand All Summaries"}
+        </Button>
+        <Button
+          variant="outline"
+          onClick={copyFullSummary}
+          className="flex items-center gap-2"
+        >
+          <Copy className="h-4 w-4" />
+          Copy Full Summary
+        </Button>
+        <AvatarMenu user={user} />
+      </div>
+    </header>
+  );
+};
+
+export default Navbar;

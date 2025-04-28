@@ -1,38 +1,34 @@
 "use client";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import Navbar from "@/components/repo-details/navbar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Directory, File, Repository } from "@prisma/client";
 import {
   ChevronDown,
   ChevronRight,
-  Copy,
   File as FileIcon,
   Folder,
 } from "lucide-react";
+import { User } from "next-auth";
 import { useCallback, useState } from "react";
-import { toast } from "sonner";
 
 // Use the same interface from your code
-interface DirectoryWithRelations extends Directory {
+export interface DirectoryWithRelations extends Directory {
   children: DirectoryWithRelations[];
   files: File[];
 }
 
-interface StructuredRepository extends Repository {
+export interface StructuredRepository extends Repository {
   directories: DirectoryWithRelations[];
   rootFiles: File[];
-  files: File[];
 }
 
 interface RepoExplorerProps {
   repository: StructuredRepository;
+  user: User;
 }
 
-export default function RepoExplorer({ repository }: RepoExplorerProps) {
+export default function RepoExplorer({ repository, user }: RepoExplorerProps) {
   const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set());
   const [showAllSummaries, setShowAllSummaries] = useState(false);
 
@@ -51,66 +47,6 @@ export default function RepoExplorer({ repository }: RepoExplorerProps) {
   const toggleAllSummaries = useCallback(() => {
     setShowAllSummaries((prev) => !prev);
   }, []);
-
-  // Function to generate the full structured summary
-  const generateFullSummary = useCallback(() => {
-    let summary = `# Repository: ${repository.name} (${repository.owner})\n\n`;
-
-    const processDirectory = (dir: DirectoryWithRelations, depth: number) => {
-      const indent = "  ".repeat(depth);
-      summary += `${indent}## Directory: ${dir.path}\n`;
-
-      // Process files in this directory
-      dir.files.forEach((file) => {
-        summary += `${indent}- File: ${file.path}\n`;
-        if (file.summary) {
-          summary += `${indent}  Summary: ${file.summary}\n\n`;
-        } else {
-          summary += `${indent}  No summary available.\n\n`;
-        }
-      });
-
-      // Process subdirectories
-      dir.children.forEach((childDir) => {
-        processDirectory(childDir, depth + 1);
-      });
-    };
-
-    // Process root directories
-    repository.directories.forEach((dir) => {
-      processDirectory(dir, 1);
-    });
-
-    // Process root files
-    if (repository.rootFiles.length > 0) {
-      summary += `## Root Files\n`;
-      repository.rootFiles.forEach((file) => {
-        summary += `- File: ${file.path}\n`;
-        if (file.summary) {
-          summary += `  Summary: ${file.summary}\n\n`;
-        } else {
-          summary += `  No summary available.\n\n`;
-        }
-      });
-    }
-
-    return summary;
-  }, [repository]);
-
-  const copyFullSummary = useCallback(() => {
-    const summary = generateFullSummary();
-    navigator.clipboard
-      .writeText(summary)
-      .then(() => {
-        toast(
-          "The full repository summary has been copied and is ready to use in an LLM prompt."
-        );
-      })
-      .catch((err) => {
-        toast("There was an error copying the summary. Please try again.");
-        console.error("Copy failed:", err);
-      });
-  }, [generateFullSummary]);
 
   // Recursive component for rendering directories
   const DirectoryTree = ({
@@ -218,52 +154,21 @@ export default function RepoExplorer({ repository }: RepoExplorerProps) {
     );
   };
 
-  const fileSummaryCount = repository.files.filter((f) => f.summary).length;
-  const totalFileCount = repository.files.length;
-
   return (
-    <Card className="w-full">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-xl font-bold">
-          {repository.name}
-          <span className="text-sm font-normal text-gray-500 ml-2">
-            by {repository.owner}
-          </span>
-        </CardTitle>
-        <Button onClick={copyFullSummary} className="flex items-center gap-2">
-          <Copy className="h-4 w-4" />
-          Copy Full Summary
-        </Button>
-      </CardHeader>
-      <CardContent>
-        <div className="mb-4 flex justify-between items-center">
-          <div>
-            <Badge variant="outline" className="mr-2">
-              {totalFileCount} Files
-            </Badge>
-            <Badge variant="secondary">{fileSummaryCount} Summaries</Badge>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={toggleAllSummaries}
-            className="text-sm"
-          >
-            {showAllSummaries
-              ? "Collapse All Summaries"
-              : "Expand All Summaries"}
-          </Button>
-        </div>
+    <div className="min-h-screen flex flex-col">
+      <Navbar
+        repository={repository}
+        user={user}
+        showAllSummaries={showAllSummaries}
+        toggleAllSummaries={toggleAllSummaries}
+      />
+      <div className="flex flex-col mt-20">
+        <div className=" pr-4">
+          {/* Directories */}
+          {repository.directories.map((dir) => (
+            <DirectoryTree key={dir.id} directory={dir} />
+          ))}
 
-        {repository.overview && (
-          <Alert className="mb-4">
-            <AlertDescription>
-              <strong>Repository Overview:</strong> {repository.overview}
-            </AlertDescription>
-          </Alert>
-        )}
-
-        <ScrollArea className="h-[500px] pr-4">
           {/* Root files */}
           {repository.rootFiles.length > 0 && (
             <div className="mb-4">
@@ -277,13 +182,8 @@ export default function RepoExplorer({ repository }: RepoExplorerProps) {
               ))}
             </div>
           )}
-
-          {/* Directories */}
-          {repository.directories.map((dir) => (
-            <DirectoryTree key={dir.id} directory={dir} />
-          ))}
-        </ScrollArea>
-      </CardContent>
-    </Card>
+        </div>
+      </div>
+    </div>
   );
 }
