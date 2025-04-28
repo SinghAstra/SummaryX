@@ -46,7 +46,18 @@ export default function RepoExplorer({ repository, user }: RepoExplorerProps) {
 
   const toggleAllSummaries = useCallback(() => {
     setShowAllSummaries((prev) => !prev);
-  }, []);
+    setExpandedDirs((prev) => {
+      const newSet = new Set(prev);
+      if (showAllSummaries) {
+        // Collapse all directories if summaries are being hidden
+        repository.directories.forEach((dir) => newSet.delete(dir.id));
+      } else {
+        // Expand all directories if summaries are being shown
+        repository.directories.forEach((dir) => newSet.add(dir.id));
+      }
+      return newSet;
+    });
+  }, [repository.directories, showAllSummaries]);
 
   // Recursive component for rendering directories
   const DirectoryTree = ({
@@ -62,7 +73,7 @@ export default function RepoExplorer({ repository, user }: RepoExplorerProps) {
     return (
       <div className="pb-1">
         <div
-          className="flex items-center hover:bg-gray-100 p-1 rounded cursor-pointer"
+          className="flex items-center hover:bg-muted/40 p-1 rounded cursor-pointer"
           style={{ paddingLeft: `${indent}px` }}
           onClick={() => toggleDir(directory.id)}
         >
@@ -71,13 +82,15 @@ export default function RepoExplorer({ repository, user }: RepoExplorerProps) {
           ) : (
             <ChevronRight className="h-4 w-4 mr-1" />
           )}
-          <Folder className="h-4 w-4 mr-2 text-blue-500" />
+          <Folder className="h-4 w-4 mr-2 text-muted-foreground" />
           <span className="text-sm font-medium">
             {directory.path.split("/").pop()}
           </span>
-          <Badge className="ml-2 text-xs" variant="outline">
-            {directory.files.length} files
-          </Badge>
+          {directory.files.length === 0 && directory.children.length === 0 && (
+            <Badge className="ml-2" variant="outline">
+              No files
+            </Badge>
+          )}
         </div>
 
         {isExpanded && (
@@ -104,7 +117,6 @@ export default function RepoExplorer({ repository, user }: RepoExplorerProps) {
     );
   };
 
-  // Component for rendering files
   const FileItem = ({
     file,
     depth = 0,
@@ -120,7 +132,7 @@ export default function RepoExplorer({ repository, user }: RepoExplorerProps) {
     return (
       <div className="pb-1">
         <div
-          className="flex items-center hover:bg-gray-100 p-1 rounded cursor-pointer"
+          className="flex items-center hover:bg-muted/40 p-1 rounded cursor-pointer"
           style={{ paddingLeft: `${indent}px` }}
           onClick={() => setIsExpanded(!isExpanded)}
         >
@@ -133,18 +145,13 @@ export default function RepoExplorer({ repository, user }: RepoExplorerProps) {
           ) : (
             <span className="w-4 mr-1" />
           )}
-          <FileIcon className="h-4 w-4 mr-2 text-gray-500" />
+          <FileIcon className="h-4 w-4 mr-2 text-muted-foreground" />
           <span className="text-sm">{file.name}</span>
-          {file.summary && (
-            <Badge className="ml-2 text-xs" variant="secondary">
-              Summary
-            </Badge>
-          )}
         </div>
 
         {isExpanded && file.summary && (
           <div
-            className="p-2 text-sm bg-gray-50 rounded mt-1 mb-2 border-l-2 border-blue-400"
+            className="p-2 text-sm bg-muted/40 rounded mt-1 mb-2 text-muted-foreground"
             style={{ marginLeft: `${indent + 24}px` }}
           >
             {file.summary}
@@ -162,27 +169,17 @@ export default function RepoExplorer({ repository, user }: RepoExplorerProps) {
         showAllSummaries={showAllSummaries}
         toggleAllSummaries={toggleAllSummaries}
       />
-      <div className="flex flex-col mt-20">
-        <div className=" pr-4">
-          {/* Directories */}
-          {repository.directories.map((dir) => (
-            <DirectoryTree key={dir.id} directory={dir} />
-          ))}
+      <div className="flex flex-col mt-20 mb-10 max-w-3xl w-full mx-auto  border rounded p-2 ">
+        {/* Directories */}
+        {repository.directories.map((dir) => (
+          <DirectoryTree key={dir.id} directory={dir} />
+        ))}
 
-          {/* Root files */}
-          {repository.rootFiles.length > 0 && (
-            <div className="mb-4">
-              <div className="font-medium mb-1">Root Files</div>
-              {repository.rootFiles.map((file) => (
-                <FileItem
-                  key={file.id}
-                  file={file}
-                  expanded={showAllSummaries}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+        {/* Root files */}
+        {repository.rootFiles.length > 0 &&
+          repository.rootFiles.map((file) => (
+            <FileItem key={file.id} file={file} expanded={showAllSummaries} />
+          ))}
       </div>
     </div>
   );
