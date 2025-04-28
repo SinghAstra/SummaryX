@@ -44,15 +44,17 @@ export default function SummaryModal({
     Wait patiently for the next parts.`;
   const handleCopyChunk = () => {
     const chunk = summaryChunks[currentChunk - 1];
+    const textToCopy =
+      currentChunk === 0 && totalChunks > 1
+        ? introChunk
+        : `${currentChunk > 1 && "(Continued) "}${chunk}${
+            currentChunk < totalChunks && " (Continued in next part)"
+          }`;
 
     navigator.clipboard
-      .writeText(
-        `${currentChunk > 1 ? "(Continued) " : ""}${chunk}${
-          currentChunk < totalChunks ? " (Continued in next part)" : ""
-        }`
-      )
+      .writeText(textToCopy)
       .then(() => {
-        toast(`Part ${currentChunk} /${totalChunks} copied to clipboard`);
+        toast(`Part ${currentChunk} / ${totalChunks} copied to clipboard`);
 
         // If there are more chunks, advance to the next one
         if (currentChunk < totalChunks) {
@@ -63,9 +65,12 @@ export default function SummaryModal({
           onClose();
         }
       })
-      .catch((err) => {
+      .catch((error) => {
         toast("Failed to copy to clipboard");
-        console.error("Copy failed:", err);
+        if (error instanceof Error) {
+          console.log("error.stack is ", error.stack);
+          console.log("error.message is ", error.message);
+        }
       });
   };
 
@@ -91,11 +96,11 @@ export default function SummaryModal({
           <pre className="whitespace-pre-wrap font-mono text-xs">
             {currentChunk === 0
               ? introChunk
-              : `
-              This is ${currentChunk} part of total ${totalChunks} parts of the summary.
-              ${currentChunk > 1 ? "(Continued) " : ""}
-            ${summaryChunks[currentChunk - 1]}
-            ${currentChunk < totalChunks ? " (Continued in next part)" : ""}`}
+              : `This is ${currentChunk} part of total ${totalChunks} parts of the summary.${
+                  currentChunk > 1 ? "(Continued) " : ""
+                }${summaryChunks[currentChunk - 1]}${
+                  currentChunk < totalChunks ? " (Continued in next part)" : ""
+                }`}
           </pre>
         </div>
 

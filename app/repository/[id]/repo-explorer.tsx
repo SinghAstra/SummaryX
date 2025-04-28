@@ -50,10 +50,23 @@ export default function RepoExplorer({ repository, user }: RepoExplorerProps) {
       const newSet = new Set(prev);
       if (showAllSummaries) {
         // Collapse all directories if summaries are being hidden
-        repository.directories.forEach((dir) => newSet.delete(dir.id));
+        const removeAllDirs = (dirs: DirectoryWithRelations[]) => {
+          dirs.forEach((dir) => {
+            newSet.delete(dir.id);
+            removeAllDirs(dir.children);
+          });
+        };
+        removeAllDirs(repository.directories);
       } else {
         // Expand all directories if summaries are being shown
-        repository.directories.forEach((dir) => newSet.add(dir.id));
+        // Use recursive function to add all directories and their children
+        const addAllDirs = (dirs: DirectoryWithRelations[]) => {
+          dirs.forEach((dir) => {
+            newSet.add(dir.id);
+            addAllDirs(dir.children);
+          });
+        };
+        addAllDirs(repository.directories);
       }
       return newSet;
     });
@@ -95,20 +108,20 @@ export default function RepoExplorer({ repository, user }: RepoExplorerProps) {
 
         {isExpanded && (
           <div>
+            {directory.children.map((childDir) => (
+              <DirectoryTree
+                key={childDir.id}
+                directory={childDir}
+                depth={depth + 1}
+              />
+            ))}
+
             {directory.files.map((file) => (
               <FileItem
                 key={file.id}
                 file={file}
                 depth={depth + 1}
                 expanded={showAllSummaries}
-              />
-            ))}
-
-            {directory.children.map((childDir) => (
-              <DirectoryTree
-                key={childDir.id}
-                directory={childDir}
-                depth={depth + 1}
               />
             ))}
           </div>
