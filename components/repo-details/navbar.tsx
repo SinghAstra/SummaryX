@@ -1,11 +1,11 @@
 import { StructuredRepository } from "@/app/repository/[id]/repo-explorer";
+import SummaryModal from "@/app/repository/[id]/summary-modal";
 import { siteConfig } from "@/config/site";
 import { DirectoryWithRelations } from "@/interfaces/github";
 import { Copy } from "lucide-react";
 import { User } from "next-auth";
 import Link from "next/link";
-import React, { useCallback } from "react";
-import { toast } from "sonner";
+import React, { useState } from "react";
 import { Avatar, AvatarImage } from "../ui/avatar";
 import { AvatarMenu } from "../ui/avatar-menu";
 import { Button } from "../ui/button";
@@ -23,8 +23,11 @@ const Navbar = ({
   toggleAllSummaries,
   showAllSummaries,
 }: RepoDetailsNavbarProps) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [generatedSummary, setGeneratedSummary] = useState("");
+
   // Function to generate the full structured summary
-  const generateFullSummary = useCallback(() => {
+  const generateFullSummary = () => {
     let summary = `# Repository: ${repository.name} (${repository.owner})\n\n`;
 
     const processDirectory = (dir: DirectoryWithRelations, depth: number) => {
@@ -66,22 +69,13 @@ const Navbar = ({
     }
 
     return summary;
-  }, [repository]);
+  };
 
-  const copyFullSummary = useCallback(() => {
+  const handleCopyFullSummary = () => {
     const summary = generateFullSummary();
-    navigator.clipboard
-      .writeText(summary)
-      .then(() => {
-        toast(
-          "The full repository summary has been copied and is ready to use in an LLM prompt."
-        );
-      })
-      .catch((err) => {
-        toast("There was an error copying the summary. Please try again.");
-        console.error("Copy failed:", err);
-      });
-  }, [generateFullSummary]);
+    setGeneratedSummary(summary);
+    setIsModalOpen(true);
+  };
   return (
     <header className=" px-4 py-2 flex items-center justify-between fixed top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex gap-2 items-center">
@@ -116,7 +110,7 @@ const Navbar = ({
         </Button>
         <Button
           variant="outline"
-          onClick={copyFullSummary}
+          onClick={handleCopyFullSummary}
           className="flex items-center gap-2"
         >
           <Copy className="h-4 w-4" />
@@ -124,6 +118,13 @@ const Navbar = ({
         </Button>
         <AvatarMenu user={user} />
       </div>
+      <SummaryModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        summary={generatedSummary}
+        owner={repository.owner}
+        name={repository.name}
+      />
     </header>
   );
 };
