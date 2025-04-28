@@ -67,6 +67,7 @@ model Repository {
   overview    String?
   directories Directory[]
   files       File[]
+  logs        Log[]
   user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt   DateTime         @default(now())
@@ -99,6 +100,15 @@ model File {
 
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
+}
+
+model Log {
+  id           String     @id @default(cuid())
+  repositoryId String
+  message      String
+  status       RepositoryStatus
+  createdAt    DateTime   @default(now())
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
 }
 
 enum RepositoryStatus {
