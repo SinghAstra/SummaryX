@@ -29,9 +29,6 @@ const RepoLogs = ({ repository }: RepoLogsProps) => {
       if (update.status === "SUCCESS") {
         router.replace(`/repository/${repositoryId}`);
       }
-      if (update.status === "FAILED") {
-        router.replace(`/dashboard`);
-      }
     });
 
     return () => {

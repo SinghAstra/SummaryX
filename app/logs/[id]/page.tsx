@@ -21,9 +21,6 @@ export default async function RepoProcessingLogsPage({
   if (repository.status === "SUCCESS") {
     redirect(`/repository/${repositoryId}`);
   }
-  if (repository.status === "FAILED") {
-    redirect("/dashboard");
-  }
 
   return <RepoLogs repository={repository} />;
 }

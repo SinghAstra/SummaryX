@@ -28,13 +28,7 @@ export function RepositoryCard({ repository }: RepositoryCardProps) {
     if (repository.status === RepositoryStatus.SUCCESS) {
       return `/repository/${repository.id}`;
     }
-    if (
-      repository.status === RepositoryStatus.PROCESSING ||
-      repository.status === RepositoryStatus.PENDING
-    ) {
-      return `/logs/${repository.id}`;
-    }
-    return null;
+    return `/logs/${repository.id}`;
   };
 
   const href = getHrefFromStatus(repository);
@@ -45,18 +39,10 @@ export function RepositoryCard({ repository }: RepositoryCardProps) {
     setMessage(null);
   }, [message]);
 
-  return href ? (
+  return (
     <Link href={href}>
       <SidebarRepositoryCard repository={repository} />
     </Link>
-  ) : (
-    <div
-      onClick={() =>
-        setMessage("Failed to process Repository. Please try again")
-      }
-    >
-      <SidebarRepositoryCard repository={repository} />
-    </div>
   );
 }
 

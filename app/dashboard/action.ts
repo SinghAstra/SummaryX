@@ -50,11 +50,18 @@ export async function activateBackendServer() {
 
 export async function fetchProcessingRepository() {
   try {
+    const session = await getServerSession(authOptions);
+
+    if (!session) {
+      return [];
+    }
+
     const response = await prisma.repository.findMany({
       where: {
         status: {
           in: ["PENDING", "PROCESSING"],
         },
+        userId: session.user.id,
       },
     });
     console.log("response is ", response);
@@ -77,6 +84,21 @@ export async function stopRepositoryProcessing() {
       return;
     }
 
+    const serviceToken = createCleanJobsToken({
+      userId: session.user.id,
+    });
+
+    const response = await fetch(`${EXPRESS_API_URL}/api/clean/user-jobs`, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${serviceToken}`,
+      },
+    });
+
+    const data = await response.json();
+
+    console.log("stopRepositoryProcessing data : ", data);
+
     await prisma.repository.updateMany({
       where: {
         userId: session.user.id,
@@ -88,21 +110,6 @@ export async function stopRepositoryProcessing() {
         status: "FAILED",
       },
     });
-
-    const serviceToken = createCleanJobsToken({
-      userId: session.user.id,
-    });
-
-    const response = await fetch(`${EXPRESS_API_URL}/api/clean/jobs`, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${serviceToken}`,
-      },
-    });
-
-    const data = await response.json();
-
-    console.log("stopRepositoryProcessing data : ", data);
   } catch (error) {
     if (error instanceof Error) {
       console.log("error.stack is ", error.stack);
