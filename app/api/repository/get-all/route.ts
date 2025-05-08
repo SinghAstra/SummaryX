@@ -1,14 +1,15 @@
-"use server";
-
 import { authOptions } from "@/lib/auth-options";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 
-export async function fetchRepositories() {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
-      return { message: "Authentication required", repositories: [] };
+      return Response.json(
+        { message: "Authentication required" },
+        { status: 401 }
+      );
     }
 
     const repositories = await prisma.repository.findMany({
@@ -19,12 +20,17 @@ export async function fetchRepositories() {
         createdAt: "desc",
       },
     });
-    return { repositories };
+
+    return Response.json(repositories);
   } catch (error) {
     if (error instanceof Error) {
-      console.log("error.stack is ", error.stack);
-      console.log("error.message is ", error.message);
+      console.log("Error message:", error.message);
+      console.log("Error stack:", error.stack);
     }
-    return { message: "Failed to Fetch Repositories", repositories: [] };
+
+    return Response.json(
+      { message: "Failed to process repository" },
+      { status: 500 }
+    );
   }
 }

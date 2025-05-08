@@ -5,7 +5,7 @@ import { authOptions } from "@/lib/auth-options";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { ReactNode } from "react";
-import { activateBackendServer, fetchRepositories } from "./action";
+import { fetchRepositories } from "./action";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -33,13 +33,11 @@ const DashboardLayout = async ({ children }: DashboardLayoutProps) => {
 
   const { repositories } = await fetchRepositories();
 
-  await activateBackendServer();
-
   return (
     <div className="min-h-screen">
       <Navbar user={session.user} />
       <div className="flex pt-16">
-        <LeftSidebar repositories={repositories} />
+        <LeftSidebar initialRepositories={repositories} />
         <main className="hidden md:flex flex-1 ml-96 ">{children}</main>
         <RightSidebar />
       </div>
