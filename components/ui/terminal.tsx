@@ -15,8 +15,31 @@ interface TerminalProps {
 function Terminal({ repository, logs }: TerminalProps) {
   const logsEndRef = useRef<HTMLDivElement>(null);
   const terminalRef = useRef<HTMLDivElement>(null);
-  const [autoScroll, setAutoScroll] = useState(true);
   const [showScrollButton, setShowScrollButton] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setShowScrollButton(!entry.isIntersecting);
+      },
+      {
+        root: terminalRef.current,
+        threshold: 1.0,
+      }
+    );
+
+    const logsEndRefVal = logsEndRef.current;
+
+    if (logsEndRefVal) {
+      observer.observe(logsEndRefVal);
+    }
+
+    return () => {
+      if (logsEndRefVal) {
+        observer.unobserve(logsEndRefVal);
+      }
+    };
+  }, []);
 
   const formatDate = (createdAt: Date) => {
     const months = [
@@ -46,34 +69,8 @@ function Terminal({ repository, logs }: TerminalProps) {
   };
 
   const scrollToBottom = () => {
-    setAutoScroll(true);
+    logsEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
-
-  const handleScroll = () => {
-    if (!terminalRef.current) return;
-
-    const { scrollTop, scrollHeight, clientHeight } = terminalRef.current;
-    const isScrolledToBottom = scrollHeight - scrollTop - clientHeight < 60;
-
-    setAutoScroll(isScrolledToBottom);
-    setShowScrollButton(!isScrolledToBottom);
-  };
-
-  useEffect(() => {
-    const terminalElement = terminalRef.current;
-    if (terminalElement) {
-      terminalElement.addEventListener("scroll", handleScroll);
-      return () => {
-        terminalElement.removeEventListener("scroll", handleScroll);
-      };
-    }
-  }, []);
-
-  useEffect(() => {
-    if (autoScroll) {
-      logsEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [logs, autoScroll]);
 
   return (
     <MaxWidthWrapper>
