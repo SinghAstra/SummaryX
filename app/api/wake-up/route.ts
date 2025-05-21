@@ -1,4 +1,5 @@
 export async function GET() {
+  let data = "";
   try {
     const EXPRESS_API_URL = process.env.EXPRESS_API_URL;
     if (!EXPRESS_API_URL) {
@@ -19,19 +20,18 @@ export async function GET() {
 
     clearTimeout(timeout);
 
-    const data = await response.json();
-    console.log("data is ", data);
+    data = await response.json();
 
     if (!response.ok) {
-      return Response.json({ isActive: false });
+      return Response.json({ isActive: false, data });
     }
 
-    return Response.json({ isActive: true,data });
+    return Response.json({ isActive: true, data });
   } catch (error) {
     if (error instanceof Error) {
       console.log("error.stack is ", error.stack);
       console.log("error.message is ", error.message);
     }
-    return Response.json({ isActive: false });
+    return Response.json({ isActive: false, data });
   }
 }
