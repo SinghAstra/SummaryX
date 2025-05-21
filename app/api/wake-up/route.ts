@@ -26,7 +26,7 @@ export async function GET() {
       return Response.json({ isActive: false });
     }
 
-    return Response.json({ isActive: true });
+    return Response.json({ isActive: true,data });
   } catch (error) {
     if (error instanceof Error) {
       console.log("error.stack is ", error.stack);
