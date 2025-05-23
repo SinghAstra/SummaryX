@@ -1,6 +1,6 @@
 # SummaryX
 
-SummaryX is a Next.js application that provides a dashboard for managing GitHub repositories. It features repository details, processing logs, and user authentication via GitHub and Google. The application uses Prisma for database interactions and Pusher for real-time communication.
+SummaryX is a Next.js application that helps you understand public github repository by generating summary of all files. You can copy the summary of files into LLM and have Q&A.
 
 ## 🧰 Technology Stack
 
