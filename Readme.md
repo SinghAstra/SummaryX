@@ -1,6 +1,6 @@
 # SummaryX
 
-SummaryX is a Next.js application that helps you understand public github repository by generating context aware summary for all files. User can copy the summary of files into LLM and have Q&A.
+SummaryX is a Next.js application that helps you understand public github repository by generating context aware summary for all files in prompt friendly manner.
 
 ## 🧰 Technology Stack
 
