@@ -1,15 +1,19 @@
+"use client";
+
 import { siteConfig } from "@/config/site";
-import FadeIn from "../global/fade-in";
-import MaxWidthWrapper from "../global/max-width-wrapper";
+import { containerVariant, slideUpVariant } from "@/lib/variants";
+import { motion } from "framer-motion";
 import BorderHoverLink from "../ui/border-hover-link";
 
 const Footer = () => {
   return (
-    <MaxWidthWrapper>
-      <footer className="flex  py-4 relative items-center justify-between border-t border-border  w-full  mx-auto  bg-[radial-gradient(35%_128px_at_50%_0%,theme(backgroundColor.white/8%),transparent)]">
-        <div className="absolute top-0 left-1/2 right-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-1.5 bg-foreground rounded-full"></div>
-
-        <FadeIn delay={0.1}>
+    <motion.div
+      variants={containerVariant}
+      initial="hidden"
+      whileInView="visible"
+    >
+      <footer className="flex sticky inset-x-0 bottom-0 p-4 items-center justify-between border-t border-border mx-4 sm:mx-8 ">
+        <motion.div variants={slideUpVariant}>
           <span className=" text-muted-foreground flex gap-2 items-center tracking-wider">
             Made by{" "}
             <BorderHoverLink
@@ -19,17 +23,17 @@ const Footer = () => {
               SinghAstra
             </BorderHoverLink>
           </span>
-        </FadeIn>
-        <FadeIn delay={0.4}>
+        </motion.div>
+        <motion.div variants={slideUpVariant}>
           <BorderHoverLink
             href={siteConfig.links.twitter}
             className="text-foreground tracking-wider"
           >
             Connect on X
           </BorderHoverLink>
-        </FadeIn>
+        </motion.div>
       </footer>
-    </MaxWidthWrapper>
+    </motion.div>
   );
 };
 
