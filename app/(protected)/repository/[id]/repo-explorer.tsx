@@ -175,24 +175,26 @@ export default function RepoExplorer({ repository, user }: RepoExplorerProps) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen">
       <Navbar
         repository={repository}
         user={user}
         showAllSummaries={showAllSummaries}
         toggleAllSummaries={toggleAllSummaries}
       />
-      <div className="flex flex-col mt-20 mb-10 max-w-3xl w-full mx-auto  border rounded p-2 ">
-        {/* Directories */}
-        {repository.directories.map((dir) => (
-          <DirectoryTree key={dir.id} directory={dir} />
-        ))}
-
-        {/* Root files */}
-        {repository.rootFiles.length > 0 &&
-          repository.rootFiles.map((file) => (
-            <FileItem key={file.id} file={file} expanded={showAllSummaries} />
+      <div className="flex items-center justify-center p-4  ">
+        <div className="flex flex-col w-full max-w-3xl border rounded p-2 ">
+          {/* Directories */}
+          {repository.directories.map((dir) => (
+            <DirectoryTree key={dir.id} directory={dir} />
           ))}
+
+          {/* Root files */}
+          {repository.rootFiles.length > 0 &&
+            repository.rootFiles.map((file) => (
+              <FileItem key={file.id} file={file} expanded={showAllSummaries} />
+            ))}
+        </div>
       </div>
     </div>
   );
