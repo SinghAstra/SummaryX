@@ -2,7 +2,7 @@ import { StructuredRepository } from "@/app/(protected)/repository/[id]/repo-exp
 import SummaryModal from "@/app/(protected)/repository/[id]/summary-modal";
 import { siteConfig } from "@/config/site";
 import { DirectoryWithRelations } from "@/interfaces/github";
-import { Copy } from "lucide-react";
+import { ArrowDownToLine, ArrowUpFromLine, Copy } from "lucide-react";
 import { User } from "next-auth";
 import Link from "next/link";
 import React, { useState } from "react";
@@ -77,7 +77,7 @@ const Navbar = ({
     setIsModalOpen(true);
   };
   return (
-    <header className=" px-4 py-2 flex items-center justify-between sticky border-dashed top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className=" px-4 py-2 flex items-center justify-between sticky border-dashed top-0 z-50 w-full border-b bg-background/95 backdrop-blur ">
       <div className="flex gap-2 items-center">
         <Link
           href="/dashboard"
@@ -95,7 +95,7 @@ const Navbar = ({
           <Avatar className="w-8 h-8">
             <AvatarImage src={repository.avatarUrl} />
           </Avatar>
-          <div className="flex gap-1">
+          <div className="hidden sm:flex gap-1">
             <span className="text-foreground">{repository.owner}</span>
             <span className="text-muted group-hover:text-muted-foreground ">
               {"/"}
@@ -106,7 +106,18 @@ const Navbar = ({
       </div>
       <div className="flex gap-2 items-center">
         <Button variant="outline" onClick={toggleAllSummaries}>
-          {showAllSummaries ? "Collapse All Summaries" : "Expand All Summaries"}
+          <span className="hidden sm:block">
+            {showAllSummaries
+              ? "Collapse All Summaries"
+              : "Expand All Summaries"}
+          </span>
+          <span className="block sm:hidden">
+            {showAllSummaries ? (
+              <ArrowDownToLine className="w-4 h-4" />
+            ) : (
+              <ArrowUpFromLine className="h-4 w-4" />
+            )}
+          </span>
         </Button>
         <Button
           variant="outline"
@@ -114,7 +125,7 @@ const Navbar = ({
           className="flex items-center gap-2"
         >
           <Copy className="h-4 w-4" />
-          Copy Full Summary
+          <span className="hidden sm:block">Copy Full Summary</span>
         </Button>
         <AvatarMenu user={user} />
       </div>
