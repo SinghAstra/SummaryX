@@ -54,11 +54,11 @@ export function AddNewRepository({
         </div>
         <div className="flex items-center gap-2">
           <Button
-            size="sm"
+            variant="outline"
             disabled={!url || isProcessing || isSuccess}
             type="submit"
             className={cn(
-              "relative overflow-hidden rounded",
+              "relative overflow-hidden tracking-wide  rounded hover:bg-muted/20",
               isSuccess && "bg-yellow-400 "
             )}
           >

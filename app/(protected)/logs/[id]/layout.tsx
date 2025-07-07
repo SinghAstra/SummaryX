@@ -47,7 +47,7 @@ export default async function RepositoryLogsLayout({
   return (
     <div className="flex flex-col ">
       <Navbar user={session.user} />
-      <div className="pt-20">{children}</div>
+      {children}
     </div>
   );
 }

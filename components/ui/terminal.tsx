@@ -76,7 +76,7 @@ function Terminal({ repository, logs }: TerminalProps) {
   };
 
   return (
-    <div className="relative mx-4 my-2 sm:mx-8 sm:my-4 rounded border h-[calc(100vh-8rem)] border-border overflow-hidden flex flex-col">
+    <div className="relative mx-4 my-2 sm:mx-8 sm:my-4 rounded border h-[calc(100vh-8rem)]  overflow-hidden flex flex-col">
       <div className="absolute z-[10] top-0 inset-x-0 flex items-center space-x-4 mb-4 p-2 bg-background/40 backdrop-blur-md">
         <Image
           src={repository.avatarUrl || "/placeholder.svg"}
@@ -100,7 +100,7 @@ function Terminal({ repository, logs }: TerminalProps) {
             className="flex items-start space-x-3 animate-in fade-in slide-in-from-bottom-1 tracking-wider"
           >
             <span className="text-muted-foreground flex-shrink-0">
-              {formatDate(repository.createdAt)}
+              {formatDate(log.createdAt)}
             </span>
             <span
               className={`whitespace-pre-wrap  ${
