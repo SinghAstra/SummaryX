@@ -1,6 +1,10 @@
 "use client";
 
-import { RepositoryStatus, type Log, type Repository } from "@prisma/client";
+import {
+  Log,
+  Repository,
+  RepositoryStatus,
+} from "@/prisma/generated/prisma-client-js";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import Image from "next/image";
