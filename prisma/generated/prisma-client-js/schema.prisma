@@ -4,8 +4,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-   url       = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
@@ -19,8 +19,8 @@ model User {
   repositories  Repository[]
   sessions      Session[]
 
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Account {
@@ -72,8 +72,8 @@ model Repository {
   logs        Log[]
   user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Directory {
@@ -100,17 +100,17 @@ model File {
   directory    Directory? @relation(fields: [directoryId], references: [id], onDelete: Cascade)
   repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
 
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Log {
-  id           String     @id @default(cuid())
+  id           String           @id @default(cuid())
   repositoryId String
   message      String
   status       RepositoryStatus
-  createdAt    DateTime   @default(now())
-  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  createdAt    DateTime         @default(now())
+  repository   Repository       @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
 }
 
 enum RepositoryStatus {
@@ -119,4 +119,3 @@ enum RepositoryStatus {
   SUCCESS
   FAILED
 }
-

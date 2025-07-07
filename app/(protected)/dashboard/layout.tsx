@@ -5,7 +5,7 @@ import { authOptions } from "@/lib/auth-options";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { ReactNode } from "react";
-import { fetchRepositories, wakeUpServer } from "./action";
+import { fetchRepositories } from "./action";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -32,8 +32,6 @@ const DashboardLayout = async ({ children }: DashboardLayoutProps) => {
   }
 
   const { repositories } = await fetchRepositories();
-
-  await wakeUpServer();
 
   return (
     <div className="min-h-screen">

@@ -20,7 +20,7 @@ const MovingGlow = ({
       before:bg-[conic-gradient(from_0deg_at_50%_50%,transparent_0_var(--initial-transparent),white_360deg)] 
       ![mask-clip:padding-box,border-box] ![mask-composite:intersect] 
       [mask:linear-gradient(transparent,transparent),linear-gradient(white,white)]
-      before:w-[200%]
+      before:w-[120%]
       before:content-[''] before:[translate:-50%_-50%]
       before:animate-[rotate_var(--animation-duration)_linear_infinite]"
       style={

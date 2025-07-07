@@ -93,6 +93,17 @@ CREATE TABLE "File" (
     CONSTRAINT "File_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "Log" (
+    "id" TEXT NOT NULL,
+    "repositoryId" TEXT NOT NULL,
+    "message" TEXT NOT NULL,
+    "status" "RepositoryStatus" NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "Log_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
@@ -128,3 +139,6 @@ ALTER TABLE "File" ADD CONSTRAINT "File_directoryId_fkey" FOREIGN KEY ("director
 
 -- AddForeignKey
 ALTER TABLE "File" ADD CONSTRAINT "File_repositoryId_fkey" FOREIGN KEY ("repositoryId") REFERENCES "Repository"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Log" ADD CONSTRAINT "Log_repositoryId_fkey" FOREIGN KEY ("repositoryId") REFERENCES "Repository"("id") ON DELETE CASCADE ON UPDATE CASCADE;

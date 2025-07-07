@@ -32,7 +32,7 @@ const LandingPage = ({
   };
 
   return (
-    <div>
+    <>
       <Navbar toggleAuthDialog={toggleAuthDialog} />
       <motion.div
         variants={containerVariant}
@@ -159,13 +159,13 @@ const LandingPage = ({
           </motion.div>
           <ConicGradientBackground />
         </div>
-        <AuthDialog
-          isDialogVisible={showAuthDialog}
-          setIsDialogVisible={setShowAuthDialog}
-        />
       </motion.div>
       <Footer />
-    </div>
+      <AuthDialog
+        isDialogVisible={showAuthDialog}
+        setIsDialogVisible={setShowAuthDialog}
+      />
+    </>
   );
 };
 
