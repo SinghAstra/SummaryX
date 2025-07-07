@@ -1,5 +1,5 @@
-import { StructuredRepository } from "@/app/repository/[id]/repo-explorer";
-import SummaryModal from "@/app/repository/[id]/summary-modal";
+import { StructuredRepository } from "@/app/(protected)/repository/[id]/repo-explorer";
+import SummaryModal from "@/app/(protected)/repository/[id]/summary-modal";
 import { siteConfig } from "@/config/site";
 import { DirectoryWithRelations } from "@/interfaces/github";
 import { Copy } from "lucide-react";
