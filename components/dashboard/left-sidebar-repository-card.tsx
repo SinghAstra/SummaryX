@@ -2,7 +2,9 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { slideUpVariant } from "@/lib/variants";
 import { Repository, RepositoryStatus } from "@prisma/client";
+import { motion } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -21,34 +23,9 @@ const getStatusColor = (status: RepositoryStatus) => {
   return "bg-yellow-500";
 };
 
-export function RepositoryCard({ repository }: RepositoryCardProps) {
-  const [message, setMessage] = useState<string | null>(null);
-
-  const getHrefFromStatus = (repository: Repository) => {
-    if (repository.status === RepositoryStatus.SUCCESS) {
-      return `/repository/${repository.id}`;
-    }
-    return `/logs/${repository.id}`;
-  };
-
-  const href = getHrefFromStatus(repository);
-
-  useEffect(() => {
-    if (!message) return;
-    toast(message);
-    setMessage(null);
-  }, [message]);
-
-  return (
-    <Link href={href}>
-      <SidebarRepositoryCard repository={repository} />
-    </Link>
-  );
-}
-
 const SidebarRepositoryCard = ({ repository }: { repository: Repository }) => {
   return (
-    <div className="flex items-center gap-3 rounded-lg border p-3 hover:bg-accent cursor-pointer transition-colors">
+    <div className="flex items-center gap-3 rounded border p-3 hover:bg-muted/20  cursor-pointer transition-colors">
       <Avatar className="h-8 w-8">
         <AvatarImage src={repository.avatarUrl || ""} alt={repository.owner} />
         <AvatarFallback>{repository.owner[0].toUpperCase()}</AvatarFallback>
@@ -70,3 +47,30 @@ const SidebarRepositoryCard = ({ repository }: { repository: Repository }) => {
     </div>
   );
 };
+
+export function RepositoryCard({ repository }: RepositoryCardProps) {
+  const [message, setMessage] = useState<string | null>(null);
+
+  const getHrefFromStatus = (repository: Repository) => {
+    if (repository.status === RepositoryStatus.SUCCESS) {
+      return `/repository/${repository.id}`;
+    }
+    return `/logs/${repository.id}`;
+  };
+
+  const href = getHrefFromStatus(repository);
+
+  useEffect(() => {
+    if (!message) return;
+    toast(message);
+    setMessage(null);
+  }, [message]);
+
+  return (
+    <motion.div variants={slideUpVariant}>
+      <Link href={href}>
+        <SidebarRepositoryCard repository={repository} />
+      </Link>
+    </motion.div>
+  );
+}

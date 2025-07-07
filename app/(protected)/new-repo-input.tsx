@@ -21,7 +21,7 @@ interface AddNewRepositoryProps {
   isSuccess: boolean;
 }
 
-export function AddNewRepository({
+function AddNewRepository({
   url,
   setUrl,
   handleSubmit,
@@ -58,7 +58,7 @@ export function AddNewRepository({
             disabled={!url || isProcessing || isSuccess}
             type="submit"
             className={cn(
-              "relative overflow-hidden rounded",
+              "relative overflow-hidden",
               isSuccess && "bg-yellow-400 "
             )}
           >
@@ -73,7 +73,7 @@ export function AddNewRepository({
                 Processing...
               </div>
             ) : (
-              "Generate Summary"
+              "Analyze"
             )}
           </Button>
         </div>
