@@ -67,7 +67,6 @@ const AuthDialog = ({
         className="max-w-[400px] relative bg-background"
         isDialogVisible={isDialogVisible}
         setIsDialogVisible={setIsDialogVisible}
-        keyToMakeDialogVisible="a"
       >
         <GradientInsetBackground />
         <div className="space-y-4 m-4 text-center">

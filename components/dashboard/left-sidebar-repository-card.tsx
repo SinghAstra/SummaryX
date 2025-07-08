@@ -4,8 +4,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { Repository, RepositoryStatus } from "@prisma/client";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
 
 interface RepositoryCardProps {
   repository: Repository;
@@ -47,8 +45,6 @@ const SidebarRepositoryCard = ({ repository }: { repository: Repository }) => {
 };
 
 export function RepositoryCard({ repository }: RepositoryCardProps) {
-  const [message, setMessage] = useState<string | null>(null);
-
   const getHrefFromStatus = (repository: Repository) => {
     if (repository.status === RepositoryStatus.SUCCESS) {
       return `/repository/${repository.id}`;
@@ -57,12 +53,6 @@ export function RepositoryCard({ repository }: RepositoryCardProps) {
   };
 
   const href = getHrefFromStatus(repository);
-
-  useEffect(() => {
-    if (!message) return;
-    toast(message);
-    setMessage(null);
-  }, [message]);
 
   return (
     <Link href={href}>

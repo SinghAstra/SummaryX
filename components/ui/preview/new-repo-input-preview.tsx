@@ -3,7 +3,7 @@
 import AuthDialog from "@/components/componentX/auth-dialog";
 import { Button } from "@/components/ui/button";
 import { SearchIcon, SparklesIcon } from "lucide-react";
-import { useState } from "react";
+import { FormEvent, useState } from "react";
 
 function AddNewRepository({
   toggleAuthDialog,
@@ -13,11 +13,15 @@ function AddNewRepository({
   const [url, setUrl] = useState("");
 
   return (
-    <form onSubmit={toggleAuthDialog}>
+    <form
+      onSubmit={(e: FormEvent) => {
+        e.preventDefault();
+        toggleAuthDialog();
+      }}
+    >
       <div className="flex items-center border-b px-4 py-3">
         <SearchIcon className="w-5 h-5 text-muted-foreground mr-2" />
         <input
-          type="url"
           placeholder="Paste Your Github repository URL..."
           value={url}
           onChange={(e) => {
@@ -37,11 +41,10 @@ function AddNewRepository({
         </div>
         <div className="flex items-center gap-2">
           <Button
-            size="sm"
             type="submit"
-            className={"relative overflow-hidden"}
+            className="relative overflow-hidden font-normal rounded text-primary bg-muted/60 hover:bg-muted/20 transition-all duration-200"
           >
-            Analyze
+            Generate Summary
           </Button>
         </div>
       </div>

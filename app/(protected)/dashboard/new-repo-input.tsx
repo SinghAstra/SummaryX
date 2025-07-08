@@ -33,7 +33,6 @@ export function AddNewRepository({
       <div className="flex items-center border-b px-4 py-3">
         <SearchIcon className="w-5 h-5 text-muted-foreground mr-2" />
         <input
-          type="url"
           placeholder="Paste Your Github repository URL..."
           value={url}
           onChange={(e) => {
@@ -58,7 +57,7 @@ export function AddNewRepository({
             disabled={!url || isProcessing || isSuccess}
             type="submit"
             className={cn(
-              "relative overflow-hidden tracking-wide  rounded hover:bg-muted/20",
+           "relative overflow-hidden font-normal rounded bg-muted/60 hover:bg-muted/20 transition-all duration-200",
               isSuccess && "bg-yellow-400 "
             )}
           >
