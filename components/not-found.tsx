@@ -51,7 +51,7 @@ const NotFound = ({ user }: NotFoundProps) => {
           </motion.p>
         </div>
         <motion.div variants={scaleInVariant}>
-          <Link href={href} className={buttonVariants({ variant: "outline" })}>
+          <Link href={href} className={buttonVariants({ variant: "outline",className:"rounded" })}>
             Back to Home
           </Link>
         </motion.div>
