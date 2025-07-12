@@ -3,7 +3,6 @@
 import Dialog from "@/components/componentX/dialog";
 import { useToastContext } from "@/components/providers/toast";
 
-import GradientInsetBackground from "@/components/componentX/gradient-inset-background";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { fetchAllUserRepository } from "@/lib/api";
 import { parseGithubUrl } from "@/lib/github";
@@ -56,10 +55,7 @@ export function AddNewRepository({
             variant="outline"
             disabled={!url || isProcessing || isSuccess}
             type="submit"
-            className={cn(
-           "relative overflow-hidden font-normal rounded bg-muted/60 hover:bg-muted/20 transition-all duration-200",
-              isSuccess && "bg-yellow-400 "
-            )}
+            className="relative overflow-hidden font-normal rounded bg-muted/60 hover:bg-muted/20 transition-all duration-200"
           >
             {isSuccess ? (
               <div className="flex items-center">
@@ -201,41 +197,41 @@ function NewRepoInput() {
         isDialogVisible={alertProcessingRepo}
         setIsDialogVisible={setAlertProcessingRepo}
       >
-        <div className="flex items-center border-b px-4 py-2">
-          <AlertCircle className="h-5 w-5 text-yellow-500 mr-2 text-xl" />
-          Pending Repository Analysis
-        </div>
-        <div className="px-4 py-2">
-          You have repository analysis already in progress. Due to API
-          restrictions, starting a new analysis will stop the processing of all
-          other repositories. Do you want to continue with the new repository
-          analysis?
-        </div>
-        <div className="flex px-4 py-2 gap-2">
-          <div
-            onClick={handleCancelNewRepo}
-            className={cn(
-              buttonVariants({
-                variant: "outline",
-                className:
-                  "bg-transparent hover:bg-transparent flex-2 rounded font-normal",
-              })
-            )}
-          >
-            Cancel
+        <div className="py-1 bg-muted/20">
+          <div className="flex items-center border-b px-4 py-2">
+            <AlertCircle className="h-5 w-5 text-yellow-500 mr-2 text-xl" />
+            Pending Repository Analysis
           </div>
-          <div
-            onClick={handleContinueWithNewRepo}
-            className={cn(
-              buttonVariants({
-                variant: "outline",
-                className:
-                  "bg-transparent hover:bg-transparent flex-1 rounded font-normal tracking-wider relative",
-              })
-            )}
-          >
-            <GradientInsetBackground />
-            Continue with new analysis
+          <div className="px-4 py-2">
+            You have repository analysis already in progress. Due to API
+            restrictions, starting a new analysis will stop the processing of
+            all other repositories. Do you want to continue with the new
+            repository analysis?
+          </div>
+          <div className="flex px-4 py-2 gap-2">
+            <div
+              onClick={handleCancelNewRepo}
+              className={cn(
+                buttonVariants({
+                  variant: "outline",
+                  className:
+                    "bg-transparent hover:bg-transparent w-full rounded font-normal",
+                })
+              )}
+            >
+              Cancel
+            </div>
+            <div
+              onClick={handleContinueWithNewRepo}
+              className={cn(
+                buttonVariants({
+                  className:
+                    " w-full rounded font-semibold tracking-wider relative",
+                })
+              )}
+            >
+              Continue with new analysis
+            </div>
           </div>
         </div>
       </Dialog>
