@@ -2,15 +2,16 @@
 
 import AuthDialog from "@/components/componentX/auth-dialog";
 import ConicGradientBackground from "@/components/componentX/conic-gradient-background";
-import GradientInsetBackground from "@/components/componentX/gradient-inset-background";
 import MovingBackground from "@/components/componentX/moving-background";
 import MovingGlow from "@/components/componentX/moving-glow";
 import RadialFadePulsatingBackground from "@/components/componentX/radial-fade-pulsating-background";
 import Footer from "@/components/home/footer";
 import Navbar from "@/components/home/navbar";
+import { buttonVariants } from "@/components/ui/button";
 import DashboardPreview from "@/components/ui/preview/dashboard-preview";
 import { siteConfig } from "@/config/site";
 import { RepositoryPreview } from "@/interfaces/github";
+import { cn } from "@/lib/utils";
 import {
   blurInVariant,
   containerVariant,
@@ -18,6 +19,7 @@ import {
 } from "@/lib/variants";
 import { motion } from "framer-motion";
 import { ArrowRightIcon } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { FaGithub, FaTwitterSquare } from "react-icons/fa";
 
@@ -41,23 +43,20 @@ const LandingPage = ({
       >
         <div className="px-3 py-20 flex flex-col items-center justify-center text-center">
           <RadialFadePulsatingBackground />
-          <motion.a
-            href={siteConfig.links.twitter}
-            target="_blank"
-            variants={scaleInVariant}
-            className="rounded group relative text-foreground px-3 py-1"
-          >
-            <MovingGlow />
-            <GradientInsetBackground />
-            <div className="absolute inset-0 group-hover:bg-muted/40 transition-all duration-200 z-[-3]" />
-            <span
-              className="z-10 text-sm 
-          flex items-center justify-center gap-2"
+          <motion.div variants={scaleInVariant}>
+            <Link
+              href={siteConfig.links.twitter}
+              target="_blank"
+              className={cn(
+                buttonVariants({ variant: "outline" }),
+                "rounded bg-transparent hover:bg-transparent group relative text-foreground px-3 py-1 flex gap-2"
+              )}
             >
-              <FaTwitterSquare className="size-3 " /> Follow For Updates
+              <MovingBackground />
+              <FaTwitterSquare className="size-3" /> Follow For Updates
               <ArrowRightIcon className="size-3 transform-all duration-300 group-hover:translate-x-1" />
-            </span>
-          </motion.a>
+            </Link>
+          </motion.div>
 
           <motion.h1
             variants={blurInVariant}
@@ -76,31 +75,35 @@ const LandingPage = ({
             <br />I will help you understand the codebase.
           </motion.p>
           <div className="flex items-center justify-center gap-4">
-            <motion.div
+            <motion.button
               variants={scaleInVariant}
-              className="relative border px-3 py-1 rounded flex items-center group cursor-pointer"
+              className={cn(
+                buttonVariants({}),
+                "relative border px-3 py-1 rounded flex items-center group cursor-pointer tracking-wide text-base"
+              )}
               onClick={toggleAuthDialog}
             >
-              <MovingBackground />
-              Get started
+              Get started for free
               <ArrowRightIcon
                 className="ml-1 size-4 transition-all duration-300 
                 group-hover:translate-x-1"
               />
-            </motion.div>
-            <motion.a
-              href={siteConfig.links.githubRepo}
-              target="_blank"
-              variants={scaleInVariant}
-              className="rounded group relative text-foreground px-3 py-1"
-            >
-              <MovingGlow />
-              <GradientInsetBackground />
-              <div className="absolute inset-0 group-hover:bg-muted/40 transition-all duration-200 z-[-3]" />
-              <span className="z-10 flex items-center justify-center gap-2">
+            </motion.button>
+            <motion.div variants={scaleInVariant}>
+              <Link
+                href={siteConfig.links.githubRepo}
+                target="_blank"
+                className={cn(
+                  buttonVariants({
+                    variant: "outline",
+                  }),
+                  "rounded group relative text-foreground px-3 py-1 flex items-center gap-2 bg-muted/20 hover:bg-muted/40 tracking-wide font-normal text-base"
+                )}
+              >
+                <MovingGlow />
                 <FaGithub className="size-3 " /> Github
-              </span>
-            </motion.a>
+              </Link>
+            </motion.div>
           </div>
         </div>
         <div className="relative px-4 sm:px-8 ">
@@ -149,7 +152,6 @@ const LandingPage = ({
               onClick={toggleAuthDialog}
             >
               <MovingGlow />
-              <GradientInsetBackground />
               Get started
               <ArrowRightIcon
                 className="ml-1 size-4 transition-all duration-300 

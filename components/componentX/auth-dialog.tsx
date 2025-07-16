@@ -8,8 +8,6 @@ import { useSearchParams } from "next/navigation";
 import React, { useState } from "react";
 import { FaGithub } from "react-icons/fa";
 import Dialog from "./dialog";
-import GradientInsetBackground from "./gradient-inset-background";
-import MovingBackground from "./moving-background";
 
 interface AuthDialogProps {
   isDialogVisible: boolean;
@@ -68,7 +66,6 @@ const AuthDialog = ({
         isDialogVisible={isDialogVisible}
         setIsDialogVisible={setIsDialogVisible}
       >
-        <GradientInsetBackground />
         <div className="space-y-4 m-4 text-center">
           <div className="space-y-1 mb-4">
             <h1 className="text-3xl tracking-wider">{siteConfig.name}</h1>
@@ -97,22 +94,21 @@ const AuthDialog = ({
             )}
           </Button>
 
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
+          <div className="relative flex gap-1">
+            <span className="flex-1 flex items-center">
               <Separator />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase ">
-              <span className="bg-background px-2 text-foreground">Or</span>
-            </div>
+            </span>
+            <span className="text-foreground">Or</span>
+            <span className="flex-1 flex items-center">
+              <Separator />
+            </span>
           </div>
 
           <Button
-            variant="outline"
-            className="w-full text-foreground rounded font-normal bg-transparent hover:bg-transparent relative"
+            className="w-full rounded tracking-wide relative"
             onClick={handleGoogleSignIn}
             disabled={isGoogleLoading}
           >
-            <MovingBackground />
             {isGoogleLoading ? (
               <>
                 <Loader className="w-5 h-5 animate-spin" />

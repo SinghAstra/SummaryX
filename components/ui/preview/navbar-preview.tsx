@@ -8,7 +8,6 @@ import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import GradientInsetBackground from "../../componentX/gradient-inset-background";
 import { Avatar, AvatarFallback } from "../avatar";
 
 export function NavbarPreview() {
@@ -41,7 +40,6 @@ export function NavbarPreview() {
             )}
             onClick={() => toggleAuthDialog()}
           >
-            <GradientInsetBackground />
             <Plus className="h-5 w-5" />
             <span className="hidden sm:block">Connect New Repository</span>
           </motion.div>

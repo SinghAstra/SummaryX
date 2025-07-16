@@ -3,7 +3,6 @@
 import { buttonVariants } from "@/components/ui/button";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
-import GradientInsetBackground from "../../componentX/gradient-inset-background";
 
 export function RightSidebarPreview() {
   return (
@@ -24,7 +23,6 @@ export function RightSidebarPreview() {
           href={siteConfig.links.twitter}
           target="_blank"
         >
-          <GradientInsetBackground />
           Connect on X
         </a>
       </div>

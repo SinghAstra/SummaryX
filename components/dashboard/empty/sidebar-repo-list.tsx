@@ -1,5 +1,4 @@
 import NewRepoDialog from "@/app/(protected)/dashboard/new-repo-dialog";
-import GradientInsetBackground from "@/components/componentX/gradient-inset-background";
 import { cn } from "@/lib/utils";
 import { scaleInVariant } from "@/lib/variants";
 import { motion } from "framer-motion";
@@ -33,7 +32,6 @@ const EmptyRepositoriesSidebarRepoList = () => {
           )}
           onClick={() => setShowNewRepoDialog(true)}
         >
-          <GradientInsetBackground />
           <Plus className="h-5 w-5" />
           Connect New Repository
         </motion.div>

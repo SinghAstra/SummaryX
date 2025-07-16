@@ -9,7 +9,6 @@ import { Plus } from "lucide-react";
 import { User } from "next-auth";
 import Link from "next/link";
 import { useState } from "react";
-import GradientInsetBackground from "../componentX/gradient-inset-background";
 import { AvatarMenu } from "../ui/avatar-menu";
 
 interface NavbarProps {
@@ -43,7 +42,6 @@ export function Navbar({ user }: NavbarProps) {
             )}
             onClick={() => setShowNewRepoDialog(true)}
           >
-            <GradientInsetBackground />
             <Plus className="h-5 w-5" />
             <span className="hidden sm:block">Connect New Repository</span>
           </motion.div>

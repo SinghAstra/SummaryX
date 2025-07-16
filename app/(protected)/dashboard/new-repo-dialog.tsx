@@ -2,8 +2,6 @@
 
 import Dialog from "@/components/componentX/dialog";
 import { useToastContext } from "@/components/providers/toast";
-
-import GradientInsetBackground from "@/components/componentX/gradient-inset-background";
 import { buttonVariants } from "@/components/ui/button";
 import { fetchAllUserRepository } from "@/lib/api";
 import { parseGithubUrl } from "@/lib/github";
@@ -169,13 +167,10 @@ function NewRepoDialog({
             onClick={handleContinueWithNewRepo}
             className={cn(
               buttonVariants({
-                variant: "outline",
-                className:
-                  "bg-transparent hover:bg-transparent flex-1 rounded font-normal tracking-wider relative",
+                className: "flex-1 rounded font-normal tracking-wider relative",
               })
             )}
           >
-            <GradientInsetBackground />
             Continue with new analysis
           </div>
         </div>
