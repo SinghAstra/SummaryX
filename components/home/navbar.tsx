@@ -1,4 +1,5 @@
 import { siteConfig } from "@/config/site";
+import { cn } from "@/lib/utils";
 import { containerVariant, scaleInVariant } from "@/lib/variants";
 import { motion } from "framer-motion";
 import { ZapIcon } from "lucide-react";
@@ -35,17 +36,19 @@ const Navbar = ({ toggleAuthDialog, user }: NavbarProps) => {
             <motion.div
               variants={scaleInVariant}
               onClick={toggleAuthDialog}
-              className={buttonVariants({
-                variant: "ghost",
-                className: "cursor-pointer",
-              })}
+              className={cn(
+                buttonVariants({
+                  variant: "ghost",
+                }),
+                "rounded cursor-pointer"
+              )}
             >
               Sign In
             </motion.div>
             <motion.div
               variants={scaleInVariant}
               onClick={toggleAuthDialog}
-              className={buttonVariants({ className: "cursor-pointer" })}
+              className={cn(buttonVariants({}), "rounded cursor-pointer")}
             >
               Get Started
               <ZapIcon className="size-3.5 ml-1.5 text-orange-500 fill-orange-500" />
