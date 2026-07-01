@@ -19,20 +19,23 @@ const ProcessSection = () => {
             <div className="w-full h-full bg-background group transition-all duration-300 ease-in-out active:scale-[0.98]">
               <div className="w-full rounded flex items-center justify-center px-4 py-2 hover:bg-muted/20 transition-all duration-300 ease-in-out">
                 <h3 className="text-foreground text-xs font-medium uppercase tracking-wider">
-                  The Process
+                  The Workflow
                 </h3>
               </div>
             </div>
           </MovingBorder>
-          <h2 className="text-center text-3xl md:text-5xl font-medium tracking-tight mt-4">
-            Entire Process in 3 steps
+
+          <h2 className="text-center text-3xl md:text-5xl font-medium tracking-tight mt-4 text-balance">
+            Codebase clarity in 3 simple steps
           </h2>
-          <p className="text-center lg:text-center text-lg tracking-normal leading-relaxed text-muted-foreground max-w-lg">
-            Follow these simple steps to perform action this is just another
-            line
+
+          <p className="text-center lg:text-center text-lg tracking-normal leading-relaxed text-muted-foreground max-w-lg text-balance">
+            Drop a link, let our background workers handle the heavy lifting,
+            and explore your code without the headache.
           </p>
         </div>
       </motion.div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 w-full py-8 gap-4">
         {processSteps.map((process, id) => (
           <motion.div

@@ -19,11 +19,11 @@ const CtaSection = () => {
       <LampBackground />
       <div className="flex flex-col items-center justify-center relative w-full text-center gap-6">
         <h2 className="text-center text-4xl md:text-7xl font-medium tracking-tight">
-          Step into the future of Landing Pages
+          Stop wrestling with messy codebases.
         </h2>
         <p className="text-muted-foreground text-lg tracking-normal leading-relaxed max-w-md mx-auto">
-          Few Line explaining the saas. This is the first line. This is the
-          second line. This is the third line.
+          Paste your GitHub link and let SummaryX build a clean, interactive map
+          with clear AI summaries for every file. Start exploring faster today.
         </p>
         <div>
           <Link href={ROUTES.SIGN_UP}>

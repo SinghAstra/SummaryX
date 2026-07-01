@@ -1,130 +1,129 @@
-import { Import, LayoutDashboardIcon, WandSparklesIcon } from "lucide-react";
+import { Cpu, Link2, Sparkles } from "lucide-react";
 
 export const processSteps = [
   {
-    title: "Import Repository",
+    title: "Paste Repository URL",
     description:
-      "Paste any public GitHub repository URL. Our engine instantly maps the directory structure and identifies the core tech stack.",
-    icon: Import,
+      "Just drop the link to any public GitHub repository. No complex local setups, no API access tokens, and zero initial configuration required.",
+    icon: Link2,
   },
   {
-    title: "Contextual Analysis",
+    title: "Automated Ingestion",
     description:
-      "We perform a deep-dive analysis of every file, generating high-level summaries and tracing cross-file dependencies automatically.",
-    icon: WandSparklesIcon,
+      "Our high-performance background queue instantly pulls the code, maps your folder hierarchy, and tracks vital filesystem structural metrics.",
+    icon: Cpu,
   },
   {
-    title: "Interactive Explorer",
+    title: "Explore with AI Insight",
     description:
-      "Navigate the codebase through an intuitive dashboard. Search, filter, and comprehend complex logic without leaving your browser.",
-    icon: LayoutDashboardIcon,
+      "Click through a smooth, interactive nested code tree and instantly view resilient, deep AI summaries for every single folder and file.",
+    icon: Sparkles,
   },
 ];
-
 export const reviews = [
   {
     name: "Michael Chen",
     rating: 5,
     review:
-      "A total lifesaver for onboarding. I had to dive into a legacy 50k LOC repo, and UnderstandX mapped the entire architecture in seconds. I actually understood the data flow before my first standup.",
+      "A total lifesaver for onboarding. I had to dive into a legacy 50k LOC repo, and SummaryX mapped the entire codebase into a clean interactive tree in seconds. I actually understood the system before my first standup.",
   },
   {
     name: "Emily Watson",
     rating: 5,
     review:
-      "The context-aware file analysis is spooky good. It doesn't just describe the code; it explains why certain patterns were used. It's like having the original maintainer sitting next to me.",
+      "The AI file summaries are incredibly accurate. It doesn't just skim the code; it tells you exactly what the file does in plain English. It's like having the original maintainer sitting right next to you explaining the files.",
   },
   {
     name: "David Kumar",
     rating: 5,
     review:
-      "I use this daily for open-source contributions. Instead of spending hours clicking through folders on GitHub, I get a clear dependency map. It's significantly improved my PR turnaround time.",
+      "I use this daily for open-source work. Instead of spending hours opening a hundred different folders on GitHub, I get an immediate map of the project. It has significantly speed up my contribution speed.",
   },
   {
     name: "Sophia Rossi",
     rating: 4,
     review:
-      "Fantastic tool for exploring new frameworks. The repo visualizer helped me understand how the core modules interact without me having to clone and grep everything locally.",
+      "Fantastic tool for exploring new frameworks. The interactive tree explorer helped me understand how core modules interact without me having to clone the whole project and grep everything locally.",
   },
   {
     name: "James Thompson",
     rating: 5,
     review:
-      "Absolutely game-changing for technical leads. I use it to audit external libraries before we add them to our stack. The insights it provides on code quality and complexity are invaluable.",
+      "Absolutely game-changing for technical leads. I use it to audit external libraries before we add them to our monorepo. The instant file breakdowns give us total code clarity with zero setup overhead.",
   },
   {
     name: "Olivia Zhang",
     rating: 4,
     review:
-      "Simple, effective, and fast. It takes the 'black box' out of complex GitHub repos. I'm looking forward to seeing how the analysis engine evolves with even more languages!",
+      "Simple, effective, and fast. It completely takes the guesswork out of complex, messy GitHub repos. Getting a clear view of an entire folder structure with working summaries is a massive time-saver.",
   },
   {
     name: "William Smith",
     rating: 5,
     review:
-      "UnderstandX is now a permanent part of my workflow. If you deal with complex codebases, this isn't just a luxury—it's a necessity for maintaining sanity and speed.",
+      "SummaryX is now a permanent part of my developer workflow. If you deal with large or unfamiliar codebases frequently, this isn't just a luxury—it's a necessity for maintaining your sanity and development speed.",
   },
   {
     name: "Mia Lindholm",
     rating: 5,
     review:
-      "I've tried other repo visualizers, but they usually just show a messy graph. UnderstandX actually gives me readable, logical summaries of what the code is doing.",
+      "I've tried other repository analysis tools, but they usually just generate a giant, unreadable graph diagram. SummaryX actually gives me clean, readable, and logical summaries of what each file is doing.",
   },
   {
     name: "Henry Fletcher",
     rating: 5,
     review:
-      "This has completely transformed how our team handles code reviews. We run the repo through UnderstandX first to get a high-level view of the changes and their impact.",
+      "This has completely transformed how our team handles technical alignment. We drop the repository link into SummaryX first to give everyone an instant high-level map of the codebase architecture before writing code.",
   },
 ];
 
 export const FAQ = [
   {
     id: "item-1",
-    question: "How does UnderstandX analyze my code?",
+    question: "How does SummaryX work?",
     answer:
-      "UnderstandX uses advanced Large Language Models (LLMs) to parse your repository's structure and logic. It identifies core modules, traces dependencies, and generates context-aware summaries that help you understand how different parts of the codebase interact.",
+      "Just paste a GitHub link. Our AI automatically scans the project, figures out how everything connects, and instantly builds a clean, interactive map with simple summaries for every single file.",
   },
   {
     id: "item-2",
-    question: "Do I need to clone the repository locally?",
+    question: "Do I need to download or clone anything?",
     answer:
-      "No. UnderstandX works entirely in your browser. Just paste a public GitHub URL, and our engine handles the indexing and analysis on our secure servers, providing you with an instant interactive dashboard.",
+      "Not at all! SummaryX runs entirely in your browser. You don't have to download heavy folders or touch your computer's terminal. Paste the link, and we handle the rest in seconds.",
   },
   {
     id: "item-3",
-    question: "Is my code used to train your AI models?",
+    question: "Is my code safe? Will it train the AI?",
     answer:
-      "Absolutely not. We prioritize your privacy. The code we analyze is processed in a transient state and is never used to train or fine-tune our underlying AI models. Your intellectual property remains yours.",
+      "Your code is 100% safe. We never use your code, projects, or intellectual property to train AI models. What's yours stays yours.",
   },
   {
     id: "item-4",
-    question: "Which programming languages are supported?",
+    question: "What programming languages do you support?",
     answer:
-      "We currently offer deep, context-aware support for TypeScript, JavaScript, Python, Rust, Go, and Java. We are constantly expanding our language models to support more ecosystems every month.",
+      "We support almost all popular languages, including JavaScript, TypeScript, Python, Rust, Go, and Java. Plus, we add support for more language setups every single month.",
   },
   {
     id: "item-5",
-    question: "Can it handle large, complex repositories?",
+    question: "Can it handle massive or messy codebases?",
     answer:
-      "Yes! UnderstandX is built specifically for scale. Whether it's a small utility library or a massive monolithic architecture, our system breaks down the code into digestible chunks to provide a clear overview without overwhelming you.",
+      "Yes! SummaryX is built for messy code. Whether it's a tiny weekend hobby app or a giant corporate system, we break the files down into simple, bite-sized summaries so you don't get overwhelmed.",
   },
   {
     id: "item-6",
-    question: "Does it support private repositories?",
+    question: "Can I use it on private repositories?",
     answer:
-      "Currently, we focus on public GitHub repositories. However, support for private repos via GitHub App integration is our top-priority feature and is coming very soon in our Pro tier.",
+      "Right now, SummaryX works with any public GitHub repository. Private repository support is our top priority and is launching very soon so you can map your private team projects.",
   },
   {
     id: "item-7",
-    question: "How accurate are the code summaries?",
+    question: "Are the AI summaries actually accurate?",
     answer:
-      "Our summaries are highly accurate because they aren't just looking at individual files. Our engine analyzes the 'context'—seeing how a function is called in another file—to explain the actual intent behind the code.",
+      "Yes. Our AI doesn't just look at a single file in a vacuum. It reads how files talk to each other across the entire codebase, giving you smart summaries that explain what the code actually does in plain English.",
   },
   {
     id: "item-8",
-    question: "Can I use UnderstandX for technical audits?",
+    question: "Who is SummaryX built for?",
     answer:
-      "Definitely. Teams use UnderstandX to perform quick security audits, dependency checks, and complexity analysis before deciding whether to adopt an open-source library into their stack.",
+      "It's perfect for developers onboarding to a new job, open-source contributors trying to make a quick fix, or tech leads auditing a new library before adding it to their system.",
   },
 ];
