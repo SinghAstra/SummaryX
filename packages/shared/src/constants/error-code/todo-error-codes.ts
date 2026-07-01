@@ -1,0 +1,8 @@
+export const TODO_ERROR_CODES = {
+  TODO_NOT_FOUND: "TODO_NOT_FOUND",
+  TODO_UNAUTHORIZED: "TODO_UNAUTHORIZED",
+  TODO_CREATION_FAILED: "TODO_CREATION_FAILED",
+} as const;
+
+export type TodoErrorCode =
+  (typeof TODO_ERROR_CODES)[keyof typeof TODO_ERROR_CODES];
