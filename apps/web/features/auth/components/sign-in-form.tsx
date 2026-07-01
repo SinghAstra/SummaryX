@@ -20,7 +20,7 @@ export function SignInForm() {
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isValid },
   } = useForm<SignInFormValues>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
@@ -108,7 +108,7 @@ export function SignInForm() {
           }
         />
 
-        <Button type="submit" disabled={isSubmitting}>
+        <Button type="submit" disabled={isSubmitting || !isValid}>
           {isSubmitting ? (
             <>
               <Loader className="size-4 animate-spin mr-2" />

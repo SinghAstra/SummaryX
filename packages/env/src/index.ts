@@ -45,7 +45,6 @@ export const apiEnvSchema = baseSchema.extend({
   SMTP_FROM_EMAIL: z
     .email("SMTP_FROM_EMAIL must be a valid email structure")
     .optional(),
-  BREVO_API_KEY: z.string().min(1, "Brevo API Key is required"),
 });
 
 /**

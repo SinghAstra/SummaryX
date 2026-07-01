@@ -87,7 +87,7 @@ export function SignUpForm() {
             label="Email"
             id="email"
             type="email"
-            placeholder="attorney@firm.com"
+            placeholder="user@mail.com"
             required
             PrefixIcon={Mail}
             {...register("email")}

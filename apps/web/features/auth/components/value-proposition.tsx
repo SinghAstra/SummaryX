@@ -15,19 +15,21 @@ export function ValueProposition() {
         >
           &ldquo;
         </div>
-        <blockquote className="space-y-4 **relative z-10**">
+        <blockquote className="space-y-4 relative z-10">
           <p className="text-2xl leading-relaxed font-semibold text-balance">
-            User Tweet on {siteConfig.name}
+            {siteConfig.name} is absolute magic. Dropped a messy legacy repo in,
+            and had a crystal-clear visual map with clean AI summaries for every
+            file in under 30 seconds. Onboarding saved.
           </p>
           <div className="flex items-center gap-3 pt-4">
             <Avatar className="h-12 w-12">
-              <AvatarImage src="/user.jpg" />
-              <AvatarFallback>CN</AvatarFallback>
+              <AvatarImage src="/user.jpg" alt="Alex Rivera" />
+              <AvatarFallback>AR</AvatarFallback>
             </Avatar>
             <div>
-              <p className="font-medium text-sm">Sarah Johnson</p>
+              <p className="font-medium text-sm text-foreground">Alex Rivera</p>
               <p className="text-xs text-muted-foreground">
-                Real Estate Attorney, San Francisco
+                Senior Full-Stack Engineer
               </p>
             </div>
           </div>
