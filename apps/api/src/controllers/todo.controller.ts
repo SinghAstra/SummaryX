@@ -5,11 +5,7 @@ import { UnauthorizedError } from "../errors/api-errors.js";
 import { todoService } from "../services/todo.service.js";
 
 export const todoController = {
-  createTodo: async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
+  createTodo: async (req: Request, res: Response, next: NextFunction) => {
     try {
       if (!req.user) {
         throw new UnauthorizedError(

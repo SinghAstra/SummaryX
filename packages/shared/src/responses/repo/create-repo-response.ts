@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const createRepoResponseSchema = z.object({
-  repositoryId: z.string().uuid(),
+  repositoryId: z.uuid(),
   isDuplicate: z.boolean(),
 });
 
