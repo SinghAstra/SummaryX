@@ -30,6 +30,7 @@ export const repositoryService = {
       const parsed = parseGitHubUrl(githubUrl);
       owner = parsed.owner;
       name = parsed.name;
+      console.log("parsed is ", parsed);
     } catch {
       throw new BadRequestError(
         "VALIDATION_ERROR",
@@ -42,6 +43,8 @@ export const repositoryService = {
         method: "HEAD",
         redirect: "follow",
       });
+      console.log("pingResponse is ", pingResponse);
+
       if (!pingResponse.ok) {
         throw new Error();
       }
@@ -68,6 +71,7 @@ export const repositoryService = {
           totalSize: BigInt(0),
         },
       });
+      console.log("newRepo is ", newRepo);
 
       return { repositoryId: newRepo.id, isDuplicate: false };
     } catch (error) {
