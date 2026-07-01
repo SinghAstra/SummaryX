@@ -1,23 +1,25 @@
 import { SiteConfig } from "@/types/site";
 
 export const siteConfig: SiteConfig = {
-  name: "StarterX",
+  name: "SummaryX",
   description:
-    "The ultimate monorepo starter kit for high-performance Next.js applications.",
-  url: "https://understandx.vercel.app",
+    "Instantly turn any messy GitHub repository into a clean, interactive map with clear, AI-powered summaries for every single file.",
+  url: "https://summaryx.vercel.app",
   keywords: [
-    "Next.js 15",
-    "React",
-    "Tailwind CSS",
-    "Server Components",
-    "Radix UI",
-    "Shadcn UI",
-    "pnpm workspaces",
-    "Turborepo",
+    "SummaryX",
+    "Codebase Map",
+    "AI Code Summaries",
+    "GitHub Repository Explorer",
+    "Interactive File Tree",
+    "Code Analytics",
+    "Developer Tools",
+    "Fast Code Comprehension",
+    "Next.js 15 App Router",
+    "Turborepo Monorepo",
   ],
   links: {
     twitter: "https://x.com/XSinghAstra",
     github: "https://github.com/SinghAstra",
-    githubRepo: "https://github.com/SinghAstra/StarterX",
+    githubRepo: "https://github.com/SinghAstra/SummaryX",
   },
 };
