@@ -4,6 +4,7 @@ import {
   JOB_NAMES,
   parseGitHubUrl,
   REPOSITORY_STATUS,
+  RepositoryData,
   RepositoryTreeNode,
 } from "@repo/shared";
 import crypto from "node:crypto";
@@ -107,5 +108,40 @@ export const repositoryService = {
     });
 
     return buildRepositoryTree(flatFiles);
+  },
+
+  async getRepositoryDetail(
+    id: string,
+    userId: string
+  ): Promise<RepositoryData> {
+    const repo = await prisma.repository.findFirst({
+      where: { id, userId },
+    });
+
+    if (!repo) {
+      throw new NotFoundError(
+        COMMON_ERROR_CODES.ROUTE_NOT_FOUND,
+        "Repository not found or access denied."
+      );
+    }
+
+    return {
+      id: repo.id,
+      userId: repo.userId,
+      githubUrl: repo.githubUrl,
+      name: repo.name,
+      owner: repo.owner,
+      avatar: repo.avatar,
+      diskPath: repo.diskPath,
+      status: repo.status,
+      readme: repo.readme,
+      totalFiles: repo.totalFiles,
+      supportedFiles: repo.supportedFiles,
+      ignoredFiles: repo.ignoredFiles,
+      totalFolders: repo.totalFolders,
+      totalSize: repo.totalSize.toString(),
+      createdAt: repo.createdAt.toISOString(),
+      updatedAt: repo.updatedAt.toISOString(),
+    };
   },
 };

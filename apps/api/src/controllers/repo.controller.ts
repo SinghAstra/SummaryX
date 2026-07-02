@@ -56,4 +56,30 @@ export const repositoryController = {
       next(error);
     }
   },
+
+  async getRepository(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const id = z.string().parse(req.params.id);
+
+      if (!req.user) {
+        throw new UnauthorizedError(
+          AUTH_ERROR_CODES.INVALID_CREDENTIALS,
+          "Please sign in to continue."
+        );
+      }
+
+      const repository = await repositoryService.getRepositoryDetail(
+        id,
+        req.user.id
+      );
+
+      res.status(200).json(repository);
+    } catch (error) {
+      next(error);
+    }
+  },
 };
