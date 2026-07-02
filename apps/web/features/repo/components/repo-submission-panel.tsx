@@ -49,17 +49,16 @@ export function RepoSubmissionPanel() {
 
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="w-full relative bg-muted/10 hover:bg-muted/30 focus-within:ring-1 focus-within:ring-ring border border-input rounded-xl p-1 transition-all duration-300 shadow-sm focus-within:shadow-md"
+        className="w-full relative bg-muted/10 hover:bg-muted/30 border rounded p-1 transition-all duration-300 shadow-sm focus-within:shadow-md"
       >
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           <div className="relative flex-1 flex items-center">
-            <GitBranch className="absolute left-3 size-4.5 text-muted-foreground/70 pointer-events-none" />
             <Input
               {...register("githubUrl")}
               type="text"
               placeholder="Paste public repository URL..."
               disabled={isPending}
-              className="w-full pl-10 pr-4 py-6 bg-transparent disabled:bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-foreground placeholder:text-muted-foreground/60 text-base rounded-none"
+              className="w-full p-2 py-3 pr-4 bg-transparent disabled:bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-foreground placeholder:text-muted-foreground/60 font-mono rounded-none"
             />
           </div>
 
@@ -67,7 +66,7 @@ export function RepoSubmissionPanel() {
             <Button
               type="submit"
               disabled={isPending}
-              className="w-full sm:w-auto rounded-lg px-5 py-5 text-sm font-medium transition-transform active:scale-[0.98] select-none cursor-pointer flex items-center gap-2"
+              className="w-full sm:w-auto rounded transition-transform active:scale-[0.98] select-none cursor-pointer flex items-center gap-2"
             >
               {isPending ? (
                 <>
