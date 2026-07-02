@@ -1,33 +1,17 @@
-import { TodoListContainer } from "@/features/todo/components/todo-list-container";
-import { fetchTodosQueryFn } from "@/features/todo/hooks/use-todos-query";
-import { TODO_QUERY_KEYS } from "@/lib/react-query/query-keys";
-import {
-  HydrationBoundary,
-  QueryClient,
-  dehydrate,
-} from "@tanstack/react-query";
+import { RepoSubmissionPanel } from "@/features/repo/components/repo-submission-panel";
+import type { Metadata } from "next";
 import React from "react";
 
-export const metadata = {
-  title: "Dashboard",
+export const metadata: Metadata = {
+  title: "Dashboard Central - SummaryX Workspace",
   description:
-    "Unified command terminal managing data pipelines and task targets.",
+    "Initialize predictive architectural maps, audit token tracking registries, and analyze git workspaces.",
 };
-export const dynamic = "force-dynamic";
 
-export default async function DashboardPage(): Promise<React.JSX.Element> {
-  const queryClient = new QueryClient();
-
-  await Promise.all([
-    queryClient.prefetchQuery({
-      queryKey: TODO_QUERY_KEYS.all,
-      queryFn: fetchTodosQueryFn,
-    }),
-  ]);
-
+export default function DashboardPage(): React.JSX.Element {
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
-      <TodoListContainer />
-    </HydrationBoundary>
+    <div className="flex-1 w-full h-full flex flex-col items-center justify-center py-12 md:py-20 lg:py-24">
+      <RepoSubmissionPanel />
+    </div>
   );
 }
