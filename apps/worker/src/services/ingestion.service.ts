@@ -1,5 +1,5 @@
 import { prisma } from "@repo/db";
-import { FileSummaryStatus, logError, RepositoryStatus } from "@repo/shared";
+import { FILE_SUMMARY_STATUS, logError, REPOSITORY_STATUS } from "@repo/shared";
 import { exec } from "node:child_process";
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
@@ -145,7 +145,7 @@ export const ingestionService = {
           const updatedRepo = await tx.repository.update({
             where: { id: repositoryId },
             data: {
-              status: RepositoryStatus.PROCESSING,
+              status: REPOSITORY_STATUS.PROCESSING,
               readme: readmeContents,
               totalFiles: stats.totalFiles,
               supportedFiles: stats.supportedFiles,
@@ -165,7 +165,7 @@ export const ingestionService = {
                 extension: file.extension,
                 size: file.size,
                 hash: file.hash,
-                summaryStatus: FileSummaryStatus.PENDING,
+                summaryStatus: FILE_SUMMARY_STATUS.PENDING,
               })),
               skipDuplicates: true,
             });
@@ -181,7 +181,7 @@ export const ingestionService = {
     } catch (error) {
       await prisma.repository.update({
         where: { id: repositoryId },
-        data: { status: RepositoryStatus.FAILED },
+        data: { status: REPOSITORY_STATUS.FAILED },
       });
       logError(error);
       throw error;
