@@ -26,13 +26,13 @@ import {
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import z from "zod";
+import { z } from "zod";
 import { useRepository } from "../hooks/use-repo";
 
 interface RepoHeaderProps {
-  isExpandedAll: boolean;
-  onToggleExpandAll: () => void;
-  onCopySummaryAll: () => void;
+  readonly isExpandedAll: boolean;
+  readonly onToggleExpandAll: () => void;
+  readonly onCopySummaryAll: () => void;
 }
 
 export function RepoHeader({
@@ -48,11 +48,10 @@ export function RepoHeader({
   const repositoryId = repoIdValidation.success ? repoIdValidation.data : null;
 
   const { data: repository } = useRepository(repositoryId ?? "");
-  console.log("repository is ", repository);
-  console.log("repositoryId is ", repositoryId);
-  const isRepoView = !!repositoryId && repository;
+  const isRepoView = !!repositoryId && !!repository;
 
-  console.log("isRepoView is ", isRepoView);
+  const isProcessing =
+    repository?.status === "PROCESSING" || repository?.status === "PENDING";
 
   const handleLogout = async () => {
     await signOut({ callbackUrl: ROUTES.SIGN_IN });
@@ -69,40 +68,46 @@ export function RepoHeader({
   };
 
   return (
-    <header className="sticky top-0 z-40">
-      <div className="p-2 px-3 flex items-center justify-between">
-        <div className="flex items-center gap-1">
+    <header className="sticky top-0 z-40 w-full backdrop-blur-md select-none shrink-0">
+      <div className="p-2 px-3 flex items-center justify-between w-full">
+        <div className="flex items-center gap-1 min-w-0">
           <button
             onClick={toggleSidebar}
-            className="p-2 hover:bg-secondary rounded-lg transition-colors md:hidden cursor-pointer"
+            className="p-2 hover:bg-secondary rounded-lg transition-colors md:hidden cursor-pointer shrink-0"
             aria-label="Toggle Sidebar"
           >
             <Menu className="w-5 h-5 text-foreground" />
           </button>
-          {isRepoView ? (
-            <a
-              href={repository.githubUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <div className="flex items-center gap-2.5 px-2 py-1 min-w-0 border rounded bg-card/50 hover:bg-card/70">
-                <Avatar className="size-6 rounded">
-                  <AvatarImage
-                    src={repository.avatar}
-                    alt={`${repository.name} logo`}
-                    className="object-cover"
-                  />
-                  <AvatarFallback className="rounded bg-primary/10 text-primary border border-primary/10">
-                    <GitFork className="size-3 text-primary" />
-                  </AvatarFallback>
-                </Avatar>
 
-                <span>
-                  {repository.owner} / {repository.name}
-                </span>
-                <ExternalLink className="size-3 text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0" />
-              </div>
-            </a>
+          {isRepoView ? (
+            <div className="flex items-center gap-2 min-w-0">
+              <a
+                href={repository.githubUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block min-w-0 group"
+              >
+                <div className="flex items-center gap-2.5 px-2 py-1 min-w-0 border rounded bg-card/50 hover:bg-card/70 transition-colors">
+                  <Avatar className="size-6 rounded shrink-0">
+                    <AvatarImage
+                      src={repository.avatar}
+                      alt={`${repository.name} logo`}
+                      className={`object-cover border border-yellow-400 border-2 ${
+                        isProcessing ? "border-yellow-400" : "border-green-400"
+                      }`}
+                    />
+                    <AvatarFallback className="rounded bg-primary/10 text-primary border border-primary/10">
+                      <GitFork className="size-3 text-primary" />
+                    </AvatarFallback>
+                  </Avatar>
+
+                  <span className="font-mono text-xs md:text-sm tracking-tight text-foreground truncate">
+                    {repository.owner} / {repository.name}
+                  </span>
+                  <ExternalLink className="size-3 text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0" />
+                </div>
+              </a>
+            </div>
           ) : (
             <Link
               href={ROUTES.DASHBOARD}
@@ -119,8 +124,8 @@ export function RepoHeader({
         </div>
 
         <div className="ml-auto flex items-center gap-2">
-          {isRepoView && (
-            <>
+          {isRepoView && !isProcessing && (
+            <div className="flex items-center gap-2 animate-in fade-in duration-300">
               <Button
                 type="button"
                 variant="ghost"
@@ -137,19 +142,20 @@ export function RepoHeader({
                 size="icon"
                 onClick={onToggleExpandAll}
                 className={cn(
-                  "rounded-full text-muted-foreground hover:text-foreground transition-colors border bg-card/50 hover:bg-card/70",
+                  "rounded-full text-muted-foreground hover:text-foreground transition-colors border bg-card/50 hover:bg-card/70 size-8",
                   isExpandedAll && "bg-secondary text-primary"
                 )}
               >
                 <ChevronsUpDown className="size-4" />
               </Button>
-            </>
+            </div>
           )}
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                className="relative h-9 w-9 rounded-full p-0 flex items-center justify-center hover:bg-secondary transition-colors cursor-pointer"
+                className="relative h-9 w-9 rounded-full p-0 flex items-center justify-center hover:bg-secondary transition-colors cursor-pointer shrink-0"
               >
                 <Avatar className="h-8 w-8">
                   <AvatarImage
