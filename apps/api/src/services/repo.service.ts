@@ -3,7 +3,7 @@ import {
   COMMON_ERROR_CODES,
   JOB_NAMES,
   parseGitHubUrl,
-  RepositoryStatus,
+  REPOSITORY_STATUS,
 } from "@repo/shared";
 import crypto from "node:crypto";
 import os from "node:os";
@@ -58,7 +58,7 @@ export const repositoryService = {
           name,
           owner,
           diskPath: uniqueDiskPath,
-          status: RepositoryStatus.PENDING,
+          status: REPOSITORY_STATUS.PENDING,
           totalSize: BigInt(0),
         },
       });

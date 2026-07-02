@@ -21,6 +21,8 @@ interface RepositoryExplorerProps {
 export function RepositoryExplorer({ repositoryId }: RepositoryExplorerProps) {
   const { data: files = [], isFetching } = useRepositoryFiles(repositoryId);
 
+  console.log("files is ", files);
+
   const fileTreeStructure = useMemo(() => buildFileTree(files), [files]);
 
   return (

@@ -18,7 +18,7 @@ export const repoApi = {
     id: string
   ): Promise<ApiResponse<GetRepositoryFilesResponse>> => {
     return apiClient.get(
-      `/api/repositories/${id}/files`,
+      `/api/repo/${id}/files`,
       getRepositoryFilesResponseSchema
     );
   },

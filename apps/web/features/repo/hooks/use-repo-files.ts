@@ -1,7 +1,7 @@
 import { type RepositoryFileData } from "@repo/shared";
 import { useQuery, type UseQueryResult } from "@tanstack/react-query";
-import { getRepositoryFilesAction } from "../actions/get-repo-files-action.js";
-import { repoKeys } from "../query-keys.js";
+import { getRepositoryFilesAction } from "../actions/get-repo-files-action";
+import { repoKeys } from "../query-keys";
 
 export const repoFilesQueryFn = async (
   id: string
@@ -11,6 +11,8 @@ export const repoFilesQueryFn = async (
   if (!response.success) {
     throw new Error(response.error.message);
   }
+
+  console.log("response.data is ", response.data);
 
   return response.data;
 };
