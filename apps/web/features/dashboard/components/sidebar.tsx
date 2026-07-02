@@ -26,14 +26,13 @@ import { Logo } from "./logo";
 const navItems = [{ title: "New", url: "/dashboard", icon: Plus }];
 
 const STATUS_BORDER_MAP: Record<RepositoryStatus, string> = {
-  PENDING: "border border-yellow-500 ring-1 ring-yellow-500/20",
-  PROCESSING:
-    "border border-yellow-500 ring-1 ring-yellow-500/20 animate-pulse",
-  COMPLETED: "border border-green-400 ring-1 ring-green-400/20",
-  FAILED: "border border-red-500 ring-1 ring-red-500/20",
+  PENDING: "border border-yellow-400 border-2",
+  PROCESSING: "border border-yellow-400 border-2",
+  COMPLETED: "border border-green-400 border-2",
+  FAILED: "border border-red-400 border-2",
 } as const;
 
-export function DashboardSidebar(): React.JSX.Element {
+export function DashboardSidebar() {
   const { state } = useSidebar();
   const pathname = usePathname();
 
@@ -88,7 +87,10 @@ export function DashboardSidebar(): React.JSX.Element {
                     <SidebarMenuButton
                       asChild
                       isActive={isActive}
-                      className={getButtonStyles(isActive)}
+                      className={cn(
+                        getButtonStyles(isActive),
+                        "border border-border/60"
+                      )}
                     >
                       <Link href={item.url}>
                         <Icon className="w-4 h-4" />
@@ -103,7 +105,7 @@ export function DashboardSidebar(): React.JSX.Element {
         </SidebarGroup>
 
         {state === "expanded" && (
-          <SidebarGroup className="mt-1 border-t border-sidebar-border/40 pt-2 animate-in fade-in duration-700">
+          <SidebarGroup className="border-t border-sidebar-border/40 pt-2 animate-in fade-in duration-700">
             <SidebarGroupContent className="mt-1">
               <SidebarMenu className="flex flex-col gap-1">
                 {repositories.map((repo) => {
@@ -122,15 +124,15 @@ export function DashboardSidebar(): React.JSX.Element {
                           className="cursor-pointer flex items-center gap-2.5 w-full"
                         >
                           <Avatar
-                            className={cn(
-                              "h-6 w-6 shrink-0 rounded-md transition-all",
-                              STATUS_BORDER_MAP[repo.status]
-                            )}
+                            className={cn("h-6 w-6 shrink-0  transition-all")}
                           >
                             <AvatarImage
                               src={repo.avatar || undefined}
                               alt={`${repo.name} identity asset`}
-                              className="object-cover"
+                              className={cn(
+                                "object-cover",
+                                STATUS_BORDER_MAP[repo.status]
+                              )}
                             />
                             <AvatarFallback className="rounded bg-background flex items-center justify-center text-muted-foreground">
                               <GitFork className="size-3 text-muted-foreground/60" />
