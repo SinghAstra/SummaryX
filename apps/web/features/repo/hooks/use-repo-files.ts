@@ -1,4 +1,4 @@
-import { RepositoryTreeNode, type RepositoryFileData } from "@repo/shared";
+import { RepositoryTreeNode } from "@repo/shared";
 import { useQuery, type UseQueryResult } from "@tanstack/react-query";
 import { getRepositoryFilesAction } from "../actions/get-repo-files-action";
 import { repoKeys } from "../query-keys";
