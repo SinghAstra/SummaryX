@@ -1,6 +1,7 @@
 import { prisma } from "@repo/db";
 import {
   COMMON_ERROR_CODES,
+  GetRepositoriesResponse,
   JOB_NAMES,
   parseGitHubUrl,
   REPOSITORY_STATUS,
@@ -143,5 +144,33 @@ export const repositoryService = {
       createdAt: repo.createdAt.toISOString(),
       updatedAt: repo.updatedAt.toISOString(),
     };
+  },
+
+  async getRepositoriesByUserId(
+    userId: string
+  ): Promise<GetRepositoriesResponse> {
+    const records = await prisma.repository.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return records.map((repo) => ({
+      id: repo.id,
+      userId: repo.userId,
+      githubUrl: repo.githubUrl,
+      name: repo.name,
+      owner: repo.owner,
+      avatar: repo.avatar,
+      diskPath: repo.diskPath,
+      status: repo.status,
+      readme: repo.readme,
+      totalFiles: repo.totalFiles,
+      supportedFiles: repo.supportedFiles,
+      ignoredFiles: repo.ignoredFiles,
+      totalFolders: repo.totalFolders,
+      totalSize: repo.totalSize.toString(),
+      createdAt: repo.createdAt.toISOString(),
+      updatedAt: repo.updatedAt.toISOString(),
+    }));
   },
 };

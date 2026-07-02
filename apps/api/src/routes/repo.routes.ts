@@ -9,3 +9,4 @@ repoRouter.use(authMiddleware);
 repoRouter.post("/", repositoryController.ingest);
 repoRouter.get("/:id/files", repositoryController.getFiles);
 repoRouter.get("/:id", repositoryController.getRepository);
+repoRouter.get("/", repositoryController.getRepositories);

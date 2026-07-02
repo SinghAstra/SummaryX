@@ -15,6 +15,8 @@ const IGNORED_DIRECTORIES = new Set([
   "build",
   ".next",
   "out",
+  "generated",
+  ".prisma",
 ]);
 const SUPPORTED_EXTENSIONS = new Set([
   ".ts",
