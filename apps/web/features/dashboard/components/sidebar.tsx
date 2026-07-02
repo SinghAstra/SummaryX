@@ -14,26 +14,32 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { siteConfig } from "@/config/site";
-import { useTodosQuery } from "@/features/todo/hooks/use-todos-query";
+import { useUserRepositories } from "@/features/repo/hooks/use-repos";
 import { cn } from "@/lib/utils";
-import { Loader2, Pickaxe, Plus } from "lucide-react";
+import { RepositoryStatus } from "@repo/shared";
+import { GitFork, Plus } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import React from "react";
 import { Logo } from "./logo";
 
-const navItems = [
-  { title: "New", url: "/dashboard", icon: Plus },
-  { title: "Jobs", url: "/jobs", icon: Pickaxe },
-];
+const navItems = [{ title: "New", url: "/dashboard", icon: Plus }];
 
-export function DashboardSidebar() {
+const STATUS_BORDER_MAP: Record<RepositoryStatus, string> = {
+  PENDING: "border border-yellow-500 ring-1 ring-yellow-500/20",
+  PROCESSING:
+    "border border-yellow-500 ring-1 ring-yellow-500/20 animate-pulse",
+  COMPLETED: "border border-green-400 ring-1 ring-green-400/20",
+  FAILED: "border border-red-500 ring-1 ring-red-500/20",
+} as const;
+
+export function DashboardSidebar(): React.JSX.Element {
   const { state } = useSidebar();
   const pathname = usePathname();
 
-  const { data, isLoading } = useTodosQuery();
-  const todos = data?.todos ?? [];
+  const { data: repositories = [] } = useUserRepositories();
 
-  const getButtonStyles = (isActive: boolean) => {
+  const getButtonStyles = (isActive: boolean): string => {
     return cn(
       "!bg-transparent !text-muted-foreground transition-colors duration-200",
       "hover:!bg-sidebar-accent hover:!text-foreground",
@@ -97,49 +103,53 @@ export function DashboardSidebar() {
         </SidebarGroup>
 
         {state === "expanded" && (
-          <SidebarGroup className="mt-1 border-t border-sidebar-border/40 pt-2 animate-in fade-in duration-800">
-            <span className="px-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-2">
-              Active Tasks
-            </span>
-            <SidebarGroupContent>
+          <SidebarGroup className="mt-1 border-t border-sidebar-border/40 pt-2 animate-in fade-in duration-700">
+            <SidebarGroupContent className="mt-1">
               <SidebarMenu className="flex flex-col gap-1">
-                {isLoading ? (
-                  <div className="flex items-center gap-2 px-2 py-1.5 text-xs text-muted-foreground">
-                    <Loader2 className="w-3 h-3 animate-spin text-primary" />
-                    <span>Loading tasks...</span>
-                  </div>
-                ) : todos.length === 0 ? (
-                  <div className="px-2 py-1.5 text-xs text-muted-foreground italic">
-                    No active tasks
-                  </div>
-                ) : (
-                  todos.map((todo, index) => {
-                    const targetUrl = `/sample/${todo.id}`;
-                    const isActive = pathname === targetUrl;
+                {repositories.map((repo) => {
+                  const targetUrl = `/repo/${repo.id}`;
+                  const isActive = pathname === targetUrl;
 
-                    return (
-                      <SidebarMenuItem key={todo.id}>
-                        <SidebarMenuButton
-                          asChild
-                          isActive={isActive}
-                          className={getButtonStyles(isActive)}
+                  return (
+                    <SidebarMenuItem key={repo.id}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isActive}
+                        className={getButtonStyles(isActive)}
+                      >
+                        <Link
+                          href={targetUrl}
+                          className="cursor-pointer flex items-center gap-2.5 w-full"
                         >
-                          <Link href={targetUrl} className="cursor-pointer">
-                            <Avatar className="h-6 w-6 shrink-0 rounded-full">
-                              <AvatarImage src="/user.jpg" alt={todo.title} />
-                              <AvatarFallback className="text-[10px] bg-muted font-medium text-muted-foreground">
-                                {index + 1}
-                              </AvatarFallback>
-                            </Avatar>
+                          <Avatar
+                            className={cn(
+                              "h-6 w-6 shrink-0 rounded-md transition-all",
+                              STATUS_BORDER_MAP[repo.status]
+                            )}
+                          >
+                            <AvatarImage
+                              src={repo.avatar || undefined}
+                              alt={`${repo.name} identity asset`}
+                              className="object-cover"
+                            />
+                            <AvatarFallback className="rounded bg-background flex items-center justify-center text-muted-foreground">
+                              <GitFork className="size-3 text-muted-foreground/60" />
+                            </AvatarFallback>
+                          </Avatar>
 
-                            <span className="truncate text-sm">
-                              {todo.title}
-                            </span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })
+                          <span className="truncate text-sm font-medium tracking-tight">
+                            {repo.name}
+                          </span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+
+                {repositories.length === 0 && (
+                  <div className="px-3 py-4 text-xs italic text-muted-foreground/40 font-sans tracking-wide select-none">
+                    No repositories yet.
+                  </div>
                 )}
               </SidebarMenu>
             </SidebarGroupContent>
