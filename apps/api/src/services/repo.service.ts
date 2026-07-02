@@ -1,6 +1,7 @@
 import { prisma } from "@repo/db";
 import {
   COMMON_ERROR_CODES,
+  JOB_NAMES,
   parseGitHubUrl,
   RepositoryStatus,
 } from "@repo/shared";
@@ -8,6 +9,7 @@ import crypto from "node:crypto";
 import os from "node:os";
 import path from "node:path";
 import { BadRequestError, NotFoundError } from "../errors/api-errors.js";
+import { repositoryIngestionQueue } from "../queues/ingestion.queue.js";
 
 interface IngestParams {
   readonly userId: string;
@@ -59,6 +61,11 @@ export const repositoryService = {
           status: RepositoryStatus.PENDING,
           totalSize: BigInt(0),
         },
+      });
+
+      await repositoryIngestionQueue.add(JOB_NAMES.ANALYZE_REPO, {
+        repositoryId: newRepo.id,
+        userId,
       });
 
       console.log("newRepo is ", newRepo);

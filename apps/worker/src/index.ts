@@ -1,1 +1,1 @@
-export * from "./workers/pipeline-worker.js";
+export * from "./workers/ingestion.worker.js";
