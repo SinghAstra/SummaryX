@@ -3,9 +3,11 @@ import {
   AUTH_ERROR_CODES,
   COMMON_ERROR_CODES,
   getJobTelemetryChannel,
-  type ApiResponse,
+  JOB_STATUS,
+  logError,
+  telemetryEventSchema,
 } from "@repo/shared";
-import { type Request, type Response } from "express";
+import { type NextFunction, type Request, type Response } from "express";
 import z from "zod";
 import { redisConnection } from "../config/redis.js";
 import {
@@ -17,127 +19,216 @@ import { jwtTokenEngine } from "../lib/jwt.js";
 import { jobService } from "../services/job.service.js";
 import { successResponse } from "../utils/response.js";
 
+const SSE_RETRY_MS = 5000;
+
+const writeSseEvent = (res: Response, payload: unknown): void => {
+  res.write(`data: ${JSON.stringify(payload)}\n\n`);
+};
+
 export const jobController = {
-  // async getJobLogs(req: Request, res: Response) {
-  //   if (!req.user) {
-  //     throw new UnauthorizedError(
-  //       AUTH_ERROR_CODES.INVALID_CREDENTIALS,
-  //       "Session credentials missing."
-  //     );
-  //   }
+  async createJob(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      if (!req.user) {
+        throw new UnauthorizedError(
+          AUTH_ERROR_CODES.INVALID_CREDENTIALS,
+          "Please sign in."
+        );
+      }
 
-  //   const idParamParse = z.string().uuid().safeParse(req.params.id);
-  //   if (!idParamParse.success) {
-  //     throw new BadRequestError(
-  //       COMMON_ERROR_CODES.VALIDATION_ERROR,
-  //       "The provided job identifier is structurally malformed."
-  //     );
-  //   }
+      const result = await jobService.createJobRun(req.user.id);
 
-  //   const jobId = idParamParse.data;
-
-  //   const logs = await prisma.jobLog.findMany({
-  //     where: { jobId },
-  //     orderBy: { createdAt: "asc" },
-  //   });
-
-  //   const payload: ApiResponse<typeof logs> = {
-  //     success: true,
-  //     data: logs,
-  //   };
-
-  //   res.status(200).json(payload);
-  // },
-
-  async createJob(req: Request, res: Response) {
-    if (!req.user) {
-      throw new UnauthorizedError(
-        AUTH_ERROR_CODES.INVALID_CREDENTIALS,
-        "Please sign in."
-      );
+      res.status(202).json(successResponse(result));
+    } catch (error) {
+      next(error);
     }
-
-    const result = await jobService.createJobRun(req.user.id);
-
-    console.log("result is ", result);
-
-    res.status(202).json(successResponse(result));
   },
 
-  //   async streamJobTelemetry(req: Request, res: Response) {
-  //     const idParamParse = z.uuid().safeParse(req.params.id);
+  async getJob(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      if (!req.user) {
+        throw new UnauthorizedError(
+          AUTH_ERROR_CODES.INVALID_CREDENTIALS,
+          "Please sign in again."
+        );
+      }
 
-  //     if (!idParamParse.success) {
-  //       throw new BadRequestError(
-  //         COMMON_ERROR_CODES.VALIDATION_ERROR,
-  //         "The provided streaming job identifier is invalid or structurally malformed."
-  //       );
-  //     }
+      const idParamParse = z.string().uuid().safeParse(req.params.id);
+      if (!idParamParse.success) {
+        throw new BadRequestError(
+          COMMON_ERROR_CODES.VALIDATION_ERROR,
+          "Invalid identifier format."
+        );
+      }
 
-  //     const id = idParamParse.data;
-  //     const queryStringToken = req.query.token as string;
-
-  //     if (!queryStringToken) {
-  //       throw new UnauthorizedError(
-  //         AUTH_ERROR_CODES.INVALID_CREDENTIALS,
-  //         "Streaming credentials missing."
-  //       );
-  //     }
-
-  //     const payloadContext = jwtTokenEngine.verifyAccessToken(queryStringToken);
-  //     if (!payloadContext) {
-  //       throw new UnauthorizedError(
-  //         AUTH_ERROR_CODES.INVALID_CREDENTIALS,
-  //         "Active connection session has expired."
-  //       );
-  //     }
-
-  //     res.writeHead(200, {
-  //       "Content-Type": "text/event-stream",
-  //       "Cache-Control": "no-cache",
-  //       Connection: "keep-alive",
-  //     });
-
-  //     const telemetrySubscriber = redisConnection.duplicate();
-
-  //     const channelCoordinate = getJobTelemetryChannel(id);
-  //     await telemetrySubscriber.subscribe(channelCoordinate);
-
-  //     telemetrySubscriber.on("message", (_channel, messagePayloadString) => {
-  //       res.write(`data: ${messagePayloadString}\n\n`);
-
-  //       if (
-  //         messagePayloadString.includes('"COMPLETED"') ||
-  //         messagePayloadString.includes('"FAILED"')
-  //       ) {
-  //         res.end();
-  //       }
-  //     });
-
-  //     req.on("close", () => {
-  //       telemetrySubscriber.unsubscribe();
-  //       telemetrySubscriber.quit();
-  //     });
-  //   },
-
-  async getJob(req: Request, res: Response) {
-    if (!req.user) {
-      throw new UnauthorizedError(
-        AUTH_ERROR_CODES.INVALID_CREDENTIALS,
-        "Please sign in again."
+      const jobData = await jobService.getJobById(
+        idParamParse.data,
+        req.user.id
       );
-    }
 
-    const idParamParse = z.string().uuid().safeParse(req.params.id);
-    if (!idParamParse.success) {
-      throw new BadRequestError(
-        COMMON_ERROR_CODES.VALIDATION_ERROR,
-        "Invalid identifier format."
+      res.status(200).json(successResponse(jobData));
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async getJobLogs(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      if (!req.user) {
+        throw new UnauthorizedError(
+          AUTH_ERROR_CODES.INVALID_CREDENTIALS,
+          "Please sign in again."
+        );
+      }
+
+      const idParamParse = z.string().uuid().safeParse(req.params.id);
+      if (!idParamParse.success) {
+        throw new BadRequestError(
+          COMMON_ERROR_CODES.VALIDATION_ERROR,
+          "Invalid identifier format."
+        );
+      }
+
+      const logsHistory = await jobService.getJobLogsById(
+        idParamParse.data,
+        req.user.id
       );
+
+      res.status(200).json(successResponse(logsHistory));
+    } catch (error) {
+      next(error);
     }
+  },
 
-    const jobData = await jobService.getJobById(idParamParse.data, req.user.id);
+  async streamJobTelemetry(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    let telemetrySubscriber: ReturnType<
+      typeof redisConnection.duplicate
+    > | null = null;
+    let isCleanedUp = false;
 
-    res.status(200).json(successResponse(jobData));
+    try {
+      const queryParse = z
+        .object({ token: z.string().min(1) })
+        .safeParse(req.query);
+
+      const idParamParse = z.uuid().safeParse(req.params.id);
+
+      if (!idParamParse.success || !queryParse.success) {
+        throw new BadRequestError(
+          COMMON_ERROR_CODES.VALIDATION_ERROR,
+          "Invalid stream parameters."
+        );
+      }
+
+      const jobId = idParamParse.data;
+      const { token } = queryParse.data;
+
+      const channelCoordinate = getJobTelemetryChannel(jobId);
+
+      const cleanup = async (): Promise<void> => {
+        if (isCleanedUp) return;
+        isCleanedUp = true;
+
+        try {
+          if (telemetrySubscriber) {
+            await telemetrySubscriber.unsubscribe(channelCoordinate);
+            await telemetrySubscriber.quit();
+          }
+        } catch (error) {
+          logError(error);
+        } finally {
+          if (!res.writableEnded) {
+            res.end();
+          }
+        }
+      };
+
+      const payloadContext = await jwtTokenEngine.verifyAccessToken(token);
+      if (!payloadContext) {
+        throw new UnauthorizedError(
+          AUTH_ERROR_CODES.INVALID_CREDENTIALS,
+          "Session expired."
+        );
+      }
+
+      const activeJob = await prisma.job.findUnique({
+        where: { id: jobId },
+      });
+
+      if (!activeJob) {
+        throw new NotFoundError(
+          COMMON_ERROR_CODES.RESOURCE_NOT_FOUND,
+          "Job not found."
+        );
+      }
+
+      if (activeJob.userId !== payloadContext.userId) {
+        throw new UnauthorizedError(
+          AUTH_ERROR_CODES.INVALID_CREDENTIALS,
+          "Access denied."
+        );
+      }
+
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+      res.setHeader("X-Accel-Buffering", "no");
+      res.flushHeaders();
+
+      res.write(`retry: ${SSE_RETRY_MS}\n\n`);
+
+      telemetrySubscriber = redisConnection.duplicate();
+
+      telemetrySubscriber.on("error", (error) => {
+        logError(error);
+        void cleanup();
+      });
+
+      await telemetrySubscriber.connect();
+
+      telemetrySubscriber.on(
+        "message",
+        (_channel: string, messagePayloadString: string) => {
+          try {
+            const parsedEvent = telemetryEventSchema.parse(
+              JSON.parse(messagePayloadString)
+            );
+
+            writeSseEvent(res, parsedEvent);
+
+            const currentStatus = parsedEvent.status as string;
+
+            if (
+              currentStatus === JOB_STATUS.COMPLETED ||
+              currentStatus === JOB_STATUS.FAILED ||
+              currentStatus === JOB_STATUS.CANCELLED
+            ) {
+              void cleanup();
+            }
+          } catch (parseError) {
+            writeSseEvent(res, { error: "MALFORMED_TELEMETRY_FRAME" });
+          }
+        }
+      );
+
+      await telemetrySubscriber.subscribe(channelCoordinate);
+
+      req.on("close", () => {
+        void cleanup();
+      });
+    } catch (error) {
+      next(error);
+    }
   },
 };

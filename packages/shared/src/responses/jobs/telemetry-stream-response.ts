@@ -1,9 +1,9 @@
 import { z } from "zod";
-import { repositoryStatusSchema } from "../../schemas/repo.js";
+import { jobStatusSchema } from "../../schemas/index.js";
 
 export const telemetryEventSchema = z.object({
   repositoryId: z.string().uuid(),
-  status: repositoryStatusSchema,
+  status: jobStatusSchema,
   progress: z.number().int().min(0).max(100),
   message: z.string(),
   timestamp: z.string(),
