@@ -77,7 +77,7 @@ export const repositoryController = {
         req.user.id
       );
 
-      res.status(200).json(repository);
+      res.status(200).json(successResponse(repository));
     } catch (error) {
       next(error);
     }

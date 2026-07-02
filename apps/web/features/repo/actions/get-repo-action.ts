@@ -1,6 +1,6 @@
 "use server";
 
-import { apiClient } from "@/lib/api-client/client.js";
+import { apiClient } from "@/lib/api-client/client";
 import {
   repositoryDataSchema,
   type ApiResponse,

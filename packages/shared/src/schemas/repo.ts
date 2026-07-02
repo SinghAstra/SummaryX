@@ -36,7 +36,7 @@ export const repositoryDataSchema = z.object({
   githubUrl: z.url(),
   name: z.string(),
   owner: z.string(),
-  avatar: z.url().nullable().optional(),
+  avatar: z.url(),
   diskPath: z.string(),
   status: repositoryStatusSchema,
   readme: z.string().nullable(),

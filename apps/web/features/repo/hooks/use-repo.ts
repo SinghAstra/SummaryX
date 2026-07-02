@@ -1,7 +1,7 @@
 import { type RepositoryData } from "@repo/shared";
 import { useQuery, type UseQueryResult } from "@tanstack/react-query";
-import { getRepositoryAction } from "../actions/get-repo-action.js";
-import { repoKeys } from "../query-keys.js";
+import { getRepositoryAction } from "../actions/get-repo-action";
+import { repoKeys } from "../query-keys";
 
 export const repoQueryFn = async (id: string): Promise<RepositoryData> => {
   const response = await getRepositoryAction(id);
