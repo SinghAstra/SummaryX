@@ -104,6 +104,7 @@ model Repository {
   githubUrl      String
   name           String
   owner          String
+  avatar         String
   diskPath       String
   status         RepositoryStatus @default(PENDING)
   readme         String?          @db.Text

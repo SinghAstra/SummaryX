@@ -51,6 +51,8 @@ export const repositoryService = {
     const repositoryId = crypto.randomUUID();
     const uniqueDiskPath = path.join(os.tmpdir(), "summary-x", repositoryId);
 
+    const repositoryAvatarUrl = `https://github.com/${owner}.png`;
+
     try {
       const newRepo = await prisma.repository.create({
         data: {
@@ -59,6 +61,7 @@ export const repositoryService = {
           githubUrl,
           name,
           owner,
+          avatar: repositoryAvatarUrl,
           diskPath: uniqueDiskPath,
           status: REPOSITORY_STATUS.PENDING,
           totalSize: BigInt(0),
