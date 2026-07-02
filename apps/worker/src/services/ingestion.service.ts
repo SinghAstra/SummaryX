@@ -53,7 +53,7 @@ async function traverseDirectory(
   basePath: string,
   currentPath: string,
   stats: TraversalStats
-) {
+): Promise<void> {
   const entries = await fs.readdir(currentPath, { withFileTypes: true });
 
   for (const entry of entries) {
@@ -101,8 +101,6 @@ export const ingestionService = {
       where: { id: repositoryId },
     });
 
-    console.log("repo is ", repo);
-
     if (!repo) return;
 
     try {
@@ -114,7 +112,7 @@ export const ingestionService = {
       await execAsync(
         `git clone --depth 1 ${repo.githubUrl} ${repo.diskPath}`,
         {
-          timeout: 60000, // 60-second execution wall protection
+          timeout: 60000,
         }
       );
 
@@ -141,37 +139,45 @@ export const ingestionService = {
         logError(error);
       }
 
-      // 🔒 Step 4: Transaction Lock: Save statistics and batch insert file metadata maps
-      const batchInsert = await prisma.$transaction(async (tx) => {
-        await tx.repository.update({
-          where: { id: repositoryId },
-          data: {
-            status: RepositoryStatus.PROCESSING,
-            readme: readmeContents,
-            totalFiles: stats.totalFiles,
-            supportedFiles: stats.supportedFiles,
-            ignoredFiles: stats.ignoredFiles,
-            totalFolders: stats.totalFolders,
-            totalSize: stats.totalSize,
-          },
-        });
-
-        if (stats.collectedFiles.length > 0) {
-          await tx.repositoryFile.createMany({
-            data: stats.collectedFiles.map((file) => ({
-              repositoryId,
-              relativePath: file.relativePath,
-              extension: file.extension,
-              size: file.size,
-              hash: file.hash,
-              summaryStatus: FileSummaryStatus.PENDING,
-            })),
-            skipDuplicates: true,
+      // 🔒 Step 4: Transaction Lock with extended timeout boundaries
+      await prisma.$transaction(
+        async (tx) => {
+          const updatedRepo = await tx.repository.update({
+            where: { id: repositoryId },
+            data: {
+              status: RepositoryStatus.PROCESSING,
+              readme: readmeContents,
+              totalFiles: stats.totalFiles,
+              supportedFiles: stats.supportedFiles,
+              ignoredFiles: stats.ignoredFiles,
+              totalFolders: stats.totalFolders,
+              totalSize: stats.totalSize,
+            },
           });
-        }
-      });
 
-      console.log("batchInsert is ", batchInsert);
+          console.log("updatedRepo is ", updatedRepo);
+
+          if (stats.collectedFiles.length > 0) {
+            const repoFiles = await tx.repositoryFile.createMany({
+              data: stats.collectedFiles.map((file) => ({
+                repositoryId,
+                relativePath: file.relativePath,
+                extension: file.extension,
+                size: file.size,
+                hash: file.hash,
+                summaryStatus: FileSummaryStatus.PENDING,
+              })),
+              skipDuplicates: true,
+            });
+
+            console.log("repoFiles is ", repoFiles);
+          }
+        },
+        {
+          maxWait: 5000,
+          timeout: 30000,
+        }
+      );
     } catch (error) {
       await prisma.repository.update({
         where: { id: repositoryId },
