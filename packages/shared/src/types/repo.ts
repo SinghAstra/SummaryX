@@ -1,14 +1,13 @@
-export const RepositoryStatus = {
+import { z } from "zod";
+
+export const REPOSITORY_STATUS = {
   PENDING: "PENDING",
   PROCESSING: "PROCESSING",
   COMPLETED: "COMPLETED",
   FAILED: "FAILED",
 } as const;
 
-export type RepositoryStatus =
-  (typeof RepositoryStatus)[keyof typeof RepositoryStatus];
-
-export const FileSummaryStatus = {
+export const FILE_SUMMARY_STATUS = {
   PENDING: "PENDING",
   PROCESSING: "PROCESSING",
   RETRYING: "RETRYING",
@@ -16,38 +15,55 @@ export const FileSummaryStatus = {
   FAILED: "FAILED",
 } as const;
 
-export type FileSummaryStatus =
-  (typeof FileSummaryStatus)[keyof typeof FileSummaryStatus];
+export const repositoryStatusSchema = z.enum([
+  REPOSITORY_STATUS.PENDING,
+  REPOSITORY_STATUS.PROCESSING,
+  REPOSITORY_STATUS.COMPLETED,
+  REPOSITORY_STATUS.FAILED,
+]);
 
-export interface RepositoryData {
-  id: string;
-  userId: string;
-  githubUrl: string;
-  name: string;
-  owner: string;
-  diskPath: string;
-  status: RepositoryStatus;
-  readme: string | null;
-  totalFiles: number;
-  supportedFiles: number;
-  ignoredFiles: number;
-  totalFolders: number;
-  totalSize: string;
-  createdAt: string;
-  updatedAt: string;
-}
+export const fileSummaryStatusSchema = z.enum([
+  FILE_SUMMARY_STATUS.PENDING,
+  FILE_SUMMARY_STATUS.PROCESSING,
+  FILE_SUMMARY_STATUS.RETRYING,
+  FILE_SUMMARY_STATUS.COMPLETED,
+  FILE_SUMMARY_STATUS.FAILED,
+]);
 
-export interface RepositoryFileData {
-  id: string;
-  repositoryId: string;
-  relativePath: string;
-  extension: string;
-  size: number;
-  hash: string;
-  summaryStatus: FileSummaryStatus;
-  summary: string | null;
-  retryCount: number;
-  lastError: string | null;
-  completedAt: string | null;
-  createdAt: string;
-}
+export const repositoryDataSchema = z.object({
+  id: z.string().uuid(),
+  userId: z.string(),
+  githubUrl: z.string().url(),
+  name: z.string(),
+  owner: z.string(),
+  diskPath: z.string(),
+  status: repositoryStatusSchema,
+  readme: z.string().nullable(),
+  totalFiles: z.number().int().nonnegative(),
+  supportedFiles: z.number().int().nonnegative(),
+  ignoredFiles: z.number().int().nonnegative(),
+  totalFolders: z.number().int().nonnegative(),
+  totalSize: z.string(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+
+export const repositoryFileDataSchema = z.object({
+  id: z.string().uuid(),
+  repositoryId: z.string().uuid(),
+  relativePath: z.string(),
+  extension: z.string(),
+  size: z.number().int().nonnegative(),
+  hash: z.string(),
+  summaryStatus: fileSummaryStatusSchema,
+  summary: z.string().nullable(),
+  retryCount: z.number().int().nonnegative(),
+  lastError: z.string().nullable(),
+  completedAt: z.string().datetime().nullable(),
+  createdAt: z.string().datetime(),
+});
+
+export type RepositoryStatus = z.infer<typeof repositoryStatusSchema>;
+export type FileSummaryStatus = z.infer<typeof fileSummaryStatusSchema>;
+export type RepositoryData = z.infer<typeof repositoryDataSchema>;
+export type RepositoryFileData = z.infer<typeof repositoryFileDataSchema>;

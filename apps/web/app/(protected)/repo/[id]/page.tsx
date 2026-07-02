@@ -1,3 +1,4 @@
+import { FileTree } from "@/features/repo/components/file-tree";
 import { buildFileTree } from "@/features/repo/utils/tree-builder";
 import { ArrowLeft, FolderTree, HardDrive } from "lucide-react";
 import { type Metadata } from "next";
