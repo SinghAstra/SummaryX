@@ -18,42 +18,42 @@ import { jobService } from "../services/job.service.js";
 import { successResponse } from "../utils/response.js";
 
 export const jobController = {
-  async getJobLogs(req: Request, res: Response) {
-    if (!req.user) {
-      throw new UnauthorizedError(
-        AUTH_ERROR_CODES.INVALID_CREDENTIALS,
-        "Session credentials missing."
-      );
-    }
+  // async getJobLogs(req: Request, res: Response) {
+  //   if (!req.user) {
+  //     throw new UnauthorizedError(
+  //       AUTH_ERROR_CODES.INVALID_CREDENTIALS,
+  //       "Session credentials missing."
+  //     );
+  //   }
 
-    const idParamParse = z.string().uuid().safeParse(req.params.id);
-    if (!idParamParse.success) {
-      throw new BadRequestError(
-        COMMON_ERROR_CODES.VALIDATION_ERROR,
-        "The provided job identifier is structurally malformed."
-      );
-    }
+  //   const idParamParse = z.string().uuid().safeParse(req.params.id);
+  //   if (!idParamParse.success) {
+  //     throw new BadRequestError(
+  //       COMMON_ERROR_CODES.VALIDATION_ERROR,
+  //       "The provided job identifier is structurally malformed."
+  //     );
+  //   }
 
-    const jobId = idParamParse.data;
+  //   const jobId = idParamParse.data;
 
-    const logs = await prisma.jobLog.findMany({
-      where: { jobId },
-      orderBy: { createdAt: "asc" },
-    });
+  //   const logs = await prisma.jobLog.findMany({
+  //     where: { jobId },
+  //     orderBy: { createdAt: "asc" },
+  //   });
 
-    const payload: ApiResponse<typeof logs> = {
-      success: true,
-      data: logs,
-    };
+  //   const payload: ApiResponse<typeof logs> = {
+  //     success: true,
+  //     data: logs,
+  //   };
 
-    res.status(200).json(payload);
-  },
+  //   res.status(200).json(payload);
+  // },
 
   async createJob(req: Request, res: Response) {
     if (!req.user) {
       throw new UnauthorizedError(
         AUTH_ERROR_CODES.INVALID_CREDENTIALS,
-        "Session credentials missing. Please sign in again."
+        "Please sign in."
       );
     }
 
@@ -120,54 +120,24 @@ export const jobController = {
   //     });
   //   },
 
-  //   async getJob(req: Request, res: Response) {
-  //     if (!req.user) {
-  //       throw new UnauthorizedError(
-  //         AUTH_ERROR_CODES.INVALID_CREDENTIALS,
-  //         "Your session has expired. Please sign in again to continue."
-  //       );
-  //     }
+  async getJob(req: Request, res: Response) {
+    if (!req.user) {
+      throw new UnauthorizedError(
+        AUTH_ERROR_CODES.INVALID_CREDENTIALS,
+        "Please sign in again."
+      );
+    }
 
-  //     const idParamParse = z.string().uuid().safeParse(req.params.id);
-  //     if (!idParamParse.success) {
-  //       throw new BadRequestError(
-  //         COMMON_ERROR_CODES.VALIDATION_ERROR,
-  //         "The requested terminal record identifier is malformed."
-  //       );
-  //     }
+    const idParamParse = z.string().uuid().safeParse(req.params.id);
+    if (!idParamParse.success) {
+      throw new BadRequestError(
+        COMMON_ERROR_CODES.VALIDATION_ERROR,
+        "Invalid identifier format."
+      );
+    }
 
-  //     const jobId = idParamParse.data;
+    const jobData = await jobService.getJobById(idParamParse.data, req.user.id);
 
-  //     const databaseJob = await prisma.job.findUnique({
-  //       where: { id: jobId },
-  //     });
-
-  //     if (!databaseJob) {
-  //       throw new NotFoundError(
-  //         COMMON_ERROR_CODES.SCHEMA_MISMATCH,
-  //         "We couldn't find the requested analysis pipeline process."
-  //       );
-  //     }
-
-  //     if (databaseJob.userId !== req.user.id) {
-  //       throw new UnauthorizedError(
-  //         AUTH_ERROR_CODES.INVALID_CREDENTIALS,
-  //         "Access denied. You do not maintain control rights over this task pipeline."
-  //       );
-  //     }
-
-  //     const payload: ApiResponse<GetJobResponse> = {
-  //       success: true,
-  //       data: {
-  //         id: databaseJob.id,
-  //         userId: databaseJob.userId,
-  //         status: databaseJob.status,
-  //         createdAt: databaseJob.createdAt,
-  //         startedAt: databaseJob.startedAt,
-  //         completedAt: databaseJob.completedAt,
-  //       },
-  //     };
-
-  //     res.status(200).json(payload);
-  //   },
+    res.status(200).json(successResponse(jobData));
+  },
 };
