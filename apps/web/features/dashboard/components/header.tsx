@@ -13,14 +13,20 @@ import {
 import { useSidebar } from "@/components/ui/sidebar";
 import { siteConfig } from "@/config/site";
 import { ROUTES } from "@/lib/routes";
-import { LogOut, Menu, User } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { ArrowLeft, LogOut, Menu, User } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { Logo } from "./logo";
 
 export function DashboardHeader() {
   const { toggleSidebar } = useSidebar();
   const { data: session } = useSession();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const isRootDashboard = pathname === ROUTES.DASHBOARD;
 
   const handleLogout = async () => {
     await signOut({ callbackUrl: ROUTES.SIGN_IN });
@@ -40,6 +46,20 @@ export function DashboardHeader() {
     <header className="sticky top-0 z-40">
       <div className="p-2 px-3 flex items-center justify-between">
         <div className="flex items-center gap-1">
+          {!isRootDashboard && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => router.back()}
+              className={cn(
+                "hidden md:inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-all duration-200 cursor-pointer rounded border hover:bg-muted/50 select-none"
+              )}
+            >
+              <ArrowLeft className="size-4 animate-in fade-in duration-300" />
+              <span className="text-xs">Back</span>
+            </Button>
+          )}
           <button
             onClick={toggleSidebar}
             className="p-2 hover:bg-secondary rounded-lg transition-colors md:hidden cursor-pointer"

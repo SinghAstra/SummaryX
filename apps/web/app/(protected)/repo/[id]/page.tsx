@@ -1,11 +1,6 @@
-import { RepositoryExplorer } from "@/features/repo/components/repo-explorer";
 import { repoFilesQueryFn } from "@/features/repo/hooks/use-repo-files";
 import { repoKeys } from "@/features/repo/query-keys";
-import {
-  dehydrate,
-  HydrationBoundary,
-  QueryClient,
-} from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { type Metadata } from "next";
 import Link from "next/link";
@@ -47,9 +42,9 @@ export default async function RepositoryPage({ params }: RepositoryPageProps) {
         </div>
       </div>
 
-      <HydrationBoundary state={dehydrate(queryClient)}>
+      {/* <HydrationBoundary state={dehydrate(queryClient)}>
         <RepositoryExplorer repositoryId={id} />
-      </HydrationBoundary>
+      </HydrationBoundary> */}
     </div>
   );
 }
