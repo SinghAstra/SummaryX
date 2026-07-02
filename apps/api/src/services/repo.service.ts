@@ -1,41 +1,33 @@
 import { prisma } from "@repo/db";
 import {
   COMMON_ERROR_CODES,
-  logError,
   parseGitHubUrl,
-  REPO_ERROR_CODES,
   RepositoryStatus,
 } from "@repo/shared";
 import crypto from "node:crypto";
 import os from "node:os";
 import path from "node:path";
-import { BadRequestError } from "../errors/api-errors.js";
+import { BadRequestError, NotFoundError } from "../errors/api-errors.js";
 
 interface IngestParams {
   readonly userId: string;
   readonly githubUrl: string;
 }
 
-interface IngestResult {
-  readonly repositoryId: string;
-  readonly isDuplicate: boolean;
-}
-
 export const repositoryService = {
-  async createRepository(params: IngestParams): Promise<IngestResult> {
+  async createRepository(params: IngestParams) {
     const { userId, githubUrl } = params;
-
     let owner: string;
     let name: string;
+
     try {
       const parsed = parseGitHubUrl(githubUrl);
       owner = parsed.owner;
       name = parsed.name;
-      console.log("parsed is ", parsed);
     } catch {
       throw new BadRequestError(
         COMMON_ERROR_CODES.SCHEMA_MISMATCH,
-        "The link format provided is invalid. Please ensure you paste a standard public GitHub repository URL (e.g., https://github.com/owner/repository)."
+        "Invalid GitHub URL format."
       );
     }
 
@@ -44,15 +36,11 @@ export const repositoryService = {
         method: "HEAD",
         redirect: "follow",
       });
-      console.log("pingResponse is ", pingResponse);
-
-      if (!pingResponse.ok) {
-        throw new Error();
-      }
+      if (!pingResponse.ok) throw new Error();
     } catch {
       throw new BadRequestError(
-        REPO_ERROR_CODES.REPOSITORY_UNREACHABLE,
-        "We couldn't reach this repository. Please confirm that the link is typed correctly and that the repository is set to public access."
+        "REPOSITORY_UNREACHABLE",
+        "Repository unreachable or private."
       );
     }
 
@@ -72,12 +60,33 @@ export const repositoryService = {
           totalSize: BigInt(0),
         },
       });
-      console.log("newRepo is ", newRepo);
-
       return { repositoryId: newRepo.id, isDuplicate: false };
-    } catch (error) {
-      logError(error);
+    } catch (error: any) {
+      if (error?.code === "P2002") {
+        const existingRepo = await prisma.repository.findFirstOrThrow({
+          where: { userId, githubUrl },
+        });
+        return { repositoryId: existingRepo.id, isDuplicate: true };
+      }
       throw error;
     }
+  },
+
+  async getRepositoryFiles(id: string, userId: string) {
+    const repo = await prisma.repository.findFirst({
+      where: { id, userId },
+    });
+
+    if (!repo) {
+      throw new NotFoundError(
+        COMMON_ERROR_CODES.ROUTE_NOT_FOUND,
+        "Repository not found."
+      );
+    }
+
+    return prisma.repositoryFile.findMany({
+      where: { repositoryId: id },
+      orderBy: { relativePath: "asc" },
+    });
   },
 };

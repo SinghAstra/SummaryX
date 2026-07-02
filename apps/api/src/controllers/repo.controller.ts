@@ -5,6 +5,7 @@ import {
   ingestRepoSchema,
 } from "@repo/shared";
 import { NextFunction, type Request, type Response } from "express";
+import z from "zod";
 import { NotFoundError, UnauthorizedError } from "../errors/api-errors.js";
 import { repositoryService } from "../services/repo.service.js";
 import { successResponse } from "../utils/response.js";
@@ -33,22 +34,28 @@ export const repositoryController = {
       next(error);
     }
   },
-  getFiles: async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
+  getFiles: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { id } = req.params;
+      const id = z.string().parse(req.params.id);
 
-      const repoExists = await prisma.repository.findUnique({
-        where: { id },
+      if (!req.user) {
+        throw new UnauthorizedError(
+          AUTH_ERROR_CODES.INVALID_CREDENTIALS,
+          "Please sign in to continue."
+        );
+      }
+
+      const repo = await prisma.repository.findFirst({
+        where: {
+          id,
+          userId: req.user.id,
+        },
       });
 
-      if (!repoExists) {
+      if (!repo) {
         throw new NotFoundError(
           COMMON_ERROR_CODES.ROUTE_NOT_FOUND,
-          "The targeted repository snapshot could not be located inside active records."
+          "Repository not found."
         );
       }
 
