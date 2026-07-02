@@ -1,5 +1,6 @@
 import { prisma } from "@repo/db";
 import {
+  COMMON_ERROR_CODES,
   logError,
   parseGitHubUrl,
   REPO_ERROR_CODES,
@@ -33,7 +34,7 @@ export const repositoryService = {
       console.log("parsed is ", parsed);
     } catch {
       throw new BadRequestError(
-        "VALIDATION_ERROR",
+        COMMON_ERROR_CODES.SCHEMA_MISMATCH,
         "The link format provided is invalid. Please ensure you paste a standard public GitHub repository URL (e.g., https://github.com/owner/repository)."
       );
     }
