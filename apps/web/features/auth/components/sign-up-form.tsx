@@ -33,7 +33,7 @@ export function SignUpForm() {
   const onSubmit = async (data: SignUpFormValues) => {
     const promise = signUpAction(data);
 
-    toast.promise(promise, {
+    await toast.promise(promise, {
       loading: "Creating your account...",
       success: (result) => {
         if (!result.success) {

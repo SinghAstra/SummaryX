@@ -118,6 +118,8 @@ model Repository {
   updatedAt      DateTime         @updatedAt
   files          RepositoryFile[]
 
+
+  @@unique([userId, githubUrl])
   @@index([status])
 }
 

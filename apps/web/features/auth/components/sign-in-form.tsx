@@ -45,7 +45,7 @@ export function SignInForm() {
       return "Welcome back!";
     };
 
-    toast.promise(promise, {
+    await toast.promise(promise, {
       loading: "Verifying credentials...",
       success: (message: string) => `${message}`,
       error: (err: Error) => `${err.message}`,

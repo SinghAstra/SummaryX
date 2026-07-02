@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/routes";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ResetPasswordFormValues, resetPasswordSchema } from "@repo/shared";
-import { KeyRound } from "lucide-react";
+import { KeyRound, Loader } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -26,10 +26,10 @@ export function ResetPasswordForm() {
     defaultValues: { token },
   });
 
-  const onSubmit = (values: ResetPasswordFormValues) => {
+  const onSubmit = async (values: ResetPasswordFormValues) => {
     const promise = resetPasswordAction({ ...values, token });
 
-    toast.promise(promise, {
+    await toast.promise(promise, {
       loading: "Please wait...",
       success: (result) => {
         if (!result.success) {
@@ -93,7 +93,14 @@ export function ResetPasswordForm() {
       />
 
       <Button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? "Resetting password..." : "Reset password"}
+        {isSubmitting ? (
+          <>
+            <Loader className="size-4 animate-spin mr-2" strokeWidth={2} />
+            Wait ...
+          </>
+        ) : (
+          "Reset password"
+        )}
       </Button>
     </form>
   );

@@ -28,7 +28,7 @@ export function ResendVerificationForm() {
   const onSubmit = async (values: ResendVerificationFormValues) => {
     const promise = resendVerificationAction({ email: values.email });
 
-    toast.promise(promise, {
+    await toast.promise(promise, {
       loading: "Sending verification email...",
       success: (result) => {
         if (!result.success) {
@@ -82,8 +82,8 @@ export function ResendVerificationForm() {
       <Button type="submit" disabled={isSubmitting}>
         {isSubmitting ? (
           <>
-            <Loader className="size-4 animate-spin mr-2" />
-            Sending...
+            <Loader className="size-4 animate-spin mr-2" strokeWidth={2} />
+            Wait ...
           </>
         ) : (
           "Send new verification link"

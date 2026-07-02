@@ -25,7 +25,7 @@ export function ForgotPasswordForm() {
   const onSubmit = async (values: ForgotPasswordFormValues) => {
     const promise = forgotPasswordAction(values);
 
-    toast.promise(promise, {
+    await toast.promise(promise, {
       loading: "Please wait...",
       success: (result) => {
         if (!result.success) {
@@ -88,8 +88,8 @@ export function ForgotPasswordForm() {
       <Button type="submit" disabled={isSubmitting}>
         {isSubmitting ? (
           <>
-            <Loader className="size-4 animate-spin mr-2" />
-            Sending...
+            <Loader className="size-4 animate-spin mr-2" strokeWidth={2} />
+            Wait ...
           </>
         ) : (
           "Send reset link"
