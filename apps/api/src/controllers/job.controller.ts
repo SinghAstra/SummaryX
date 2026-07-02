@@ -1,216 +1,173 @@
-// import { prisma } from "@repo/db";
-// import {
-//   AUTH_ERROR_CODES,
-//   BaseJobData,
-//   COMMON_ERROR_CODES,
-//   GetJobResponse,
-//   getJobTelemetryChannel,
-//   JOB_NAMES,
-//   JOB_STATUS,
-//   type ApiResponse,
-//   type CreateJobResponse,
-// } from "@repo/shared";
-// import { type Request, type Response } from "express";
-// import z from "zod";
-// import { infrastructureQueue } from "../config/queue.js";
-// import { redisConnection } from "../config/redis.js";
-// import {
-//   BadRequestError,
-//   NotFoundError,
-//   UnauthorizedError,
-// } from "../errors/api-errors.js";
-// import { jwtTokenEngine } from "../lib/jwt.js";
+import { prisma } from "@repo/db";
+import {
+  AUTH_ERROR_CODES,
+  COMMON_ERROR_CODES,
+  getJobTelemetryChannel,
+  type ApiResponse,
+} from "@repo/shared";
+import { type Request, type Response } from "express";
+import z from "zod";
+import { redisConnection } from "../config/redis.js";
+import {
+  BadRequestError,
+  NotFoundError,
+  UnauthorizedError,
+} from "../errors/api-errors.js";
+import { jwtTokenEngine } from "../lib/jwt.js";
+import { jobService } from "../services/job.service.js";
+import { successResponse } from "../utils/response.js";
 
-// export const jobController = {
-//   async getJobs(req: Request, res: Response) {
-//     if (!req.user) {
-//       throw new UnauthorizedError(
-//         AUTH_ERROR_CODES.INVALID_CREDENTIALS,
-//         "Session credentials missing. Please sign in again."
-//       );
-//     }
+export const jobController = {
+  async getJobLogs(req: Request, res: Response) {
+    if (!req.user) {
+      throw new UnauthorizedError(
+        AUTH_ERROR_CODES.INVALID_CREDENTIALS,
+        "Session credentials missing."
+      );
+    }
 
-//     const jobs = await prisma.job.findMany({
-//       where: { userId: req.user.id },
-//       orderBy: { createdAt: "desc" },
-//     });
+    const idParamParse = z.string().uuid().safeParse(req.params.id);
+    if (!idParamParse.success) {
+      throw new BadRequestError(
+        COMMON_ERROR_CODES.VALIDATION_ERROR,
+        "The provided job identifier is structurally malformed."
+      );
+    }
 
-//     const payload: ApiResponse<typeof jobs> = {
-//       success: true,
-//       data: jobs,
-//     };
+    const jobId = idParamParse.data;
 
-//     res.status(200).json(payload);
-//   },
+    const logs = await prisma.jobLog.findMany({
+      where: { jobId },
+      orderBy: { createdAt: "asc" },
+    });
 
-//   async getJobLogs(req: Request, res: Response) {
-//     if (!req.user) {
-//       throw new UnauthorizedError(
-//         AUTH_ERROR_CODES.INVALID_CREDENTIALS,
-//         "Session credentials missing."
-//       );
-//     }
+    const payload: ApiResponse<typeof logs> = {
+      success: true,
+      data: logs,
+    };
 
-//     const idParamParse = z.string().uuid().safeParse(req.params.id);
-//     if (!idParamParse.success) {
-//       throw new BadRequestError(
-//         COMMON_ERROR_CODES.VALIDATION_ERROR,
-//         "The provided job identifier is structurally malformed."
-//       );
-//     }
+    res.status(200).json(payload);
+  },
 
-//     const jobId = idParamParse.data;
+  async createJob(req: Request, res: Response) {
+    if (!req.user) {
+      throw new UnauthorizedError(
+        AUTH_ERROR_CODES.INVALID_CREDENTIALS,
+        "Session credentials missing. Please sign in again."
+      );
+    }
 
-//     const logs = await prisma.jobLog.findMany({
-//       where: { jobId },
-//       orderBy: { createdAt: "asc" },
-//     });
+    const result = await jobService.createJobRun(req.user.id);
 
-//     const payload: ApiResponse<typeof logs> = {
-//       success: true,
-//       data: logs,
-//     };
+    console.log("result is ", result);
 
-//     res.status(200).json(payload);
-//   },
+    res.status(202).json(successResponse(result));
+  },
 
-//   async createJob(req: Request, res: Response) {
-//     if (!req.user) {
-//       throw new UnauthorizedError(
-//         AUTH_ERROR_CODES.INVALID_CREDENTIALS,
-//         "Session credentials missing. Please sign in again."
-//       );
-//     }
-//     const authenticatedUserId = req.user.id;
+  //   async streamJobTelemetry(req: Request, res: Response) {
+  //     const idParamParse = z.uuid().safeParse(req.params.id);
 
-//     console.log("authenticatedUserId is ", authenticatedUserId);
+  //     if (!idParamParse.success) {
+  //       throw new BadRequestError(
+  //         COMMON_ERROR_CODES.VALIDATION_ERROR,
+  //         "The provided streaming job identifier is invalid or structurally malformed."
+  //       );
+  //     }
 
-//     const databaseJob = await prisma.job.create({
-//       data: {
-//         userId: authenticatedUserId,
-//         status: JOB_STATUS.PENDING,
-//       },
-//     });
+  //     const id = idParamParse.data;
+  //     const queryStringToken = req.query.token as string;
 
-//     const queuePayload: BaseJobData = {
-//       jobId: databaseJob.id,
-//       userId: authenticatedUserId,
-//     };
+  //     if (!queryStringToken) {
+  //       throw new UnauthorizedError(
+  //         AUTH_ERROR_CODES.INVALID_CREDENTIALS,
+  //         "Streaming credentials missing."
+  //       );
+  //     }
 
-//     await infrastructureQueue.add(JOB_NAMES.PIPELINE_PARSE, queuePayload);
+  //     const payloadContext = jwtTokenEngine.verifyAccessToken(queryStringToken);
+  //     if (!payloadContext) {
+  //       throw new UnauthorizedError(
+  //         AUTH_ERROR_CODES.INVALID_CREDENTIALS,
+  //         "Active connection session has expired."
+  //       );
+  //     }
 
-//     const payload: ApiResponse<CreateJobResponse> = {
-//       success: true,
-//       data: { jobId: databaseJob.id },
-//     };
+  //     res.writeHead(200, {
+  //       "Content-Type": "text/event-stream",
+  //       "Cache-Control": "no-cache",
+  //       Connection: "keep-alive",
+  //     });
 
-//     res.status(202).json(payload);
-//   },
+  //     const telemetrySubscriber = redisConnection.duplicate();
 
-//   async streamJobTelemetry(req: Request, res: Response) {
-//     const idParamParse = z.uuid().safeParse(req.params.id);
+  //     const channelCoordinate = getJobTelemetryChannel(id);
+  //     await telemetrySubscriber.subscribe(channelCoordinate);
 
-//     if (!idParamParse.success) {
-//       throw new BadRequestError(
-//         COMMON_ERROR_CODES.VALIDATION_ERROR,
-//         "The provided streaming job identifier is invalid or structurally malformed."
-//       );
-//     }
+  //     telemetrySubscriber.on("message", (_channel, messagePayloadString) => {
+  //       res.write(`data: ${messagePayloadString}\n\n`);
 
-//     const id = idParamParse.data;
-//     const queryStringToken = req.query.token as string;
+  //       if (
+  //         messagePayloadString.includes('"COMPLETED"') ||
+  //         messagePayloadString.includes('"FAILED"')
+  //       ) {
+  //         res.end();
+  //       }
+  //     });
 
-//     if (!queryStringToken) {
-//       throw new UnauthorizedError(
-//         AUTH_ERROR_CODES.INVALID_CREDENTIALS,
-//         "Streaming credentials missing."
-//       );
-//     }
+  //     req.on("close", () => {
+  //       telemetrySubscriber.unsubscribe();
+  //       telemetrySubscriber.quit();
+  //     });
+  //   },
 
-//     const payloadContext = jwtTokenEngine.verifyAccessToken(queryStringToken);
-//     if (!payloadContext) {
-//       throw new UnauthorizedError(
-//         AUTH_ERROR_CODES.INVALID_CREDENTIALS,
-//         "Active connection session has expired."
-//       );
-//     }
+  //   async getJob(req: Request, res: Response) {
+  //     if (!req.user) {
+  //       throw new UnauthorizedError(
+  //         AUTH_ERROR_CODES.INVALID_CREDENTIALS,
+  //         "Your session has expired. Please sign in again to continue."
+  //       );
+  //     }
 
-//     res.writeHead(200, {
-//       "Content-Type": "text/event-stream",
-//       "Cache-Control": "no-cache",
-//       Connection: "keep-alive",
-//     });
+  //     const idParamParse = z.string().uuid().safeParse(req.params.id);
+  //     if (!idParamParse.success) {
+  //       throw new BadRequestError(
+  //         COMMON_ERROR_CODES.VALIDATION_ERROR,
+  //         "The requested terminal record identifier is malformed."
+  //       );
+  //     }
 
-//     const telemetrySubscriber = redisConnection.duplicate();
+  //     const jobId = idParamParse.data;
 
-//     const channelCoordinate = getJobTelemetryChannel(id);
-//     await telemetrySubscriber.subscribe(channelCoordinate);
+  //     const databaseJob = await prisma.job.findUnique({
+  //       where: { id: jobId },
+  //     });
 
-//     telemetrySubscriber.on("message", (_channel, messagePayloadString) => {
-//       res.write(`data: ${messagePayloadString}\n\n`);
+  //     if (!databaseJob) {
+  //       throw new NotFoundError(
+  //         COMMON_ERROR_CODES.SCHEMA_MISMATCH,
+  //         "We couldn't find the requested analysis pipeline process."
+  //       );
+  //     }
 
-//       if (
-//         messagePayloadString.includes('"COMPLETED"') ||
-//         messagePayloadString.includes('"FAILED"')
-//       ) {
-//         res.end();
-//       }
-//     });
+  //     if (databaseJob.userId !== req.user.id) {
+  //       throw new UnauthorizedError(
+  //         AUTH_ERROR_CODES.INVALID_CREDENTIALS,
+  //         "Access denied. You do not maintain control rights over this task pipeline."
+  //       );
+  //     }
 
-//     req.on("close", () => {
-//       telemetrySubscriber.unsubscribe();
-//       telemetrySubscriber.quit();
-//     });
-//   },
+  //     const payload: ApiResponse<GetJobResponse> = {
+  //       success: true,
+  //       data: {
+  //         id: databaseJob.id,
+  //         userId: databaseJob.userId,
+  //         status: databaseJob.status,
+  //         createdAt: databaseJob.createdAt,
+  //         startedAt: databaseJob.startedAt,
+  //         completedAt: databaseJob.completedAt,
+  //       },
+  //     };
 
-//   async getJob(req: Request, res: Response) {
-//     if (!req.user) {
-//       throw new UnauthorizedError(
-//         AUTH_ERROR_CODES.INVALID_CREDENTIALS,
-//         "Your session has expired. Please sign in again to continue."
-//       );
-//     }
-
-//     const idParamParse = z.string().uuid().safeParse(req.params.id);
-//     if (!idParamParse.success) {
-//       throw new BadRequestError(
-//         COMMON_ERROR_CODES.VALIDATION_ERROR,
-//         "The requested terminal record identifier is malformed."
-//       );
-//     }
-
-//     const jobId = idParamParse.data;
-
-//     const databaseJob = await prisma.job.findUnique({
-//       where: { id: jobId },
-//     });
-
-//     if (!databaseJob) {
-//       throw new NotFoundError(
-//         COMMON_ERROR_CODES.SCHEMA_MISMATCH,
-//         "We couldn't find the requested analysis pipeline process."
-//       );
-//     }
-
-//     if (databaseJob.userId !== req.user.id) {
-//       throw new UnauthorizedError(
-//         AUTH_ERROR_CODES.INVALID_CREDENTIALS,
-//         "Access denied. You do not maintain control rights over this task pipeline."
-//       );
-//     }
-
-//     const payload: ApiResponse<GetJobResponse> = {
-//       success: true,
-//       data: {
-//         id: databaseJob.id,
-//         userId: databaseJob.userId,
-//         status: databaseJob.status,
-//         createdAt: databaseJob.createdAt,
-//         startedAt: databaseJob.startedAt,
-//         completedAt: databaseJob.completedAt,
-//       },
-//     };
-
-//     res.status(200).json(payload);
-//   },
-// };
+  //     res.status(200).json(payload);
+  //   },
+};
