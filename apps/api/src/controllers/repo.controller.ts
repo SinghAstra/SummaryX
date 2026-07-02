@@ -1,24 +1,23 @@
-import { prisma } from "@repo/db";
-import {
-  AUTH_ERROR_CODES,
-  COMMON_ERROR_CODES,
-  ingestRepoSchema,
-} from "@repo/shared";
-import { NextFunction, type Request, type Response } from "express";
+import { AUTH_ERROR_CODES, ingestRepoSchema } from "@repo/shared";
+import { type NextFunction, type Request, type Response } from "express";
 import z from "zod";
-import { NotFoundError, UnauthorizedError } from "../errors/api-errors.js";
+import { UnauthorizedError } from "../errors/api-errors.js";
 import { repositoryService } from "../services/repo.service.js";
 import { successResponse } from "../utils/response.js";
 
 export const repositoryController = {
-  ingest: async (req: Request, res: Response, next: NextFunction) => {
+  ingest: async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const validatedInput = ingestRepoSchema.parse(req.body);
 
       if (!req.user) {
         throw new UnauthorizedError(
           AUTH_ERROR_CODES.INVALID_CREDENTIALS,
-          "Session credentials missing. Please sign in again."
+          "Please sign in to continue."
         );
       }
 
@@ -34,7 +33,12 @@ export const repositoryController = {
       next(error);
     }
   },
-  getFiles: async (req: Request, res: Response, next: NextFunction) => {
+
+  getFiles: async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const id = z.string().parse(req.params.id);
 
@@ -45,24 +49,9 @@ export const repositoryController = {
         );
       }
 
-      const repo = await prisma.repository.findFirst({
-        where: {
-          id,
-          userId: req.user.id,
-        },
-      });
+      const files = await repositoryService.getRepositoryFiles(id, req.user.id);
 
-      if (!repo) {
-        throw new NotFoundError(
-          COMMON_ERROR_CODES.ROUTE_NOT_FOUND,
-          "Repository not found."
-        );
-      }
-
-      const files = await prisma.repositoryFile.findMany({
-        where: { repositoryId: id },
-        orderBy: { relativePath: "asc" },
-      });
+      console.log("files is ", files);
 
       res.status(200).json(successResponse(files));
     } catch (error) {

@@ -60,6 +60,8 @@ export const repositoryService = {
           totalSize: BigInt(0),
         },
       });
+
+      console.log("newRepo is ", newRepo);
       return { repositoryId: newRepo.id, isDuplicate: false };
     } catch (error: any) {
       if (error?.code === "P2002") {
