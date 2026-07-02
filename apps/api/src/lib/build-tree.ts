@@ -4,6 +4,10 @@ import { FileSummaryStatus, RepositoryTreeNode } from "@repo/shared";
 export function buildRepositoryTree(
   files: RepositoryFile[]
 ): RepositoryTreeNode[] {
+  console.log(
+    `📊 [Tree Builder] Starting compilation. Total raw records received: ${files.length}`
+  );
+
   const root: RepositoryTreeNode = {
     name: "root",
     relativePath: "",
@@ -12,13 +16,20 @@ export function buildRepositoryTree(
   };
 
   for (const file of files) {
-    const parts = file.relativePath.split("/");
+    const normalizedPath = file.relativePath.replace(/\\/g, "/");
+    const parts = normalizedPath.split("/");
+
     let currentElement = root;
 
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i];
       const isLastPart = i === parts.length - 1;
       const runningPath = parts.slice(0, i + 1).join("/");
+
+      // Check what items currently exist in the current folder tier
+      const currentChildrenNames = currentElement.children.map(
+        (c) => `${c.name} (${c.type})`
+      );
 
       let targetNode = currentElement.children.find(
         (child) => child.name === part
@@ -38,8 +49,10 @@ export function buildRepositoryTree(
           }),
           children: [],
         };
+
         (currentElement.children as RepositoryTreeNode[]).push(targetNode);
       }
+
       currentElement = targetNode;
     }
   }
@@ -56,5 +69,7 @@ export function buildRepositoryTree(
       });
   };
 
-  return sortTreeNodes(root.children);
+  const finalTree = sortTreeNodes(root.children);
+
+  return finalTree;
 }

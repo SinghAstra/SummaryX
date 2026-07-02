@@ -1,4 +1,4 @@
-import { RepositoryFileBrowser } from "@/features/files/components/repo-file-browser";
+import { RepositoryExplorer } from "@/features/files/components/repo-explorer";
 import { repoFilesQueryFn } from "@/features/repo/hooks/use-repo-files";
 import { repoKeys } from "@/features/repo/query-keys";
 import { QueryClient } from "@tanstack/react-query";
@@ -26,7 +26,7 @@ export default async function RepositoryPage({ params }: RepositoryPageProps) {
 
   return (
     <div className="w-full flex-1 flex px-4 md:px-6  flex-col gap-4 md:gap-6 animate-in fade-in duration-300">
-      <RepositoryFileBrowser id={id} />
+      <RepositoryExplorer repositoryId={id} />
     </div>
   );
 }

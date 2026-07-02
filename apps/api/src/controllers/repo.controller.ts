@@ -51,8 +51,6 @@ export const repositoryController = {
 
       const files = await repositoryService.getRepositoryFiles(id, req.user.id);
 
-      console.log("files is ", files);
-
       res.status(200).json(successResponse(files));
     } catch (error) {
       next(error);

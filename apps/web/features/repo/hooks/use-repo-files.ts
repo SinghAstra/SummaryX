@@ -1,25 +1,23 @@
-import { type RepositoryFileData } from "@repo/shared";
+import { RepositoryTreeNode, type RepositoryFileData } from "@repo/shared";
 import { useQuery, type UseQueryResult } from "@tanstack/react-query";
 import { getRepositoryFilesAction } from "../actions/get-repo-files-action";
 import { repoKeys } from "../query-keys";
 
 export const repoFilesQueryFn = async (
   id: string
-): Promise<RepositoryFileData[]> => {
+): Promise<RepositoryTreeNode[]> => {
   const response = await getRepositoryFilesAction(id);
 
   if (!response.success) {
     throw new Error(response.error.message);
   }
 
-  console.log("response.data is ", response.data);
-
   return response.data;
 };
 
 export function useRepositoryFiles(
   id: string
-): UseQueryResult<RepositoryFileData[], Error> {
+): UseQueryResult<RepositoryTreeNode[], Error> {
   return useQuery({
     queryKey: repoKeys.files(id),
     queryFn: () => repoFilesQueryFn(id),
