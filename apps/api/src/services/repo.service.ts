@@ -4,11 +4,13 @@ import {
   JOB_NAMES,
   parseGitHubUrl,
   REPOSITORY_STATUS,
+  RepositoryTreeNode,
 } from "@repo/shared";
 import crypto from "node:crypto";
 import os from "node:os";
 import path from "node:path";
 import { BadRequestError, NotFoundError } from "../errors/api-errors.js";
+import { buildRepositoryTree } from "../lib/build-tree.js";
 import { repositoryIngestionQueue } from "../queues/ingestion.queue.js";
 
 interface IngestParams {
@@ -81,7 +83,10 @@ export const repositoryService = {
     }
   },
 
-  async getRepositoryFiles(id: string, userId: string) {
+  async getRepositoryFiles(
+    id: string,
+    userId: string
+  ): Promise<RepositoryTreeNode[]> {
     const repo = await prisma.repository.findFirst({
       where: { id, userId },
     });
@@ -93,9 +98,11 @@ export const repositoryService = {
       );
     }
 
-    return prisma.repositoryFile.findMany({
+    const flatFiles = await prisma.repositoryFile.findMany({
       where: { repositoryId: id },
       orderBy: { relativePath: "asc" },
     });
+
+    return buildRepositoryTree(flatFiles);
   },
 };

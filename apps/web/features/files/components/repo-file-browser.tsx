@@ -1,11 +1,11 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useRepositoryFiles } from "@/features/repo/hooks/use-repo-files.js";
-import type { TreeNode } from "@/lib/file-tree.js";
+import { useRepositoryFiles } from "@/features/repo/hooks/use-repo-files";
+import type { TreeNode } from "@/lib/file-tree";
 import { Code2, FileText, X } from "lucide-react";
 import { useState } from "react";
-import { FileExplorer } from "./file-explorer.js";
+import { FileExplorer } from "./file-explorer";
 
 interface RepositoryFileBrowserProps {
   readonly id: string;

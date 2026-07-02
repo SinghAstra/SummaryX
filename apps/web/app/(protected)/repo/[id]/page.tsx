@@ -1,6 +1,6 @@
 import { RepositoryFileBrowser } from "@/features/files/components/repo-file-browser";
-import { repoFilesQueryFn } from "@/features/repo/hooks/use-repo-files.js";
-import { repoKeys } from "@/features/repo/query-keys.js";
+import { repoFilesQueryFn } from "@/features/repo/hooks/use-repo-files";
+import { repoKeys } from "@/features/repo/query-keys";
 import { QueryClient } from "@tanstack/react-query";
 import { type Metadata } from "next";
 

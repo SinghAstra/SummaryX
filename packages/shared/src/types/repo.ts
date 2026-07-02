@@ -31,9 +31,9 @@ export const fileSummaryStatusSchema = z.enum([
 ]);
 
 export const repositoryDataSchema = z.object({
-  id: z.string().uuid(),
+  id: z.uuid(),
   userId: z.string(),
-  githubUrl: z.string().url(),
+  githubUrl: z.url(),
   name: z.string(),
   owner: z.string(),
   diskPath: z.string(),
@@ -44,13 +44,13 @@ export const repositoryDataSchema = z.object({
   ignoredFiles: z.number().int().nonnegative(),
   totalFolders: z.number().int().nonnegative(),
   totalSize: z.string(),
-  createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime(),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
 });
 
 export const repositoryFileDataSchema = z.object({
-  id: z.string().uuid(),
-  repositoryId: z.string().uuid(),
+  id: z.uuid(),
+  repositoryId: z.uuid(),
   relativePath: z.string(),
   extension: z.string(),
   size: z.number().int().nonnegative(),
@@ -59,8 +59,8 @@ export const repositoryFileDataSchema = z.object({
   summary: z.string().nullable(),
   retryCount: z.number().int().nonnegative(),
   lastError: z.string().nullable(),
-  completedAt: z.string().datetime().nullable(),
-  createdAt: z.string().datetime(),
+  completedAt: z.iso.datetime().nullable(),
+  createdAt: z.iso.datetime(),
 });
 
 export type RepositoryStatus = z.infer<typeof repositoryStatusSchema>;

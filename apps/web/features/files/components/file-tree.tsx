@@ -1,6 +1,6 @@
 "use client";
 
-import { getFileIcon, TreeNode } from "@/lib/file-tree.js";
+import { getFileIcon, TreeNode } from "@/lib/file-tree";
 import { ChevronRight } from "lucide-react";
 import { useState } from "react";
 
