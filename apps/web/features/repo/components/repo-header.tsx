@@ -14,14 +14,32 @@ import { useSidebar } from "@/components/ui/sidebar";
 import { siteConfig } from "@/config/site";
 import { Logo } from "@/features/dashboard/components/logo";
 import { ROUTES } from "@/lib/routes";
-import { ExternalLink, GitFork, LogOut, Menu, User } from "lucide-react";
+import { cn } from "@/lib/utils";
+import {
+  ChevronsUpDown,
+  ExternalLink,
+  GitFork,
+  LogOut,
+  Menu,
+  User,
+} from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import z from "zod";
 import { useRepository } from "../hooks/use-repo";
 
-export function RepoHeader() {
+interface RepoHeaderProps {
+  isExpandedAll: boolean;
+  onToggleExpandAll: () => void;
+  onCopySummaryAll: () => void;
+}
+
+export function RepoHeader({
+  isExpandedAll,
+  onToggleExpandAll,
+  onCopySummaryAll,
+}: RepoHeaderProps) {
   const { toggleSidebar } = useSidebar();
   const { data: session } = useSession();
   const params = useParams();
@@ -67,7 +85,7 @@ export function RepoHeader() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              <div className="flex items-center gap-2.5 px-2 py-1 min-w-0 border rounded bg-card/10 hover:bg-card/30">
+              <div className="flex items-center gap-2.5 px-2 py-1 min-w-0 border rounded bg-card/50 hover:bg-card/70">
                 <Avatar className="size-6 rounded">
                   <AvatarImage
                     src={repository.avatar}
@@ -100,7 +118,33 @@ export function RepoHeader() {
           )}
         </div>
 
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-2">
+          {isRepoView && (
+            <>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={onCopySummaryAll}
+                className="text-xs text-muted-foreground hover:text-foreground cursor-pointer border bg-card/50 hover:bg-card/70"
+              >
+                Copy Summary
+              </Button>
+
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={onToggleExpandAll}
+                className={cn(
+                  "rounded-full text-muted-foreground hover:text-foreground transition-colors border bg-card/50 hover:bg-card/70",
+                  isExpandedAll && "bg-secondary text-primary"
+                )}
+              >
+                <ChevronsUpDown className="size-4" />
+              </Button>
+            </>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button

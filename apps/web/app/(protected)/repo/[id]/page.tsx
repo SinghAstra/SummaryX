@@ -1,24 +1,29 @@
-import { RepositoryExplorer } from "@/features/files/components/repo-explorer";
-import { RepoHeader } from "@/features/repo/components/repo-header";
+import { RepoWorkspaceShell } from "@/features/files/components/repo-workspace-shell";
 import { repoQueryFn } from "@/features/repo/hooks/use-repo";
 import { repoFilesQueryFn } from "@/features/repo/hooks/use-repo-files";
 import { repoKeys } from "@/features/repo/query-keys";
-import { QueryClient } from "@tanstack/react-query";
+import {
+  dehydrate,
+  HydrationBoundary,
+  QueryClient,
+} from "@tanstack/react-query";
 import { type Metadata } from "next";
+import React from "react";
 
 export const metadata: Metadata = {
-  title: "Repository Explorer",
+  title: "Repository Workspace - SummaryX",
   description:
-    "Browse your repository structure with interactive folder navigation and file preview.",
+    "Interactive directory mapping and live AI summary generation workspace.",
 };
 
 interface RepositoryPageProps {
   params: Promise<{ id: string }>;
 }
 
-export default async function RepositoryPage({ params }: RepositoryPageProps) {
+export default async function RepositoryPage({
+  params,
+}: RepositoryPageProps): Promise<React.JSX.Element> {
   const { id } = await params;
-
   const queryClient = new QueryClient();
 
   await Promise.all([
@@ -33,15 +38,8 @@ export default async function RepositoryPage({ params }: RepositoryPageProps) {
   ]);
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
-      <RepoHeader />
-      <main className="flex-1 overflow-y-auto">
-        <div className="p-4 md:p-6 lg:p-8 w-full min-h-full flex flex-col">
-          <div className="w-full flex-1 flex flex-col gap-4 md:gap-6 animate-in fade-in duration-300">
-            <RepositoryExplorer repositoryId={id} />
-          </div>
-        </div>
-      </main>
-    </div>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <RepoWorkspaceShell repositoryId={id} />
+    </HydrationBoundary>
   );
 }

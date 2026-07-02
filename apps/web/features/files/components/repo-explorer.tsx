@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { useRepositoryFiles } from "@/features/repo/hooks/use-repo-files";
 import { cn } from "@/lib/utils";
 import { type RepositoryTreeNode } from "@repo/shared";
@@ -10,21 +9,55 @@ import {
   FileText,
   Folder,
   FolderOpen,
-  PanelLeftClose,
-  PanelLeftOpen,
 } from "lucide-react";
 import React, { useCallback, useState } from "react";
 
 interface RepositoryExplorerProps {
-  readonly repositoryId: string;
+  repositoryId: string;
+  isExpandedAll: boolean;
 }
 
-export function RepositoryExplorer({ repositoryId }: RepositoryExplorerProps) {
+export function RepositoryExplorer({
+  repositoryId,
+  isExpandedAll,
+}: RepositoryExplorerProps) {
   const { data: treeNodes = [] } = useRepositoryFiles(repositoryId);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
     new Set()
   );
   const [activeFile, setActiveFile] = useState<RepositoryTreeNode | null>(null);
+
+  const [prevIsExpandedAll, setPrevIsExpandedAll] =
+    useState<boolean>(isExpandedAll);
+
+  const getAllFolderPaths = useCallback(
+    (nodes: RepositoryTreeNode[]): Set<string> => {
+      const folders = new Set<string>();
+
+      const traverse = (items: RepositoryTreeNode[]) => {
+        for (const node of items) {
+          if (node.type === "folder") {
+            folders.add(node.relativePath);
+            traverse(node.children);
+          }
+        }
+      };
+
+      traverse(nodes);
+      return folders;
+    },
+    []
+  );
+
+  if (isExpandedAll !== prevIsExpandedAll) {
+    setPrevIsExpandedAll(isExpandedAll);
+
+    if (isExpandedAll) {
+      setExpandedFolders(getAllFolderPaths(treeNodes));
+    } else {
+      setExpandedFolders(new Set());
+    }
+  }
 
   const handleToggleFolder = useCallback((path: string) => {
     setExpandedFolders((prev) => {
@@ -38,55 +71,11 @@ export function RepositoryExplorer({ repositoryId }: RepositoryExplorerProps) {
     });
   }, []);
 
-  const handleToggleAll = useCallback(() => {
-    const allExpanded = expandedFolders.size > 0;
-
-    if (allExpanded) {
-      setExpandedFolders(new Set());
-    } else {
-      const nextSet = new Set<string>();
-      const deeplyIndex = (nodes: RepositoryTreeNode[]) => {
-        nodes.forEach((node) => {
-          if (node.type === "folder") {
-            nextSet.add(node.relativePath);
-            deeplyIndex(node.children);
-          }
-        });
-      };
-      deeplyIndex(treeNodes);
-      setExpandedFolders(nextSet);
-    }
-  }, [treeNodes, expandedFolders.size]);
-
-  const allExpanded = expandedFolders.size > 0;
-
   return (
     <div className="border border-border bg-card/50 rounded flex flex-col shadow-sm overflow-hidden backdrop-blur-sm">
-      <div className="h-11 border-b border-border/60 px-3 flex items-center justify-between bg-muted/20 select-none shrink-0">
-        <div className="flex items-center gap-1.5 ml-auto">
-          {treeNodes.length > 0 && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleToggleAll}
-              className="size-6 rounded-md text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
-              title={
-                allExpanded ? "Collapse All Folders" : "Expand All Folders"
-              }
-            >
-              {allExpanded ? (
-                <PanelLeftClose className="size-3.5" />
-              ) : (
-                <PanelLeftOpen className="size-3.5" />
-              )}
-            </Button>
-          )}
-        </div>
-      </div>
-
       <div className="flex-1 p-2">
         {treeNodes.length === 0 ? (
-          <div className="h-full flex items-center justify-center text-xs text-muted-foreground/40 font-sans italic select-none">
+          <div className="h-full flex items-center justify-center text-xs text-muted-foreground/40 font-sans italic select-none py-12">
             Empty directory tree.
           </div>
         ) : (
@@ -109,11 +98,11 @@ export function RepositoryExplorer({ repositoryId }: RepositoryExplorerProps) {
 }
 
 interface TreeNodeItemProps {
-  readonly node: RepositoryTreeNode;
-  readonly expandedFolders: Set<string>;
-  readonly activeFile: RepositoryTreeNode | null;
-  readonly onToggleFolder: (path: string) => void;
-  readonly onSelectFile: (file: RepositoryTreeNode) => void;
+  node: RepositoryTreeNode;
+  expandedFolders: Set<string>;
+  activeFile: RepositoryTreeNode | null;
+  onToggleFolder: (path: string) => void;
+  onSelectFile: (file: RepositoryTreeNode) => void;
 }
 
 function TreeNodeItem({
