@@ -36,6 +36,7 @@ export const repositoryDataSchema = z.object({
   githubUrl: z.url(),
   name: z.string(),
   owner: z.string(),
+  avatar: z.url().nullable().optional(),
   diskPath: z.string(),
   status: repositoryStatusSchema,
   readme: z.string().nullable(),
@@ -90,17 +91,10 @@ export const repositoryTreeNodeSchema: z.ZodType<RepositoryTreeNode> = z.lazy(
     })
 );
 
-export const getRepositoryFilesResponseSchema = z.array(
-  repositoryTreeNodeSchema
-);
-
 export type RepositoryStatus = z.infer<typeof repositoryStatusSchema>;
 export type FileSummaryStatus = z.infer<typeof fileSummaryStatusSchema>;
 export type RepositoryData = z.infer<typeof repositoryDataSchema>;
 export type RepositoryFileData = z.infer<typeof repositoryFileDataSchema>;
-export type GetRepositoryFilesResponse = z.infer<
-  typeof getRepositoryFilesResponseSchema
->;
 
 const GITHUB_URL_REGEX =
   /^https?:\/\/(?:www\.)?github\.com\/([^/]+)\/([^/.]+)(?:\.git)?\/?$/;
