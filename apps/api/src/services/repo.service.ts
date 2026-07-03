@@ -3,6 +3,7 @@ import {
   COMMON_ERROR_CODES,
   GetRepositoriesResponse,
   JOB_NAMES,
+  JOB_STATUS,
   parseGitHubUrl,
   REPOSITORY_STATUS,
   RepositoryData,
@@ -70,20 +71,21 @@ export const repositoryService = {
         },
       });
 
+      const job = await prisma.job.create({
+        data: {
+          repositoryId: newRepo.id,
+          status: JOB_STATUS.PENDING,
+        },
+      });
+
       await repositoryIngestionQueue.add(JOB_NAMES.ANALYZE_REPO, {
-        repositoryId: newRepo.id,
-        userId,
+        jobId: job.id,
       });
 
       console.log("newRepo is ", newRepo);
+
       return { repositoryId: newRepo.id, isDuplicate: false };
     } catch (error: any) {
-      if (error?.code === "P2002") {
-        const existingRepo = await prisma.repository.findFirstOrThrow({
-          where: { userId, githubUrl },
-        });
-        return { repositoryId: existingRepo.id, isDuplicate: true };
-      }
       throw error;
     }
   },

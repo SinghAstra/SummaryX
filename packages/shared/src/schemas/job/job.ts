@@ -25,7 +25,6 @@ export const logLevelSchema = z.enum([LOG_LEVEL.INFO, LOG_LEVEL.ERROR]);
 
 export const JobDataSchema = z.object({
   jobId: z.uuid(),
-  userId: z.string(),
 });
 
 export type JobStatus = z.infer<typeof jobStatusSchema>;

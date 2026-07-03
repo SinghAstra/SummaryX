@@ -25,7 +25,6 @@ export const jobService = {
 
     await repositoryIngestionQueue.add(JOB_NAMES.ANALYZE_REPO, {
       jobId: job.id,
-      userId,
     });
 
     return { jobId: job.id };

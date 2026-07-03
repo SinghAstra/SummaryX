@@ -98,9 +98,15 @@ async function traverseDirectory(
 }
 
 export const ingestionService = {
-  async processRepositoryIngestion(repositoryId: string): Promise<void> {
+  async processRepositoryIngestion(jobId: string): Promise<void> {
+    const job = await prisma.job.findUnique({
+      where: { id: jobId },
+    });
+
+    if (!job) return;
+
     const repo = await prisma.repository.findUnique({
-      where: { id: repositoryId },
+      where: { id: job.repositoryId },
     });
 
     if (!repo) return;
@@ -145,7 +151,7 @@ export const ingestionService = {
       await prisma.$transaction(
         async (tx) => {
           const updatedRepo = await tx.repository.update({
-            where: { id: repositoryId },
+            where: { id: job.repositoryId },
             data: {
               status: REPOSITORY_STATUS.PROCESSING,
               readme: readmeContents,
@@ -162,7 +168,7 @@ export const ingestionService = {
           if (stats.collectedFiles.length > 0) {
             const repoFiles = await tx.repositoryFile.createMany({
               data: stats.collectedFiles.map((file) => ({
-                repositoryId,
+                repositoryId: job.repositoryId,
                 relativePath: file.relativePath,
                 extension: file.extension,
                 size: file.size,
@@ -182,7 +188,7 @@ export const ingestionService = {
       );
     } catch (error) {
       await prisma.repository.update({
-        where: { id: repositoryId },
+        where: { id: job.repositoryId },
         data: { status: REPOSITORY_STATUS.FAILED },
       });
       logError(error);
