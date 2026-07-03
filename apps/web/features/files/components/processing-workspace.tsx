@@ -28,7 +28,14 @@ export function ProcessingWorkspace({ repo }: ProcessingWorkspaceProps) {
   return (
     <div className="flex-1 flex flex-col overflow-hidden h-full w-full">
       <ProcessingHeader />
-      <TerminalConsole messages={allTerminalMessages} />
+
+      <main className="flex-1 overflow-y-auto">
+        <div className="p-1 md:p-2 lg:p-4 w-full min-h-full flex flex-col">
+          <div className="w-full flex-1 flex flex-col gap-4 md:gap-6 animate-in fade-in duration-300">
+            <TerminalConsole messages={allTerminalMessages} />
+          </div>
+        </div>
+      </main>
     </div>
   );
 }

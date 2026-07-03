@@ -3,12 +3,12 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useSidebar } from "@/components/ui/sidebar";
 import { siteConfig } from "@/config/site";
@@ -18,12 +18,11 @@ import { useRepository } from "@/features/repo/hooks/use-repo";
 import { ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 import {
-  ChevronsUpDown,
-  ExternalLink,
-  GitFork,
-  LogOut,
-  Menu,
-  User,
+    ExternalLink,
+    GitFork,
+    LogOut,
+    Menu,
+    User,
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
