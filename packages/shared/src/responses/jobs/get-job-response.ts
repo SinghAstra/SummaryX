@@ -3,7 +3,7 @@ import { jobStatusSchema } from "../../schemas";
 
 export const getJobResponseSchema = z.object({
   id: z.uuid(),
-  userId: z.string(),
+  repositoryId: z.string(),
   status: jobStatusSchema,
   createdAt: z.iso.datetime(),
   startedAt: z.iso.datetime().nullable(),

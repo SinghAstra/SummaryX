@@ -23,11 +23,11 @@ export const jobStatusSchema = z.enum([
 
 export const logLevelSchema = z.enum([LOG_LEVEL.INFO, LOG_LEVEL.ERROR]);
 
-export const baseJobDataSchema = z.object({
-  repositoryId: z.string().uuid(),
+export const JobDataSchema = z.object({
+  jobId: z.uuid(),
   userId: z.string(),
 });
 
 export type JobStatus = z.infer<typeof jobStatusSchema>;
 export type LogLevel = z.infer<typeof logLevelSchema>;
-export type BaseJobData = z.infer<typeof baseJobDataSchema>;
+export type JobData = z.infer<typeof JobDataSchema>;

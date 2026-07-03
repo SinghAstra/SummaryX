@@ -179,13 +179,6 @@ export const jobController = {
         );
       }
 
-      if (activeJob.userId !== payloadContext.userId) {
-        throw new UnauthorizedError(
-          AUTH_ERROR_CODES.INVALID_CREDENTIALS,
-          "Access denied."
-        );
-      }
-
       res.setHeader("Content-Type", "text/event-stream");
       res.setHeader("Cache-Control", "no-cache");
       res.setHeader("Connection", "keep-alive");
