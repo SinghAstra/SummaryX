@@ -139,7 +139,6 @@ export const repositoryService = {
       status: repo.status,
       readme: repo.readme,
       totalFiles: repo.totalFiles,
-      latestJobId: null,
       supportedFiles: repo.supportedFiles,
       ignoredFiles: repo.ignoredFiles,
       totalFolders: repo.totalFolders,

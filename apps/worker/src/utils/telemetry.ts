@@ -36,6 +36,8 @@ export async function trackProgress({
     timestamp: new Date().toISOString(),
   };
 
+  console.log("eventPayload is ", eventPayload);
+
   await telemetryPublisher.publish(
     channelCoordinate,
     JSON.stringify(eventPayload)

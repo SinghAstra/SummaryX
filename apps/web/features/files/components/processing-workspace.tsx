@@ -27,6 +27,8 @@ export function ProcessingWorkspace({ repo }: ProcessingWorkspaceProps) {
     session?.accessToken
   );
 
+  console.log("liveMessages is ", liveMessages);
+
   const allTerminalMessages = useMemo(() => {
     return [...initialLogs.map((log) => log.message), ...liveMessages];
   }, [initialLogs, liveMessages]);
