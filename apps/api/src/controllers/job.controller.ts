@@ -14,6 +14,7 @@ import {
   BadRequestError,
   NotFoundError,
   UnauthorizedError,
+  ValidationError,
 } from "../errors/api-errors.js";
 import { jwtTokenEngine } from "../lib/jwt.js";
 import { jobService } from "../services/job.service.js";
@@ -39,7 +40,12 @@ export const jobController = {
         );
       }
 
-      const result = await jobService.createJobRun(req.user.id);
+      const { repoId } = req.body;
+      if (!repoId) {
+        throw new ValidationError("Repository ID is required.");
+      }
+
+      const result = await jobService.createJobRun(req.user.id, repoId);
 
       res.status(202).json(successResponse(result));
     } catch (error) {

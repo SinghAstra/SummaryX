@@ -8,11 +8,14 @@ import {
   JOB_NAMES,
   JOB_STATUS,
 } from "@repo/shared";
-import { infrastructureQueue } from "../config/queue.js";
 import { NotFoundError, UnauthorizedError } from "../errors/api-errors.js";
+import { repositoryIngestionQueue } from "../queues/ingestion.queue.js";
 
 export const jobService = {
-  async createJobRun(userId: string): Promise<CreateJobResponse> {
+  async createJobRun(
+    userId: string,
+    repositoryId: string
+  ): Promise<CreateJobResponse> {
     const job = await prisma.job.create({
       data: {
         userId,
@@ -20,8 +23,8 @@ export const jobService = {
       },
     });
 
-    await infrastructureQueue.add(JOB_NAMES.ANALYZE_REPO, {
-      jobId: job.id,
+    await repositoryIngestionQueue.add(JOB_NAMES.ANALYZE_REPO, {
+      repositoryId,
       userId,
     });
 
