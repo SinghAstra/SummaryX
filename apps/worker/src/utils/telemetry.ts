@@ -1,7 +1,7 @@
 import { prisma } from "@repo/db";
 import {
   getJobTelemetryChannel,
-  type JobProgressEvent,
+  TelemetryEvent,
   type JobStatus,
   type LogLevel,
 } from "@repo/shared";
@@ -9,6 +9,7 @@ import { telemetryPublisher } from "../config/redis.js";
 
 interface TelemetryOptions {
   jobId: string;
+  repositoryId: string;
   status: JobStatus;
   message: string;
   logLevel?: LogLevel;
@@ -16,6 +17,7 @@ interface TelemetryOptions {
 
 export async function trackProgress({
   jobId,
+  repositoryId,
   status,
   message,
   logLevel,
@@ -27,7 +29,12 @@ export async function trackProgress({
   }
 
   const channelCoordinate = getJobTelemetryChannel(jobId);
-  const eventPayload: JobProgressEvent = { status, message };
+  const eventPayload: TelemetryEvent = {
+    repositoryId,
+    status,
+    message,
+    timestamp: new Date().toISOString(),
+  };
 
   await telemetryPublisher.publish(
     channelCoordinate,
