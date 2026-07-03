@@ -30,8 +30,19 @@ export function ProcessingWorkspace({ repo }: ProcessingWorkspaceProps) {
   console.log("liveMessages is ", liveMessages);
 
   const allTerminalMessages = useMemo(() => {
-    const historicalStrings = initialLogs.map((log) => log.message);
-    return Array.from(new Set([...historicalStrings, ...liveMessages]));
+    const historicalMapped = initialLogs.map((log) => ({
+      message: log.message,
+      timestamp: log.createdAt,
+    }));
+
+    const combined = [...historicalMapped, ...liveMessages];
+
+    const seen = new Set<string>();
+    return combined.filter((item) => {
+      if (seen.has(item.message)) return false;
+      seen.add(item.message);
+      return true;
+    });
   }, [initialLogs, liveMessages]);
 
   return (

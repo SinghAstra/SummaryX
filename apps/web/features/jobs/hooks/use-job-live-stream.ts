@@ -5,13 +5,18 @@ import { JOB_STATUS, logError, TelemetryEvent } from "@repo/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
+export interface TerminalMessage {
+  message: string;
+  timestamp: string;
+}
+
 export function useJobLiveStream(
   jobId: string,
   repositoryId: string,
   accessToken: string | undefined
 ) {
   const queryClient = useQueryClient();
-  const [liveMessages, setLiveMessages] = useState<string[]>([]);
+  const [liveMessages, setLiveMessages] = useState<TerminalMessage[]>([]);
 
   useEffect(() => {
     if (!jobId || !accessToken) return;
@@ -26,7 +31,10 @@ export function useJobLiveStream(
         console.log("payload is ", payload);
 
         if (payload.message) {
-          setLiveMessages((prev) => [...prev, payload.message]);
+          setLiveMessages((prev) => [
+            ...prev,
+            { message: payload.message, timestamp: payload.timestamp },
+          ]);
         }
 
         if (payload.status) {
