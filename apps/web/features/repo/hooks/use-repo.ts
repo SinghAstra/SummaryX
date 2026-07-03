@@ -12,9 +12,6 @@ export const repoQueryFn = async (
     throw new Error(response.error.message);
   }
 
-  console.log("repository is ", response.data);
-  console.log("latestJobId is ", response.data.latestJobId);
-
   return response.data;
 };
 

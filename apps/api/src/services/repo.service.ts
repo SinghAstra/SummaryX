@@ -82,8 +82,6 @@ export const repositoryService = {
         jobId: job.id,
       });
 
-      console.log("newRepo is ", newRepo);
-
       return { repositoryId: newRepo.id, isDuplicate: false };
     } catch (error: any) {
       throw error;
@@ -127,8 +125,6 @@ export const repositoryService = {
         },
       },
     });
-
-    console.log("repo is ", repo);
 
     if (!repo) {
       throw new NotFoundError(

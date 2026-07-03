@@ -1,17 +1,8 @@
 "use server";
 
-import { apiClient } from "@/lib/api-client/client";
-import {
-  getRepositoriesResponseSchema,
-  type ApiResponse,
-  type GetRepositoriesResponse,
-} from "@repo/shared";
+import { type ApiResponse, type GetRepositoriesResponse } from "@repo/shared";
+import { repoApi } from "../api/repo-api";
 
-export async function getRepositoriesAction(): Promise<
-  ApiResponse<GetRepositoriesResponse>
-> {
-  return apiClient.get<GetRepositoriesResponse>(
-    "/api/repo",
-    getRepositoriesResponseSchema
-  );
+export async function getRepositoriesAction(): Promise<ApiResponse<GetRepositoriesResponse>> {
+  return repoApi.getRepositories();
 }

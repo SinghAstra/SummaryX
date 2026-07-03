@@ -194,8 +194,6 @@ export const jobController = {
         void cleanup();
       });
 
-      await telemetrySubscriber.connect();
-
       telemetrySubscriber.on(
         "message",
         (_channel: string, messagePayloadString: string) => {

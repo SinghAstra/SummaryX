@@ -26,8 +26,6 @@ export const repositoryController = {
         githubUrl: validatedInput.githubUrl,
       });
 
-      console.log("responseData is ", responseData);
-
       res.status(201).json(successResponse(responseData));
     } catch (error) {
       next(error);

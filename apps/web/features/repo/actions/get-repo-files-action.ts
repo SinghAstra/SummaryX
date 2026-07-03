@@ -9,5 +9,5 @@ import { repoApi } from "../api/repo-api";
 export async function getRepositoryFilesAction(
   id: string
 ): Promise<ApiResponse<GetRepositoryFilesResponse>> {
-  return await repoApi.getRepositoryFiles(id);
+  return repoApi.getRepositoryFiles(id);
 }

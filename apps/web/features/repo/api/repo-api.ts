@@ -3,9 +3,13 @@ import {
   type ApiResponse,
   type CreateRepoResponse,
   createRepoResponseSchema,
-  GetRepositoryFilesResponse,
+  type GetRepositoriesResponse,
+  getRepositoriesResponseSchema,
+  type GetRepositoryFilesResponse,
   getRepositoryFilesResponseSchema,
-  IngestRepoInput,
+  type GetRepositoryResponse,
+  getRepositoryResponseSchema,
+  type IngestRepoInput,
 } from "@repo/shared";
 
 export const repoApi = {
@@ -14,6 +18,15 @@ export const repoApi = {
   ): Promise<ApiResponse<CreateRepoResponse>> => {
     return apiClient.post("/api/repo", data, createRepoResponseSchema);
   },
+
+  getRepository: (id: string): Promise<ApiResponse<GetRepositoryResponse>> => {
+    return apiClient.get(`/api/repo/${id}`, getRepositoryResponseSchema);
+  },
+
+  getRepositories: (): Promise<ApiResponse<GetRepositoriesResponse>> => {
+    return apiClient.get("/api/repo", getRepositoriesResponseSchema);
+  },
+
   getRepositoryFiles: (
     id: string
   ): Promise<ApiResponse<GetRepositoryFilesResponse>> => {
