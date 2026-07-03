@@ -10,6 +10,7 @@ import { ProcessingHeader } from "./processing-header";
 
 interface ProcessingWorkspaceProps {
   repo: {
+    id: string;
     latestJobId: string | null;
     status: RepositoryStatus;
   };
@@ -19,7 +20,12 @@ export function ProcessingWorkspace({ repo }: ProcessingWorkspaceProps) {
   const { data: session } = useSession();
   const activeJobId = repo.latestJobId ?? "";
   const { data: initialLogs = [] } = useJobLogs(activeJobId);
-  const { liveMessages } = useJobLiveStream(activeJobId, session?.accessToken);
+
+  const { liveMessages } = useJobLiveStream(
+    activeJobId,
+    repo.id,
+    session?.accessToken
+  );
 
   const allTerminalMessages = useMemo(() => {
     return [...initialLogs.map((log) => log.message), ...liveMessages];
@@ -28,7 +34,6 @@ export function ProcessingWorkspace({ repo }: ProcessingWorkspaceProps) {
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       <ProcessingHeader />
-
       <main className="flex-1 overflow-y-auto h-full p-1 md:p-2 lg:p-4 animate-in fade-in duration-300">
         <TerminalConsole messages={allTerminalMessages} />
       </main>

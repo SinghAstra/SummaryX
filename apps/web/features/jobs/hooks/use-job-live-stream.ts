@@ -1,12 +1,13 @@
 "use client";
 
-import { JOB_STATUS, logError, type GetJobResponse } from "@repo/shared";
+import { repoKeys } from "@/features/repo/query-keys";
+import { JOB_STATUS, logError } from "@repo/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { JOBS_QUERY_KEYS } from "../query-keys";
 
 export function useJobLiveStream(
   jobId: string,
+  repositoryId: string,
   accessToken: string | undefined
 ) {
   const queryClient = useQueryClient();
@@ -34,14 +35,8 @@ export function useJobLiveStream(
           ) {
             eventSource.close();
 
-            queryClient.setQueryData(
-              JOBS_QUERY_KEYS.details(jobId),
-              (old: GetJobResponse | undefined) =>
-                old ? { ...old, status: payload.status } : old
-            );
-
             void queryClient.invalidateQueries({
-              queryKey: JOBS_QUERY_KEYS.lists(),
+              queryKey: repoKeys.detail(repositoryId),
             });
           }
         }
@@ -53,7 +48,7 @@ export function useJobLiveStream(
     eventSource.onerror = () => eventSource.close();
 
     return () => eventSource.close();
-  }, [jobId, accessToken, queryClient]);
+  }, [jobId, repositoryId, accessToken, queryClient]);
 
   return { liveMessages };
 }
