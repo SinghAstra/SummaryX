@@ -93,7 +93,6 @@ export const repositoryTreeNodeSchema: z.ZodType<RepositoryTreeNode> = z.lazy(
 
 export type RepositoryStatus = z.infer<typeof repositoryStatusSchema>;
 export type FileSummaryStatus = z.infer<typeof fileSummaryStatusSchema>;
-export type RepositoryData = z.infer<typeof repositoryDataSchema>;
 export type RepositoryFileData = z.infer<typeof repositoryFileDataSchema>;
 
 const GITHUB_URL_REGEX =

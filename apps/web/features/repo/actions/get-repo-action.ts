@@ -2,13 +2,16 @@
 
 import { apiClient } from "@/lib/api-client/client";
 import {
-  repositoryDataSchema,
+  GetRepositoryResponse,
+  getRepositoryResponseSchema,
   type ApiResponse,
-  type RepositoryData,
 } from "@repo/shared";
 
 export async function getRepositoryAction(
   id: string
-): Promise<ApiResponse<RepositoryData>> {
-  return apiClient.get<RepositoryData>(`/api/repo/${id}`, repositoryDataSchema);
+): Promise<ApiResponse<GetRepositoryResponse>> {
+  return apiClient.get<GetRepositoryResponse>(
+    `/api/repo/${id}`,
+    getRepositoryResponseSchema
+  );
 }

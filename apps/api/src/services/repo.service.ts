@@ -2,11 +2,11 @@ import { prisma } from "@repo/db";
 import {
   COMMON_ERROR_CODES,
   GetRepositoriesResponse,
+  GetRepositoryResponse,
   JOB_NAMES,
   JOB_STATUS,
   parseGitHubUrl,
   REPOSITORY_STATUS,
-  RepositoryData,
   RepositoryTreeNode,
 } from "@repo/shared";
 import crypto from "node:crypto";
@@ -116,10 +116,19 @@ export const repositoryService = {
   async getRepositoryDetail(
     id: string,
     userId: string
-  ): Promise<RepositoryData> {
+  ): Promise<GetRepositoryResponse> {
     const repo = await prisma.repository.findFirst({
       where: { id, userId },
+      include: {
+        jobs: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          select: { id: true },
+        },
+      },
     });
+
+    console.log("repo is ", repo);
 
     if (!repo) {
       throw new NotFoundError(
@@ -138,6 +147,7 @@ export const repositoryService = {
       diskPath: repo.diskPath,
       status: repo.status,
       readme: repo.readme,
+      latestJobId: repo.jobs[0]?.id || null,
       totalFiles: repo.totalFiles,
       supportedFiles: repo.supportedFiles,
       ignoredFiles: repo.ignoredFiles,
