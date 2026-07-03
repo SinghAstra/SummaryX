@@ -3,10 +3,10 @@
 import { useSession } from "next-auth/react";
 import { useParams, useRouter } from "next/navigation";
 import { useMemo } from "react";
+import { TerminalHeader } from "../../files/components/terminal-header";
 import { useJobLiveStream } from "../hooks/use-job-live-stream";
 import { useJobLogs } from "../hooks/use-job-logs";
 import { TerminalConsole } from "./terminal-console";
-import { TerminalHeader } from "./terminal-header";
 
 interface HistoricLogEntry {
   id: string;

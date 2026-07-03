@@ -42,6 +42,7 @@ export const repositoryDataSchema = z.object({
   readme: z.string().nullable(),
   totalFiles: z.number().int().nonnegative(),
   supportedFiles: z.number().int().nonnegative(),
+  latestJobId: z.uuid().nullable(),
   ignoredFiles: z.number().int().nonnegative(),
   totalFolders: z.number().int().nonnegative(),
   totalSize: z.string(),

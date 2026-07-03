@@ -1,4 +1,4 @@
-import { RepoWorkspaceShell } from "@/features/files/components/repo-workspace-shell";
+import { RepoWorkspaceShell } from "@/features/files/components/repo-workspace-shell-one";
 import { repoQueryFn } from "@/features/repo/hooks/use-repo";
 import { repoFilesQueryFn } from "@/features/repo/hooks/use-repo-files";
 import { repoKeys } from "@/features/repo/query-keys";
@@ -8,7 +8,6 @@ import {
   QueryClient,
 } from "@tanstack/react-query";
 import { type Metadata } from "next";
-import React from "react";
 
 export const metadata: Metadata = {
   title: "Repository Workspace - SummaryX",
@@ -20,9 +19,7 @@ interface RepositoryPageProps {
   params: Promise<{ id: string }>;
 }
 
-export default async function RepositoryPage({
-  params,
-}: RepositoryPageProps): Promise<React.JSX.Element> {
+export default async function RepositoryPage({ params }: RepositoryPageProps) {
   const { id } = await params;
   const queryClient = new QueryClient();
 
