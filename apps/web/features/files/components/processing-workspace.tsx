@@ -1,12 +1,12 @@
 "use client";
 
-import { TerminalHeader } from "@/features/files/components/terminal-header";
 import { TerminalConsole } from "@/features/jobs/components/terminal-console";
 import { useJobLiveStream } from "@/features/jobs/hooks/use-job-live-stream";
 import { useJobLogs } from "@/features/jobs/hooks/use-job-logs";
 import { RepositoryStatus } from "@repo/shared";
 import { useSession } from "next-auth/react";
 import { useMemo } from "react";
+import { ProcessingHeader } from "./processing-header";
 
 interface ProcessingWorkspaceProps {
   repo: {
@@ -27,10 +27,8 @@ export function ProcessingWorkspace({ repo }: ProcessingWorkspaceProps) {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden h-full w-full">
-      <div className="w-full max-w-3xl space-y-4 m-auto p-4 flex flex-col">
-        <TerminalHeader jobId={activeJobId} status={repo.status} />
-        <TerminalConsole messages={allTerminalMessages} />
-      </div>
+      <ProcessingHeader />
+      <TerminalConsole messages={allTerminalMessages} />
     </div>
   );
 }

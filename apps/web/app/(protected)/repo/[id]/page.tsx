@@ -1,4 +1,4 @@
-import { RepoWorkspaceShell } from "@/features/files/components/repo-workspace-shell-one";
+import { RepoWorkspaceShell } from "@/features/files/components/repo-workspace-shell";
 import { repoQueryFn } from "@/features/repo/hooks/use-repo";
 import { repoFilesQueryFn } from "@/features/repo/hooks/use-repo-files";
 import { repoKeys } from "@/features/repo/query-keys";

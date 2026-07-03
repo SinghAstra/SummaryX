@@ -25,7 +25,7 @@ import { Logo } from "./logo";
 
 const navItems = [{ title: "New", url: "/dashboard", icon: Plus }];
 
-const STATUS_BORDER_MAP: Record<RepositoryStatus, string> = {
+export const STATUS_BORDER_MAP: Record<RepositoryStatus, string> = {
   PENDING: "border border-yellow-400 border-2",
   PROCESSING: "border border-yellow-400 border-2",
   COMPLETED: "border border-green-400 border-2",

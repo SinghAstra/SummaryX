@@ -2,7 +2,7 @@
 
 import { useRepository } from "@/features/repo/hooks/use-repo";
 import { REPOSITORY_STATUS } from "@repo/shared";
-import { ProcessingWorkspace } from "./proccessing-workspace";
+import { ProcessingWorkspace } from "./processing-workspace";
 import { RepositoryWorkspace } from "./repo-workspace";
 
 interface RepoWorkspaceShellProps {
