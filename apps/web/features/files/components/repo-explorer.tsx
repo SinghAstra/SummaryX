@@ -72,7 +72,7 @@ export function RepositoryExplorer({
   }, []);
 
   return (
-    <div className="border border-border bg-card/50 rounded flex flex-col shadow-sm overflow-hidden backdrop-blur-sm">
+    <div className="border border-border bg-card/50 rounded flex flex-col shadow-sm h-full overflow-y-auto w-full backdrop-blur-sm">
       <div className="flex-1 p-2">
         {treeNodes.length === 0 ? (
           <div className="h-full flex items-center justify-center text-xs text-muted-foreground/40 font-sans italic select-none py-12">

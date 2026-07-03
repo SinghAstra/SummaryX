@@ -16,9 +16,9 @@ export function RepoWorkspaceShell({ repositoryId }: RepoWorkspaceShellProps) {
     return null;
   }
 
-  if (repo.status !== REPOSITORY_STATUS.COMPLETED) {
-    return <ProcessingWorkspace repo={repo} />;
-  }
+  // if (repo.status !== REPOSITORY_STATUS.COMPLETED) {
+  //   return <ProcessingWorkspace repo={repo} />;
+  // }
 
   return <RepositoryWorkspace repo={repo} />;
 }

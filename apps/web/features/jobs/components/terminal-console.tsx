@@ -4,7 +4,7 @@ interface TerminalConsoleProps {
 
 export function TerminalConsole({ messages }: TerminalConsoleProps) {
   return (
-    <div className="rounded border bg-secondary p-5 font-mono text-xs shadow-inner space-y-2 h-100 overflow-y-auto w-full">
+    <div className="rounded border bg-card/20 p-5 font-mono text-xs shadow-inner space-y-2 h-full overflow-y-auto w-full">
       {messages.map((messageText, index) => (
         <p
           key={index}
