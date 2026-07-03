@@ -1,10 +1,17 @@
 import { prisma } from "@repo/db";
-import { FILE_SUMMARY_STATUS, logError, REPOSITORY_STATUS } from "@repo/shared";
+import {
+  FILE_SUMMARY_STATUS,
+  JOB_STATUS,
+  LOG_LEVEL,
+  logError,
+  REPOSITORY_STATUS,
+} from "@repo/shared";
 import { exec } from "node:child_process";
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
+import { trackProgress } from "../utils/telemetry.js";
 
 const execAsync = promisify(exec);
 
@@ -102,29 +109,51 @@ export const ingestionService = {
     const job = await prisma.job.findUnique({
       where: { id: jobId },
     });
-
     if (!job) return;
 
     const repo = await prisma.repository.findUnique({
       where: { id: job.repositoryId },
     });
-
     if (!repo) return;
 
     try {
-      // 📂 Step 1: Ensure workspace cleanliness on local scratch space
+      await prisma.job.update({
+        where: { id: jobId },
+        data: { status: JOB_STATUS.RUNNING, startedAt: new Date() },
+      });
+
+      await trackProgress({
+        jobId,
+        repositoryId: repo.id,
+        status: JOB_STATUS.RUNNING,
+        logLevel: LOG_LEVEL.INFO,
+        message: "Preparing your workspace...",
+      });
+
       await fs.mkdir(path.dirname(repo.diskPath), { recursive: true });
       await fs.rm(repo.diskPath, { recursive: true, force: true });
 
-      // 📥 Step 2: Execute Shallow Git Clone allocation profile
+      await trackProgress({
+        jobId,
+        repositoryId: repo.id,
+        status: JOB_STATUS.RUNNING,
+        logLevel: LOG_LEVEL.INFO,
+        message: "Downloading your repository files...",
+      });
+
       await execAsync(
         `git clone --depth 1 ${repo.githubUrl} ${repo.diskPath}`,
-        {
-          timeout: 60000,
-        }
+        { timeout: 60000 }
       );
 
-      // 📊 Step 3: Run recursive layout indexing operations
+      await trackProgress({
+        jobId,
+        repositoryId: repo.id,
+        status: JOB_STATUS.RUNNING,
+        logLevel: LOG_LEVEL.INFO,
+        message: "Analyzing project folders and files...",
+      });
+
       const stats: TraversalStats = {
         totalFiles: 0,
         supportedFiles: 0,
@@ -133,10 +162,8 @@ export const ingestionService = {
         totalSize: BigInt(0),
         collectedFiles: [],
       };
-
       await traverseDirectory(repo.diskPath, repo.diskPath, stats);
 
-      // Extract raw readme contents if available on local scratch root
       let readmeContents: string | null = null;
       try {
         readmeContents = await fs.readFile(
@@ -147,10 +174,17 @@ export const ingestionService = {
         logError(error);
       }
 
-      // 🔒 Step 4: Transaction Lock with extended timeout boundaries
+      await trackProgress({
+        jobId,
+        repositoryId: repo.id,
+        status: JOB_STATUS.RUNNING,
+        logLevel: LOG_LEVEL.INFO,
+        message: "Saving project maps to your dashboard...",
+      });
+
       await prisma.$transaction(
         async (tx) => {
-          const updatedRepo = await tx.repository.update({
+          await tx.repository.update({
             where: { id: job.repositoryId },
             data: {
               status: REPOSITORY_STATUS.PROCESSING,
@@ -163,10 +197,8 @@ export const ingestionService = {
             },
           });
 
-          console.log("updatedRepo is ", updatedRepo);
-
           if (stats.collectedFiles.length > 0) {
-            const repoFiles = await tx.repositoryFile.createMany({
+            await tx.repositoryFile.createMany({
               data: stats.collectedFiles.map((file) => ({
                 repositoryId: job.repositoryId,
                 relativePath: file.relativePath,
@@ -177,20 +209,42 @@ export const ingestionService = {
               })),
               skipDuplicates: true,
             });
-
-            console.log("repoFiles is ", repoFiles);
           }
         },
-        {
-          maxWait: 5000,
-          timeout: 30000,
-        }
+        { maxWait: 5000, timeout: 30000 }
       );
+
+      await prisma.job.update({
+        where: { id: jobId },
+        data: { status: JOB_STATUS.COMPLETED, completedAt: new Date() },
+      });
+
+      await trackProgress({
+        jobId,
+        repositoryId: repo.id,
+        status: JOB_STATUS.COMPLETED,
+        logLevel: LOG_LEVEL.INFO,
+        message: "Project setup successful!",
+      });
     } catch (error) {
+      await prisma.job.update({
+        where: { id: jobId },
+        data: { status: JOB_STATUS.FAILED },
+      });
+
       await prisma.repository.update({
         where: { id: job.repositoryId },
         data: { status: REPOSITORY_STATUS.FAILED },
       });
+
+      await trackProgress({
+        jobId,
+        repositoryId: repo.id,
+        status: JOB_STATUS.FAILED,
+        logLevel: LOG_LEVEL.ERROR,
+        message: "Setup failed. Please retry later.",
+      });
+
       logError(error);
       throw error;
     }
