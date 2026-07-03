@@ -2,6 +2,7 @@
 
 import { useRepository } from "@/features/repo/hooks/use-repo";
 import { REPOSITORY_STATUS } from "@repo/shared";
+import { notFound } from "next/navigation";
 import { ProcessingWorkspace } from "./processing-workspace";
 import { RepositoryWorkspace } from "./repo-workspace";
 
@@ -13,12 +14,12 @@ export function RepoWorkspaceShell({ repositoryId }: RepoWorkspaceShellProps) {
   const { data: repo } = useRepository(repositoryId);
 
   if (!repo) {
-    return null;
+    return notFound();
   }
 
-  // if (repo.status !== REPOSITORY_STATUS.COMPLETED) {
-  //   return <ProcessingWorkspace repo={repo} />;
-  // }
+  if (repo.status !== REPOSITORY_STATUS.COMPLETED) {
+    return <ProcessingWorkspace repo={repo} />;
+  }
 
   return <RepositoryWorkspace repo={repo} />;
 }
