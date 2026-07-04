@@ -1,5 +1,6 @@
 import { logError } from "@repo/shared";
 import Groq from "groq-sdk";
+import { getCachedClient } from "./client-cache.js";
 import { classifyError } from "./error-classifier.js";
 import { coolDownKey, getNextKey } from "./key-manager.js";
 import { acquire, release } from "./queue.js";
@@ -15,6 +16,9 @@ const RETRY_CONFIG = {
 const DEFAULT_REQUEST_TIMEOUT_MS = 10000;
 const COOL_DOWN_DURATION_MS = 30000;
 
+/**
+ * Core Request Orchestrator. Keeps signature strictly locked to single runId param.
+ */
 export async function runSimpleAssignment(runId: number): Promise<boolean> {
   const totalTaskStartTime = Date.now();
   const keyInfo = getNextKey();
@@ -26,7 +30,7 @@ export async function runSimpleAssignment(runId: number): Promise<boolean> {
   await acquire(runId);
 
   try {
-    const groq = new Groq({ apiKey: keyInfo.key });
+    const groq: Groq = getCachedClient(keyInfo.key, keyInfo.index);
 
     const response = await executeWithRetry(
       async () => {

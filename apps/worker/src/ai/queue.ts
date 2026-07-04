@@ -1,4 +1,4 @@
-const MAX_CONCURRENT_REQUESTS = 3;
+const MAX_CONCURRENT_REQUESTS = 8;
 let activeRequests = 0;
 
 // Array holding the resolve hooks of sleeping execution tracks (FIFO Queue)
