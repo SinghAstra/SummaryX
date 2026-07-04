@@ -1,68 +1,49 @@
 import { redisConnection } from "../config/redis.js";
-
-const METRICS_KEYS = {
-  TOTAL: "groq:metrics:total",
-  SUCCESS: "groq:metrics:success",
-  FAILURE: "groq:metrics:failure",
-  RETRIES: "groq:metrics:retries",
-  LATENCY_TOTAL: "groq:metrics:latency_total",
-  PEAK_QUEUE: "groq:metrics:peak_queue",
-  coolDowns: "groq:metrics:coolDowns",
-  KEY_COUNTER_PREFIX: "groq:metrics:key_usage:",
-} as const;
+import { getKeyUsageMetricKey, REDIS_KEYS } from "./redis-keys.js";
 
 export interface ClusterMetricsSummary {
-  readonly totalRequests: number;
-  readonly successfulRequests: number;
-  readonly failedRequests: number;
-  readonly retriesCount: number;
-  readonly averageLatencyMs: number;
-  readonly peakQueueLength: number;
-  readonly coolDownsCount: number;
-  readonly requestsPerKey: Record<number, number>;
+  totalRequests: number;
+  successfulRequests: number;
+  failedRequests: number;
+  retriesCount: number;
+  averageLatencyMs: number;
+  peakQueueLength: number;
+  coolDownsCount: number;
+  requestsPerKey: Record<number, number>;
 }
 
-/**
- * Atomic telemetry tracking functions for the cluster state.
- */
 export async function recordRequestStart(keyIndex: number): Promise<void> {
-  await redisConnection.incr(METRICS_KEYS.TOTAL);
-  await redisConnection.incr(`${METRICS_KEYS.KEY_COUNTER_PREFIX}${keyIndex}`);
+  await redisConnection.incr(REDIS_KEYS.TOTAL);
+  await redisConnection.incr(getKeyUsageMetricKey(keyIndex));
 }
 
 export async function recordSuccess(latencyMs: number): Promise<void> {
-  await redisConnection.incr(METRICS_KEYS.SUCCESS);
-  await redisConnection.incrby(METRICS_KEYS.LATENCY_TOTAL, latencyMs);
+  await redisConnection.incr(REDIS_KEYS.SUCCESS);
+  await redisConnection.incrby(REDIS_KEYS.LATENCY_TOTAL, latencyMs);
 }
 
 export async function recordFailure(latencyMs: number): Promise<void> {
-  await redisConnection.incr(METRICS_KEYS.FAILURE);
-  await redisConnection.incrby(METRICS_KEYS.LATENCY_TOTAL, latencyMs);
+  await redisConnection.incr(REDIS_KEYS.FAILURE);
+  await redisConnection.incrby(REDIS_KEYS.LATENCY_TOTAL, latencyMs);
 }
 
 export async function recordRetry(): Promise<void> {
-  await redisConnection.incr(METRICS_KEYS.RETRIES);
+  await redisConnection.incr(REDIS_KEYS.RETRIES);
 }
 
 export async function recordCoolDownTriggered(): Promise<void> {
-  await redisConnection.incr(METRICS_KEYS.coolDowns);
+  await redisConnection.incr(REDIS_KEYS.COOL_DOWN_COUNT);
 }
 
-/**
- * Evaluates queue backpressure using a transaction loop to preserve the maximum peak level seen.
- */
 export async function trackQueueLength(currentLength: number): Promise<void> {
-  const currentPeakString = await redisConnection.get(METRICS_KEYS.PEAK_QUEUE);
+  const currentPeakString = await redisConnection.get(REDIS_KEYS.PEAK_QUEUE);
   const currentPeak = currentPeakString ? parseInt(currentPeakString, 10) : 0;
 
   if (currentLength > currentPeak) {
-    await redisConnection.set(METRICS_KEYS.PEAK_QUEUE, currentLength);
+    await redisConnection.set(REDIS_KEYS.PEAK_QUEUE, currentLength);
   }
 }
 
-/**
- * Resets telemetry data before starting new benchmark tests.
- */
 export async function resetClusterMetrics(): Promise<void> {
   const keys = await redisConnection.keys("groq:metrics:*");
   if (keys.length > 0) {
@@ -70,19 +51,16 @@ export async function resetClusterMetrics(): Promise<void> {
   }
 }
 
-/**
- * Computes live mathematical aggregates across all running nodes in the cluster.
- */
 export async function fetchClusterTelemetry(): Promise<ClusterMetricsSummary> {
   const [total, success, failure, retries, latency, peakQueue, coolDowns] =
     await Promise.all([
-      redisConnection.get(METRICS_KEYS.TOTAL),
-      redisConnection.get(METRICS_KEYS.SUCCESS),
-      redisConnection.get(METRICS_KEYS.FAILURE),
-      redisConnection.get(METRICS_KEYS.RETRIES),
-      redisConnection.get(METRICS_KEYS.LATENCY_TOTAL),
-      redisConnection.get(METRICS_KEYS.PEAK_QUEUE),
-      redisConnection.get(METRICS_KEYS.coolDowns),
+      redisConnection.get(REDIS_KEYS.TOTAL),
+      redisConnection.get(REDIS_KEYS.SUCCESS),
+      redisConnection.get(REDIS_KEYS.FAILURE),
+      redisConnection.get(REDIS_KEYS.RETRIES),
+      redisConnection.get(REDIS_KEYS.LATENCY_TOTAL),
+      redisConnection.get(REDIS_KEYS.PEAK_QUEUE),
+      redisConnection.get(REDIS_KEYS.COOL_DOWN_COUNT),
     ]);
 
   const totalReq = total ? parseInt(total, 10) : 0;
@@ -90,10 +68,7 @@ export async function fetchClusterTelemetry(): Promise<ClusterMetricsSummary> {
   const failReq = failure ? parseInt(failure, 10) : 0;
   const totalLatency = latency ? parseInt(latency, 10) : 0;
 
-  // Compile individual key distribution telemetry logs
-  const keyUsageKeys = await redisConnection.keys(
-    `${METRICS_KEYS.KEY_COUNTER_PREFIX}*`
-  );
+  const keyUsageKeys = await redisConnection.keys("groq:metrics:key_usage:*");
   const requestsPerKey: Record<number, number> = {};
 
   for (const keyPath of keyUsageKeys) {

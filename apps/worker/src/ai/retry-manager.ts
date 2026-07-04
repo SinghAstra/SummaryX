@@ -10,8 +10,7 @@ interface RetryConfig {
 export async function executeWithRetry<T>(
   operation: () => Promise<T>,
   config: RetryConfig,
-  runId: number,
-  totalTaskStartTime: number
+  runId: number
 ): Promise<T> {
   let attempts = 0;
 
@@ -22,7 +21,6 @@ export async function executeWithRetry<T>(
       console.log(
         `[Run ${runId}] 🔄 Retry begins | Attempt ${attempts}/${config.maxRetries}`
       );
-      // 🟢 Telemetry hook
       await recordRetry();
     }
 
@@ -30,8 +28,6 @@ export async function executeWithRetry<T>(
       return await operation();
     } catch (error: unknown) {
       const classification = classifyError(error);
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
 
       console.log(
         `[Run ${runId}] ❌ Execution Failure | Attempt: ${attempts} | Class: ${classification.label}`
