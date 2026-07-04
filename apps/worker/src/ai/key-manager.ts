@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 import { redisConnection } from "../config/redis.js";
 import { recordCoolDownTriggered } from "./metrics.js";
+import { getCoolDownKeyPath } from "./redis-keys.js";
 
 dotenv.config();
 
@@ -26,13 +27,12 @@ export async function coolDownKey(
   index: number,
   durationMs: number
 ): Promise<void> {
-  const redisKey = `groq:key_cooldown:${index}`;
+  const redisKey = getCoolDownKeyPath(index);
   await redisConnection.set(redisKey, "COOLDOWN_ACTIVE", "PX", durationMs);
 
-  // 🟢 Telemetry hook
   await recordCoolDownTriggered();
   console.log(
-    `🔒 [Shared Key Registry] Index ${index} flagged as unhealthy across cluster.`
+    `🔒 [Shared Key Registry] Index ${index} flagged as cool_down status across cluster.`
   );
 }
 
@@ -42,7 +42,7 @@ export async function getNextKey(): Promise<RotatedKeyResult> {
   for (let i = 0; i < poolLength; i++) {
     const checkIndex = (currentRotationIndex + i) % poolLength;
     const key = apiKeysPool[checkIndex];
-    const redisKey = `groq:key_cooldown:${checkIndex}`;
+    const redisKey = getCoolDownKeyPath(checkIndex);
 
     const isCooledDown = await redisConnection.exists(redisKey);
 
