@@ -1,6 +1,7 @@
 import { logError } from "@repo/shared";
 import dotenv from "dotenv";
 import Groq from "groq-sdk";
+import { acquire, release } from "./queue.js";
 import { executeWithRetry } from "./retry-manager.js";
 import { withTimeout } from "./timeout.js";
 
@@ -23,11 +24,10 @@ const RETRY_CONFIG = {
 } as const;
 
 const DEFAULT_REQUEST_TIMEOUT_MS = 10000;
-const MAX_CONCURRENT_REQUESTS = 3;
 
-let activeRequests = 0;
-const requestQueue: (() => void)[] = [];
-
+/**
+ * Core Request Orchestrator. Completely clean of underlying state calculations.
+ */
 export async function runSimpleAssignment(
   runId: number,
   timeoutOverrideMs?: number
@@ -39,15 +39,8 @@ export async function runSimpleAssignment(
     `[Run ${runId}] 📡 Request starts | Initiated total track context.`
   );
 
-  if (activeRequests >= MAX_CONCURRENT_REQUESTS) {
-    console.log(`[Run ${runId}] 💤 No free slot. Request enters queue...`);
-    await new Promise<void>((resolve) => {
-      requestQueue.push(resolve);
-    });
-    console.log(`[Run ${runId}] 🔓 Slot available. Request leaves queue.`);
-  }
-
-  activeRequests++;
+  // 🟢 Step 1: Claim concurrency allocation slot externally
+  await acquire(runId);
 
   try {
     const response = await executeWithRetry(
@@ -83,12 +76,7 @@ export async function runSimpleAssignment(
     logError(error);
     return false;
   } finally {
-    activeRequests--;
-    if (requestQueue.length > 0) {
-      const nextJobResolver = requestQueue.shift();
-      if (nextJobResolver) {
-        nextJobResolver();
-      }
-    }
+    // 🟢 Step 2: Ensure release hook is safely reached inside terminal blocks
+    release();
   }
 }
