@@ -1,6 +1,7 @@
 import { logError } from "@repo/shared";
 import dotenv from "dotenv";
 import Groq from "groq-sdk";
+import { classifyError } from "./error-classifier.js";
 
 dotenv.config();
 
@@ -99,34 +100,23 @@ export async function runSimpleAssignment(runId: number): Promise<boolean> {
         );
         return true;
       } catch (error: unknown) {
-        // Cast to an indexed object type to bypass explicit 'any' rules safely
-        const apiError = error as { status?: number; message?: string };
-        const errorMessage = apiError.message || String(error);
-        const errorStatus = apiError.status;
-
-        const isTimeout = errorMessage.includes("REQUEST_TIMEOUT");
-        const isTransient =
-          isTimeout || errorStatus === 429 || errorMessage.includes("429");
-        const errorLabel = isTimeout
-          ? "TIMEOUT"
-          : `HTTP_${errorStatus || "429"}`;
+        const classification = classifyError(error);
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
 
         console.log(
-          `[Run ${runId}] ❌ Execution Failure | Attempt: ${attempts}/${MAX_RETRIES} | Class: ${errorLabel}`
+          `[Run ${runId}] ❌ Execution Failure | Attempt: ${attempts}/${MAX_RETRIES} | Class: ${classification.label}`
         );
 
-        if (!isTransient || attempts >= MAX_RETRIES) {
+        if (classification.isPermanent || attempts >= MAX_RETRIES) {
           const totalExecutionTimeSec = (
             (Date.now() - totalTaskStartTime) /
             1000
           ).toFixed(2);
-
-          // 📋 Log: Request fails permanently
           console.log(
             `[Run ${runId}] 🚨 Request fails permanently | Closed on attempt ${attempts} | Final Elapsed Time: ${totalExecutionTimeSec}s | Details: ${errorMessage}`
           );
 
-          // Invoke shared domain telemetry error mapping handler
           logError(error);
           return false;
         }
@@ -134,7 +124,6 @@ export async function runSimpleAssignment(runId: number): Promise<boolean> {
         const exponentialDelay = BACKOFF_BASE_MS * Math.pow(2, attempts - 1);
         const finalWait = Math.min(MAX_BACKOFF_MS, exponentialDelay);
 
-        // 📋 Log: Backoff starts
         console.log(
           `[Run ${runId}] ⏳ Backoff starts | Suspending thread context for next ${
             finalWait / 1000
@@ -146,9 +135,7 @@ export async function runSimpleAssignment(runId: number): Promise<boolean> {
     }
     return false;
   } finally {
-    // 🟢 Step 3: Free Slot & Release the Next Job
     activeRequests--;
-
     if (requestQueue.length > 0) {
       const nextJobResolver = requestQueue.shift();
       if (nextJobResolver) {
