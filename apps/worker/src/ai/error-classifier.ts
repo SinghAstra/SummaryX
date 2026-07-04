@@ -7,6 +7,9 @@ export interface ErrorClassification {
   readonly label: string;
 }
 
+/**
+ * Pure functional utility to parse and classify incoming exceptions.
+ */
 export function classifyError(error: unknown): ErrorClassification {
   const apiError = error as {
     status?: number;
