@@ -21,7 +21,7 @@ const COOL_DOWN_DURATION_MS = 30000;
  */
 export async function runSimpleAssignment(runId: number): Promise<boolean> {
   const totalTaskStartTime = Date.now();
-  const keyInfo = getNextKey();
+  const keyInfo = await getNextKey();
 
   console.log(
     `[Run ${runId}] 📡 Request starts | Checked out API Key Index: ${keyInfo.index}`

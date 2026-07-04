@@ -1,23 +1,15 @@
 import dotenv from "dotenv";
+import { redisConnection } from "../config/redis.js";
 
 dotenv.config();
 
-interface ApiKeyStatus {
-  readonly key: string;
-  coolDownExpiry: number;
-}
-
 const rawKeysString = process.env.GROQ_API_KEY || "";
 
-// Transform the split string collection into mutable state tracks
-const apiKeysPool: ApiKeyStatus[] = rawKeysString
+// Maintain a static reference list of keys mapped out from the environment
+const apiKeysPool: readonly string[] = rawKeysString
   .split(",")
   .map((key) => key.trim())
-  .filter((key) => key.length > 0)
-  .map((key) => ({
-    key,
-    coolDownExpiry: 0,
-  }));
+  .filter((key) => key.length > 0);
 
 if (apiKeysPool.length === 0) {
   throw new Error(
@@ -33,53 +25,56 @@ export interface RotatedKeyResult {
 }
 
 /**
- * Places a specific key index on coolDown until the calculated expiry threshold settles.
+ * Places a key index on a shared cluster-wide cooldown using Redis TTL keys.
  */
-export function coolDownKey(index: number, durationMs: number): void {
-  const keyState = apiKeysPool[index];
-  if (keyState) {
-    keyState.coolDownExpiry = Date.now() + durationMs;
-    console.log(
-      `🔒 [Key Registry] Index ${index} entered cooldown state for next ${
-        durationMs / 1000
-      }s.`
-    );
-  }
+export async function coolDownKey(
+  index: number,
+  durationMs: number
+): Promise<void> {
+  const redisKey = `groq:key_cooldown:${index}`;
+  await redisConnection.set(redisKey, "COOLDOWN_ACTIVE", "PX", durationMs);
+  console.log(
+    `🔒 [Shared Key Registry] Index ${index} flagged as unhealthy across cluster for next ${
+      durationMs / 1000
+    }s.`
+  );
 }
 
 /**
- * Round-Robin key selection utility.
- * Automatically skips unhealthy keys that are inside an active coolDown window.
+ * Distributed Round-Robin key selection utility.
+ * Asynchronously cross-references active Redis keys to bypass throttled tokens instantly.
  */
-export function getNextKey(): RotatedKeyResult {
+export async function getNextKey(): Promise<RotatedKeyResult> {
   const poolLength = apiKeysPool.length;
-  const now = Date.now();
 
-  // Scan the array pool starting from our current rotation pointer position
   for (let i = 0; i < poolLength; i++) {
     const checkIndex = (currentRotationIndex + i) % poolLength;
-    const keyState = apiKeysPool[checkIndex];
+    const key = apiKeysPool[checkIndex];
+    const redisKey = `groq:key_cooldown:${checkIndex}`;
 
-    if (keyState && now >= keyState.coolDownExpiry) {
-      // Key is healthy! Claim it, advance the master index pointer, and return
+    // Query the shared cluster state to see if this specific index is cooling down
+    const isCooledDown = await redisConnection.exists(redisKey);
+
+    if (isCooledDown === 0 && key) {
+      // Key is healthy globally! Claim it and advance rotation pointers
       currentRotationIndex = (checkIndex + 1) % poolLength;
-      return { key: keyState.key, index: checkIndex };
+      return { key, index: checkIndex };
     }
   }
 
-  // Fallback safety gate: If all keys are cooling down, do not stall the thread.
-  // Pull the next round-robin key anyway, allowing retry managers to handle backoffs.
   const fallbackIndex = currentRotationIndex;
   currentRotationIndex = (currentRotationIndex + 1) % poolLength;
 
   console.log(
-    `⚠️ [Key Registry] All keys are cooling down. Falling back to Index ${fallbackIndex}.`
+    `⚠️ [Shared Key Registry] All keys are cooling down globally. Falling back to Index ${fallbackIndex}.`
   );
 
   const fallbackKey = apiKeysPool[fallbackIndex];
   if (!fallbackKey) {
-    throw new Error("GROQ_KEY_ERROR: Fallback tracking resolution failed.");
+    throw new Error(
+      "GROQ_KEY_ERROR: Shared fallback tracking resolution failed."
+    );
   }
 
-  return { key: fallbackKey.key, index: fallbackIndex };
+  return { key: fallbackKey, index: fallbackIndex };
 }
