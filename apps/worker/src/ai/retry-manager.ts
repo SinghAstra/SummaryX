@@ -10,7 +10,8 @@ interface RetryConfig {
 export async function executeWithRetry<T>(
   operation: () => Promise<T>,
   config: RetryConfig,
-  runId: number
+  runId: number,
+  totalTaskStartTime: number
 ): Promise<T> {
   let attempts = 0;
 
@@ -28,6 +29,8 @@ export async function executeWithRetry<T>(
       return await operation();
     } catch (error: unknown) {
       const classification = classifyError(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
 
       console.log(
         `[Run ${runId}] ❌ Execution Failure | Attempt: ${attempts} | Class: ${classification.label}`

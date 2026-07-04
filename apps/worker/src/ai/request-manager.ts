@@ -15,7 +15,7 @@ const RETRY_CONFIG = {
 } as const;
 
 const DEFAULT_REQUEST_TIMEOUT_MS = 10000;
-const COOLDOWN_DURATION_MS = 30000;
+const COOL_DOWN_DURATION_MS = 30000;
 
 export async function runSimpleAssignment(runId: number): Promise<boolean> {
   const totalTaskStartTime = Date.now();
@@ -51,7 +51,7 @@ export async function runSimpleAssignment(runId: number): Promise<boolean> {
         } catch (error: unknown) {
           const classification = classifyError(error);
           if (classification.isRateLimit) {
-            await coolDownKey(keyInfo.index, COOLDOWN_DURATION_MS);
+            await coolDownKey(keyInfo.index, COOL_DOWN_DURATION_MS);
           }
           throw error;
         }
