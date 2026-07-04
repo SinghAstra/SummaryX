@@ -15,8 +15,37 @@ if (apiKeysPool.length === 0) {
   );
 }
 
-console.log("apiKeysPool is ", apiKeysPool);
+// 🟢 In-memory pointer to track traffic distribution states
+let currentRotationIndex = 0;
 
+export interface RotatedKeyResult {
+  readonly key: string;
+  readonly index: number;
+}
+
+/**
+ * Returns the read-only array of all configured API keys.
+ */
 export function getApiKeys(): readonly string[] {
   return apiKeysPool;
+}
+
+/**
+ * 🟢 Round-Robin key selection utility.
+ * Sequentially selects the next available key from the memory collection array.
+ */
+export function getNextKey(): RotatedKeyResult {
+  const index = currentRotationIndex;
+  const key = apiKeysPool[index];
+
+  if (!key) {
+    throw new Error(
+      "GROQ_KEY_ERROR: Selected key index evaluates to undefined."
+    );
+  }
+
+  // Advance pointer and wrap around smoothly using modulo arithmetic balances
+  currentRotationIndex = (currentRotationIndex + 1) % apiKeysPool.length;
+
+  return { key, index };
 }
