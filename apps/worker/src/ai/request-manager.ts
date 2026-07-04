@@ -3,6 +3,7 @@ import Groq from "groq-sdk";
 import { getCachedClient } from "./client-cache.js";
 import { classifyError } from "./error-classifier.js";
 import { coolDownKey, getNextKey } from "./key-manager.js";
+import { recordFailure, recordRequestStart, recordSuccess } from "./metrics.js";
 import { acquire, release } from "./queue.js";
 import { executeWithRetry } from "./retry-manager.js";
 import { withTimeout } from "./timeout.js";
@@ -14,14 +15,13 @@ const RETRY_CONFIG = {
 } as const;
 
 const DEFAULT_REQUEST_TIMEOUT_MS = 10000;
-const COOL_DOWN_DURATION_MS = 30000;
+const COOLDOWN_DURATION_MS = 30000;
 
-/**
- * Core Request Orchestrator. Keeps signature strictly locked to single runId param.
- */
 export async function runSimpleAssignment(runId: number): Promise<boolean> {
   const totalTaskStartTime = Date.now();
   const keyInfo = await getNextKey();
+
+  await recordRequestStart(keyInfo.index);
 
   console.log(
     `[Run ${runId}] 📡 Request starts | Checked out API Key Index: ${keyInfo.index}`
@@ -51,7 +51,7 @@ export async function runSimpleAssignment(runId: number): Promise<boolean> {
         } catch (error: unknown) {
           const classification = classifyError(error);
           if (classification.isRateLimit) {
-            coolDownKey(keyInfo.index, COOL_DOWN_DURATION_MS);
+            await coolDownKey(keyInfo.index, COOLDOWN_DURATION_MS);
           }
           throw error;
         }
@@ -61,18 +61,13 @@ export async function runSimpleAssignment(runId: number): Promise<boolean> {
       totalTaskStartTime
     );
 
-    const totalExecutionTimeSec = (
-      (Date.now() - totalTaskStartTime) /
-      1000
-    ).toFixed(2);
-    console.log(
-      `[Run ${runId}] ✅ Request succeeds | Used Key Index: ${keyInfo.index} | Total Time: ${totalExecutionTimeSec}s`
-    );
+    await recordSuccess(Date.now() - totalTaskStartTime);
     return true;
   } catch (error: unknown) {
+    await recordFailure(Date.now() - totalTaskStartTime);
     logError(error);
     return false;
   } finally {
-    release();
+    await release();
   }
 }

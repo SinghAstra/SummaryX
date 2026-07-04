@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { queueSubscriber, redisConnection } from "../config/redis.js";
+import { trackQueueLength } from "./metrics.js";
 
 const MAX_CONCURRENT_REQUESTS = 3;
 
@@ -11,7 +12,6 @@ const REDIS_KEYS = {
 
 const pendingResolvers = new Map<string, () => void>();
 
-// Permanent global multiplexing listener for distributed wakeups
 queueSubscriber.on("message", (channel: string, message: string): void => {
   if (message === "RELEASE_RELEASE") {
     const resolve = pendingResolvers.get(channel);
@@ -23,10 +23,6 @@ queueSubscriber.on("message", (channel: string, message: string): void => {
   }
 });
 
-/**
- * 🟢 Production Self-Healing Initialization
- * Clears orphaned counters from dead processes on worker startup.
- */
 async function initializeDistributedQueue(): Promise<void> {
   try {
     await redisConnection.del(REDIS_KEYS.ACTIVE_COUNT);
@@ -42,12 +38,8 @@ async function initializeDistributedQueue(): Promise<void> {
   }
 }
 
-// Fire the self-healing routine immediately upon module loading
 void initializeDistributedQueue();
 
-/**
- * Claims a global concurrency slot across horizontal worker systems using atomic Redis operations.
- */
 export async function acquire(runId: number): Promise<void> {
   const currentActive = await redisConnection.incr(REDIS_KEYS.ACTIVE_COUNT);
 
@@ -58,7 +50,6 @@ export async function acquire(runId: number): Promise<void> {
     return;
   }
 
-  // Saturated capacity: correct the increment register state
   await redisConnection.decr(REDIS_KEYS.ACTIVE_COUNT);
 
   const uniqueWorkerToken = crypto.randomUUID();
@@ -69,6 +60,11 @@ export async function acquire(runId: number): Promise<void> {
   );
 
   await redisConnection.rpush(REDIS_KEYS.QUEUE_LIST, uniqueWorkerToken);
+
+  // 🟢 Telemetry hook: check the live array length and update the peak metric gauge
+  const currentQueueLength = await redisConnection.llen(REDIS_KEYS.QUEUE_LIST);
+  await trackQueueLength(currentQueueLength);
+
   await queueSubscriber.subscribe(privateChannel);
 
   await new Promise<void>((resolve) => {
@@ -80,9 +76,6 @@ export async function acquire(runId: number): Promise<void> {
   );
 }
 
-/**
- * Releases the global concurrency slot or hands it off to the next waiting process token.
- */
 export async function release(): Promise<void> {
   const nextWaitingWorkerToken = await redisConnection.lpop(
     REDIS_KEYS.QUEUE_LIST
