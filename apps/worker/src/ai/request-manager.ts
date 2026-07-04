@@ -1,6 +1,8 @@
 import { logError } from "@repo/shared";
 import Groq from "groq-sdk";
+import { redisConnection } from "../config/redis.js";
 import { getCachedClient } from "./client-cache.js";
+import { ENGINE_CONFIG, REDIS_KEYS } from "./constants.js";
 import { classifyError } from "./error-classifier.js";
 import { coolDownKey, getNextKey } from "./key-manager.js";
 import { recordFailure, recordRequestStart, recordSuccess } from "./metrics.js";
@@ -8,34 +10,38 @@ import { acquire, release } from "./queue.js";
 import { executeWithRetry } from "./retry-manager.js";
 import { withTimeout } from "./timeout.js";
 
-const RETRY_CONFIG = {
-  backoffBaseMs: 1000,
-  maxBackoffMs: 5 * 60 * 1000,
-  maxRetries: 10,
-} as const;
-
-const DEFAULT_REQUEST_TIMEOUT_MS = 10000;
-const COOL_DOWN_DURATION_MS = 30000;
-
+/**
+ * Core Orchestrator entry point enforcing perfect Visual Parity specifications across all output streams.
+ */
 export async function runSimpleAssignment(runId: number): Promise<boolean> {
   const totalTaskStartTime = Date.now();
-  const keyInfo = await getNextKey();
 
-  await recordRequestStart(keyInfo.index);
+  const initialActive = await redisConnection
+    .get(REDIS_KEYS.ACTIVE_COUNT)
+    .then((v) => (v ? parseInt(v, 10) : 0));
+  const initialQueue = await redisConnection.llen(REDIS_KEYS.QUEUE_LIST);
+  const startTimeSec = ((Date.now() - totalTaskStartTime) / 1000).toFixed(2);
 
   console.log(
-    `[Run ${runId}] 📡 Request starts | Checked out API Key Index: ${keyInfo.index}`
+    `[Run ${runId}] 📡 START | Key Index: TBD | Result: N/A | Active Slots: ${initialActive}/${ENGINE_CONFIG.MAX_CONCURRENT_REQUESTS} | Queue Size: ${initialQueue} | Time: ${startTimeSec}s`
   );
 
-  await acquire(runId);
+  await acquire(runId, totalTaskStartTime);
+
+  let finalResolvedKeyIndex = 0;
 
   try {
-    const groq: Groq = getCachedClient(keyInfo.key, keyInfo.index);
+    const outcome = await executeWithRetry(
+      async (attempt: number) => {
+        const keyInfo = await getNextKey();
+        finalResolvedKeyIndex = keyInfo.index;
 
-    const response = await executeWithRetry(
-      async () => {
+        await recordRequestStart(keyInfo.index);
+
+        const groq: Groq = getCachedClient(keyInfo.key, keyInfo.index);
+
         try {
-          return await withTimeout(
+          const res = await withTimeout(
             groq.chat.completions.create({
               model: "llama-3.1-8b-instant",
               messages: [
@@ -46,26 +52,68 @@ export async function runSimpleAssignment(runId: number): Promise<boolean> {
               ],
               temperature: 0.1,
             }),
-            DEFAULT_REQUEST_TIMEOUT_MS
+            ENGINE_CONFIG.DEFAULT_REQUEST_TIMEOUT_MS
           );
+          return { data: res, keyIndex: keyInfo.index };
         } catch (error: unknown) {
           const classification = classifyError(error);
           if (classification.isRateLimit) {
-            await coolDownKey(keyInfo.index, COOL_DOWN_DURATION_MS);
+            await coolDownKey(
+              keyInfo.index,
+              ENGINE_CONFIG.COOL_DOWN_DURATION_MS
+            );
           }
-          throw error;
+          throw { originalError: error, keyIndex: keyInfo.index };
         }
       },
-      RETRY_CONFIG,
       runId,
       totalTaskStartTime
     );
 
+    const totalExecutionTimeSec = (
+      (Date.now() - totalTaskStartTime) /
+      1000
+    ).toFixed(2);
     await recordSuccess(Date.now() - totalTaskStartTime);
+
+    const successActive = await redisConnection
+      .get(REDIS_KEYS.ACTIVE_COUNT)
+      .then((v) => (v ? parseInt(v, 10) : 0));
+    const successQueue = await redisConnection.llen(REDIS_KEYS.QUEUE_LIST);
+
+    console.log(
+      `[Run ${runId}] ✅ SUCCESS | Key Index: ${
+        outcome.keyIndex
+      } | Result: "${outcome.data.choices[0]?.message?.content?.trim()}" | Active Slots: ${successActive}/${
+        ENGINE_CONFIG.MAX_CONCURRENT_REQUESTS
+      } | Queue Size: ${successQueue} | Time: ${totalExecutionTimeSec}s`
+    );
     return true;
   } catch (error: unknown) {
+    const totalExecutionTimeSec = (
+      (Date.now() - totalTaskStartTime) /
+      1000
+    ).toFixed(2);
     await recordFailure(Date.now() - totalTaskStartTime);
-    logError(error);
+
+    const contextError = error as {
+      originalError?: unknown;
+      keyIndex?: number;
+    };
+    const actualException = contextError.originalError || error;
+    logError(actualException);
+
+    const failureActive = await redisConnection
+      .get(REDIS_KEYS.ACTIVE_COUNT)
+      .then((v) => (v ? parseInt(v, 10) : 0));
+    const failureQueue = await redisConnection.llen(REDIS_KEYS.QUEUE_LIST);
+
+    const apiError = actualException as { message?: string };
+    const errorMessage = apiError.message || String(actualException);
+
+    console.log(
+      `[Run ${runId}] 🚨 FATAL | Key Index: ${finalResolvedKeyIndex} | Result: "${errorMessage}" | Active Slots: ${failureActive}/${ENGINE_CONFIG.MAX_CONCURRENT_REQUESTS} | Queue Size: ${failureQueue} | Time: ${totalExecutionTimeSec}s`
+    );
     return false;
   } finally {
     await release();

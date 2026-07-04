@@ -1,9 +1,8 @@
 import crypto from "node:crypto";
 import { queueSubscriber, redisConnection } from "../config/redis.js";
+import { ENGINE_CONFIG, getQueueChannelKey, REDIS_KEYS } from "./constants.js";
+import { peekNextKeyIndex } from "./key-manager.js";
 import { trackQueueLength } from "./metrics.js";
-import { getQueueChannelKey, REDIS_KEYS } from "./redis-keys.js";
-
-const MAX_CONCURRENT_REQUESTS = 8;
 
 const pendingResolvers = new Map<string, () => void>();
 
@@ -35,12 +34,18 @@ async function initializeDistributedQueue(): Promise<void> {
 
 void initializeDistributedQueue();
 
-export async function acquire(runId: number): Promise<void> {
+export async function acquire(
+  runId: number,
+  totalTaskStartTime: number
+): Promise<void> {
   const currentActive = await redisConnection.incr(REDIS_KEYS.ACTIVE_COUNT);
+  const nextEstimatedIndex = peekNextKeyIndex();
 
-  if (currentActive <= MAX_CONCURRENT_REQUESTS) {
+  if (currentActive <= ENGINE_CONFIG.MAX_CONCURRENT_REQUESTS) {
+    const queueSize = await redisConnection.llen(REDIS_KEYS.QUEUE_LIST);
+    const timeSec = ((Date.now() - totalTaskStartTime) / 1000).toFixed(2);
     console.log(
-      `[Run ${runId}] 🟢 Slot claimed instantly via shared Redis connection.`
+      `[Run ${runId}] 🟢 CLAIMED | Key Index: ${nextEstimatedIndex} | Result: N/A | Active Slots: ${currentActive}/${ENGINE_CONFIG.MAX_CONCURRENT_REQUESTS} | Queue Size: ${queueSize} | Time: ${timeSec}s`
     );
     return;
   }
@@ -50,14 +55,15 @@ export async function acquire(runId: number): Promise<void> {
   const uniqueWorkerToken = crypto.randomUUID();
   const privateChannel = getQueueChannelKey(uniqueWorkerToken);
 
-  console.log(
-    `[Run ${runId}] 💤 Capacity saturated. Adding token to distributed Redis queue...`
-  );
-
   await redisConnection.rpush(REDIS_KEYS.QUEUE_LIST, uniqueWorkerToken);
 
   const currentQueueLength = await redisConnection.llen(REDIS_KEYS.QUEUE_LIST);
   await trackQueueLength(currentQueueLength);
+
+  const queueTimeSec = ((Date.now() - totalTaskStartTime) / 1000).toFixed(2);
+  console.log(
+    `[Run ${runId}] 💤 QUEUED | Key Index: ${nextEstimatedIndex} | Result: N/A | Active Slots: ${ENGINE_CONFIG.MAX_CONCURRENT_REQUESTS}/${ENGINE_CONFIG.MAX_CONCURRENT_REQUESTS} | Queue Size: ${currentQueueLength} | Time: ${queueTimeSec}s`
+  );
 
   await queueSubscriber.subscribe(privateChannel);
 
@@ -65,8 +71,14 @@ export async function acquire(runId: number): Promise<void> {
     pendingResolvers.set(privateChannel, resolve);
   });
 
+  const postActive = await redisConnection
+    .get(REDIS_KEYS.ACTIVE_COUNT)
+    .then((v) => (v ? parseInt(v, 10) : 0));
+  const postQueueSize = await redisConnection.llen(REDIS_KEYS.QUEUE_LIST);
+  const releaseTimeSec = ((Date.now() - totalTaskStartTime) / 1000).toFixed(2);
+
   console.log(
-    `[Run ${runId}] 🔓 Token released from Redis List. Continuing execution loop.`
+    `[Run ${runId}] 🔓 RELEASED | Key Index: ${nextEstimatedIndex} | Result: N/A | Active Slots: ${postActive}/${ENGINE_CONFIG.MAX_CONCURRENT_REQUESTS} | Queue Size: ${postQueueSize} | Time: ${releaseTimeSec}s`
   );
 }
 

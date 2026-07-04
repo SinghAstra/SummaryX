@@ -1,15 +1,15 @@
 import { redisConnection } from "../config/redis.js";
-import { getKeyUsageMetricKey, REDIS_KEYS } from "./redis-keys.js";
+import { getKeyUsageMetricKey, REDIS_KEYS } from "./constants.js";
 
 export interface ClusterMetricsSummary {
-  totalRequests: number;
-  successfulRequests: number;
-  failedRequests: number;
-  retriesCount: number;
-  averageLatencyMs: number;
-  peakQueueLength: number;
-  coolDownsCount: number;
-  requestsPerKey: Record<number, number>;
+  readonly totalRequests: number;
+  readonly successfulRequests: number;
+  readonly failedRequests: number;
+  readonly retriesCount: number;
+  readonly averageLatencyMs: number;
+  readonly peakQueueLength: number;
+  readonly coolDownsCount: number;
+  readonly requestsPerKey: Record<number, number>;
 }
 
 export async function recordRequestStart(keyIndex: number): Promise<void> {

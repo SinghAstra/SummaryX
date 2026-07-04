@@ -8,7 +8,7 @@ export interface ErrorClassification {
 }
 
 /**
- * Pure functional utility to parse and classify incoming exceptions.
+ * Pure functional utility to parse and classify incoming execution errors.
  */
 export function classifyError(error: unknown): ErrorClassification {
   const apiError = error as {

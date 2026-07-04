@@ -1,7 +1,18 @@
 /**
- * Strict structural single source of truth for all distributed Redis keys.
- * Banish hardcoded strings across modules completely.
+ * Global configurations and shared Redis state layout schemas.
+ * Replaces all local variable duplicates across the entire pipeline.
  */
+export const ENGINE_CONFIG = {
+  MAX_CONCURRENT_REQUESTS: 8,
+  DEFAULT_REQUEST_TIMEOUT_MS: 10000,
+  COOL_DOWN_DURATION_MS: 30000,
+  RETRY: {
+    backoffBaseMs: 1000,
+    maxBackoffMs: 5 * 60 * 1000,
+    maxRetries: 10,
+  },
+} as const;
+
 export const REDIS_KEYS = {
   ACTIVE_COUNT: "groq:active_requests",
   QUEUE_LIST: "groq:queue_list",
@@ -15,21 +26,21 @@ export const REDIS_KEYS = {
 } as const;
 
 /**
- * Generates a private pub/sub lane string wrapper for a sleeping task token.
+ * Returns a private channel name string for a sleeping queue token context.
  */
 export function getQueueChannelKey(workerToken: string): string {
   return `groq:queue_channel:${workerToken}`;
 }
 
 /**
- * Generates a shared cluster-wide key tracking individual key index locks.
+ * Returns a shared cluster key tracking individual token index cooldowns.
  */
 export function getCoolDownKeyPath(keyIndex: number): string {
   return `groq:cool_down:${keyIndex}`;
 }
 
 /**
- * Generates a telemetry tracking key for a specific token index signature.
+ * Returns a telemetry key for a specific API token index signature.
  */
 export function getKeyUsageMetricKey(keyIndex: number): string {
   return `groq:metrics:key_usage:${keyIndex}`;

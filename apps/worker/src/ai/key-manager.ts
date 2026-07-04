@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 import { redisConnection } from "../config/redis.js";
+import { getCoolDownKeyPath } from "./constants.js";
 import { recordCoolDownTriggered } from "./metrics.js";
-import { getCoolDownKeyPath } from "./redis-keys.js";
 
 dotenv.config();
 
@@ -23,12 +23,16 @@ export interface RotatedKeyResult {
   readonly index: number;
 }
 
+export function peekNextKeyIndex(): number {
+  return currentRotationIndex;
+}
+
 export async function coolDownKey(
   index: number,
   durationMs: number
 ): Promise<void> {
   const redisKey = getCoolDownKeyPath(index);
-  await redisConnection.set(redisKey, "COOLDOWN_ACTIVE", "PX", durationMs);
+  await redisConnection.set(redisKey, "COOL_DOWN_ACTIVE", "PX", durationMs);
 
   await recordCoolDownTriggered();
   console.log(
