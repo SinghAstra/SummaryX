@@ -1,21 +1,21 @@
 import { logError } from "@repo/shared";
-import dotenv from "dotenv";
 import Groq from "groq-sdk";
+import { getApiKeys } from "./key-manager.js";
 import { acquire, release } from "./queue.js";
 import { executeWithRetry } from "./retry-manager.js";
 import { withTimeout } from "./timeout.js";
 
-dotenv.config();
+const keys = getApiKeys();
+const primaryApiKey = keys[0];
 
-const apiKey = process.env.GROQ_API_KEY;
-
-if (!apiKey) {
+if (!primaryApiKey) {
   throw new Error(
-    "GROQ_CONFIG_ERROR: No Groq API key detected in environment variables."
+    "GROQ_CONFIG_ERROR: Primary API key is missing from the keys pool."
   );
 }
 
-const groq = new Groq({ apiKey });
+// Initialize the client with the first parsed key string
+const groq = new Groq({ apiKey: primaryApiKey });
 
 const RETRY_CONFIG = {
   backoffBaseMs: 1000,
@@ -26,20 +26,15 @@ const RETRY_CONFIG = {
 const DEFAULT_REQUEST_TIMEOUT_MS = 10000;
 
 /**
- * Core Request Orchestrator. Completely clean of underlying state calculations.
+ * Core Request Orchestrator leveraging the environment-driven multi-key pool shell.
  */
-export async function runSimpleAssignment(
-  runId: number,
-  timeoutOverrideMs?: number
-): Promise<boolean> {
+export async function runSimpleAssignment(runId: number): Promise<boolean> {
   const totalTaskStartTime = Date.now();
-  const currentTimeoutWindow = timeoutOverrideMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
 
   console.log(
-    `[Run ${runId}] 📡 Request starts | Initiated total track context.`
+    `[Run ${runId}] 📡 Request starts | Total Loaded Keys: ${keys.length} | Using Key Index 0`
   );
 
-  // 🟢 Step 1: Claim concurrency allocation slot externally
   await acquire(runId);
 
   try {
@@ -56,7 +51,7 @@ export async function runSimpleAssignment(
             ],
             temperature: 0.1,
           }),
-          currentTimeoutWindow
+          DEFAULT_REQUEST_TIMEOUT_MS
         );
       },
       RETRY_CONFIG,
@@ -76,7 +71,6 @@ export async function runSimpleAssignment(
     logError(error);
     return false;
   } finally {
-    // 🟢 Step 2: Ensure release hook is safely reached inside terminal blocks
     release();
   }
 }
