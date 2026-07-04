@@ -1,7 +1,7 @@
 import { logError } from "@repo/shared";
 import dotenv from "dotenv";
 import Groq from "groq-sdk";
-import { classifyError } from "./error-classifier.js";
+import { executeWithRetry } from "./retry-manager.js";
 
 dotenv.config();
 
@@ -15,14 +15,17 @@ if (!apiKey) {
 
 const groq = new Groq({ apiKey });
 
-const BACKOFF_BASE_MS = 1000;
-const MAX_BACKOFF_MS = 5 * 60 * 1000;
-const MAX_RETRIES = 10;
+// Centralized Constants Passed to Drivers
+const RETRY_CONFIG = {
+  backoffBaseMs: 1000,
+  maxBackoffMs: 5 * 60 * 1000,
+  maxRetries: 10,
+} as const;
+
 const REQUEST_TIMEOUT_MS = 10000;
-
 const MAX_CONCURRENT_REQUESTS = 3;
-let activeRequests = 0;
 
+let activeRequests = 0;
 const requestQueue: (() => void)[] = [];
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
@@ -38,44 +41,32 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
   ]);
 }
 
+/**
+ * Unified request manager wrapper. Execution is clean, short, and highly readable.
+ */
 export async function runSimpleAssignment(runId: number): Promise<boolean> {
   const totalTaskStartTime = Date.now();
-  let attempts = 0;
 
   console.log(
     `[Run ${runId}] 📡 Request starts | Initiated total track context.`
   );
 
-  // 🟢 Step 1: Queue or Execute
+  // Step 1: Admission Concurrency Checking Enclaves
   if (activeRequests >= MAX_CONCURRENT_REQUESTS) {
-    // 📋 Log: Request enters queue
     console.log(`[Run ${runId}] 💤 No free slot. Request enters queue...`);
-
-    // Suspend the execution track by pushing its resolver into our FIFO stack
     await new Promise<void>((resolve) => {
       requestQueue.push(resolve);
     });
-
-    // 📋 Log: Request leaves queue
     console.log(`[Run ${runId}] 🔓 Slot available. Request leaves queue.`);
   }
 
-  // 🟢 Step 2: Claim an active execution slot
   activeRequests++;
 
   try {
-    while (attempts < MAX_RETRIES) {
-      attempts++;
-
-      if (attempts > 1) {
-        // 📋 Log: Retry begins
-        console.log(
-          `[Run ${runId}] 🔄 Retry begins | Attempt ${attempts}/${MAX_RETRIES}`
-        );
-      }
-
-      try {
-        const response = await withTimeout(
+    // Step 2: Delegate Execution Logic and Retries down to the Functional Helper
+    const response = await executeWithRetry(
+      async () => {
+        return await withTimeout(
           groq.chat.completions.create({
             model: "llama-3.1-8b-instant",
             messages: [
@@ -88,53 +79,26 @@ export async function runSimpleAssignment(runId: number): Promise<boolean> {
           }),
           REQUEST_TIMEOUT_MS
         );
+      },
+      RETRY_CONFIG,
+      runId,
+      totalTaskStartTime
+    );
 
-        const totalExecutionTimeSec = (
-          (Date.now() - totalTaskStartTime) /
-          1000
-        ).toFixed(2);
-
-        // 📋 Log: Request succeeds
-        console.log(
-          `[Run ${runId}] ✅ Request succeeds | Attempt: ${attempts}/${MAX_RETRIES} | Result: "${response.choices[0]?.message?.content?.trim()}" | Total Time: ${totalExecutionTimeSec}s`
-        );
-        return true;
-      } catch (error: unknown) {
-        const classification = classifyError(error);
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
-
-        console.log(
-          `[Run ${runId}] ❌ Execution Failure | Attempt: ${attempts}/${MAX_RETRIES} | Class: ${classification.label}`
-        );
-
-        if (classification.isPermanent || attempts >= MAX_RETRIES) {
-          const totalExecutionTimeSec = (
-            (Date.now() - totalTaskStartTime) /
-            1000
-          ).toFixed(2);
-          console.log(
-            `[Run ${runId}] 🚨 Request fails permanently | Closed on attempt ${attempts} | Final Elapsed Time: ${totalExecutionTimeSec}s | Details: ${errorMessage}`
-          );
-
-          logError(error);
-          return false;
-        }
-
-        const exponentialDelay = BACKOFF_BASE_MS * Math.pow(2, attempts - 1);
-        const finalWait = Math.min(MAX_BACKOFF_MS, exponentialDelay);
-
-        console.log(
-          `[Run ${runId}] ⏳ Backoff starts | Suspending thread context for next ${
-            finalWait / 1000
-          }s...`
-        );
-
-        await new Promise((resolve) => setTimeout(resolve, finalWait));
-      }
-    }
+    const totalExecutionTimeSec = (
+      (Date.now() - totalTaskStartTime) /
+      1000
+    ).toFixed(2);
+    console.log(
+      `[Run ${runId}] ✅ Request succeeds | Result: "${response.choices[0]?.message?.content?.trim()}" | Total Time: ${totalExecutionTimeSec}s`
+    );
+    return true;
+  } catch (error: unknown) {
+    // Shared validation framework parsing error boundaries globally
+    logError(error);
     return false;
   } finally {
+    // Step 3: Guaranteed Release Lifecycles
     activeRequests--;
     if (requestQueue.length > 0) {
       const nextJobResolver = requestQueue.shift();
