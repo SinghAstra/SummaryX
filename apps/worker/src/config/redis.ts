@@ -31,3 +31,5 @@ telemetryPublisher.on("error", (error) => {
     code: (error as any).code,
   });
 });
+
+export const queueSubscriber = redisConnection.duplicate();
