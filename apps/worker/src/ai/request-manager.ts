@@ -1,6 +1,7 @@
 import { logError } from "@repo/shared";
 import Groq from "groq-sdk";
-import { getNextKey } from "./key-manager.js"; // 🟢 Import the new round-robin distribution utility
+import { classifyError } from "./error-classifier.js";
+import { coolDownKey, getNextKey } from "./key-manager.js";
 import { acquire, release } from "./queue.js";
 import { executeWithRetry } from "./retry-manager.js";
 import { withTimeout } from "./timeout.js";
@@ -12,14 +13,14 @@ const RETRY_CONFIG = {
 } as const;
 
 const DEFAULT_REQUEST_TIMEOUT_MS = 10000;
+const COOL_DOWN_DURATION_MS = 30000;
 
 export async function runSimpleAssignment(runId: number): Promise<boolean> {
   const totalTaskStartTime = Date.now();
-
   const keyInfo = getNextKey();
 
   console.log(
-    `[Run ${runId}] 📡 Request starts | Target API Key Pool Index: ${keyInfo.index}`
+    `[Run ${runId}] 📡 Request starts | Checked out API Key Index: ${keyInfo.index}`
   );
 
   await acquire(runId);
@@ -29,19 +30,27 @@ export async function runSimpleAssignment(runId: number): Promise<boolean> {
 
     const response = await executeWithRetry(
       async () => {
-        return await withTimeout(
-          groq.chat.completions.create({
-            model: "llama-3.1-8b-instant",
-            messages: [
-              {
-                role: "user",
-                content: "Output exactly one Indian Youtuber name",
-              },
-            ],
-            temperature: 0.1,
-          }),
-          DEFAULT_REQUEST_TIMEOUT_MS
-        );
+        try {
+          return await withTimeout(
+            groq.chat.completions.create({
+              model: "llama-3.1-8b-instant",
+              messages: [
+                {
+                  role: "user",
+                  content: "Output exactly one Indian Youtuber name",
+                },
+              ],
+              temperature: 0.1,
+            }),
+            DEFAULT_REQUEST_TIMEOUT_MS
+          );
+        } catch (error: unknown) {
+          const classification = classifyError(error);
+          if (classification.isRateLimit) {
+            coolDownKey(keyInfo.index, COOL_DOWN_DURATION_MS);
+          }
+          throw error;
+        }
       },
       RETRY_CONFIG,
       runId,
