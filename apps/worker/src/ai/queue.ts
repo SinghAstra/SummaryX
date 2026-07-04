@@ -1,14 +1,9 @@
 import crypto from "node:crypto";
 import { queueSubscriber, redisConnection } from "../config/redis.js";
 import { trackQueueLength } from "./metrics.js";
+import { getQueueChannelKey, REDIS_KEYS } from "./redis-keys.js";
 
-const MAX_CONCURRENT_REQUESTS = 3;
-
-const REDIS_KEYS = {
-  ACTIVE_COUNT: "groq:active_requests",
-  QUEUE_LIST: "groq:queue_list",
-  PUB_SUB_PREFIX: "groq:queue_channel",
-} as const;
+const MAX_CONCURRENT_REQUESTS = 8;
 
 const pendingResolvers = new Map<string, () => void>();
 
@@ -53,7 +48,7 @@ export async function acquire(runId: number): Promise<void> {
   await redisConnection.decr(REDIS_KEYS.ACTIVE_COUNT);
 
   const uniqueWorkerToken = crypto.randomUUID();
-  const privateChannel = `${REDIS_KEYS.PUB_SUB_PREFIX}:${uniqueWorkerToken}`;
+  const privateChannel = getQueueChannelKey(uniqueWorkerToken);
 
   console.log(
     `[Run ${runId}] 💤 Capacity saturated. Adding token to distributed Redis queue...`
@@ -61,7 +56,6 @@ export async function acquire(runId: number): Promise<void> {
 
   await redisConnection.rpush(REDIS_KEYS.QUEUE_LIST, uniqueWorkerToken);
 
-  // 🟢 Telemetry hook: check the live array length and update the peak metric gauge
   const currentQueueLength = await redisConnection.llen(REDIS_KEYS.QUEUE_LIST);
   await trackQueueLength(currentQueueLength);
 
@@ -82,7 +76,7 @@ export async function release(): Promise<void> {
   );
 
   if (nextWaitingWorkerToken) {
-    const privateChannel = `${REDIS_KEYS.PUB_SUB_PREFIX}:${nextWaitingWorkerToken}`;
+    const privateChannel = getQueueChannelKey(nextWaitingWorkerToken);
     await redisConnection.publish(privateChannel, "RELEASE_RELEASE");
     return;
   }
