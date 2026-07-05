@@ -10,8 +10,10 @@ import { acquire, release } from "./queue.js";
 import { executeWithRetry } from "./retry-manager.js";
 import { withTimeout } from "./timeout.js";
 
+export type ChatRole = "system" | "user" | "assistant"
+
 export interface ChatCompletionMessage {
-  role: "system" | "user" | "assistant";
+  role: ChatRole;
   content: string;
 }
 
