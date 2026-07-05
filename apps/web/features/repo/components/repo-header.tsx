@@ -92,7 +92,7 @@ export function RepoHeader({
                     <AvatarImage
                       src={repository.avatar}
                       alt={`${repository.name} logo`}
-                      className={`object-cover border border-yellow-400 border-2 ${
+                      className={`object-cover border-yellow-400 border-2 ${
                         isProcessing ? "border-yellow-400" : "border-green-400"
                       }`}
                     />
@@ -141,12 +141,23 @@ export function RepoHeader({
                 variant="ghost"
                 size="icon"
                 onClick={onToggleExpandAll}
+                aria-label={
+                  isExpandedAll
+                    ? "Collapse all folders and summaries"
+                    : "Expand all folders and summaries"
+                }
+                title={isExpandedAll ? "Collapse All" : "Expand All"}
                 className={cn(
                   "rounded-full text-muted-foreground hover:text-foreground transition-colors border bg-card/50 hover:bg-card/70 size-8",
-                  isExpandedAll && "bg-secondary text-primary"
+                  isExpandedAll && "bg-secondary text-primary border-primary/20"
                 )}
               >
-                <ChevronsUpDown className="size-4" />
+                <ChevronsUpDown
+                  className={cn(
+                    "size-4 transition-transform duration-200",
+                    isExpandedAll && "rotate-180 text-primary"
+                  )}
+                />
               </Button>
             </div>
           )}

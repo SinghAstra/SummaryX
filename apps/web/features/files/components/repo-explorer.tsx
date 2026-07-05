@@ -10,81 +10,26 @@ import {
   Folder,
   FolderOpen,
 } from "lucide-react";
-import React, { useCallback, useState } from "react";
+import React from "react";
 import { RepositoryLoadingSkeleton } from "./repo-loading-skeleton";
 
 interface RepositoryExplorerProps {
-  repositoryId: string;
-  isExpandedAll: boolean;
+  readonly repositoryId: string;
+  readonly expandedFolders: Set<string>;
+  readonly expandedSummaries: Set<string>;
+  readonly onToggleFolder: (path: string) => void;
+  readonly onToggleSummary: (fileId: string) => void;
 }
 
 export function RepositoryExplorer({
   repositoryId,
-  isExpandedAll,
+  expandedFolders,
+  expandedSummaries,
+  onToggleFolder,
+  onToggleSummary,
 }: RepositoryExplorerProps) {
+  // Uses the exact same cached query dataset instantly without extra network trips
   const { data: treeNodes = [], isLoading } = useRepositoryFiles(repositoryId);
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
-    new Set()
-  );
-  const [expandedSummaries, setExpandedSummaries] = useState<Set<string>>(
-    new Set()
-  );
-
-  const [prevIsExpandedAll, setPrevIsExpandedAll] =
-    useState<boolean>(isExpandedAll);
-
-  const getAllFolderPaths = useCallback(
-    (nodes: RepositoryTreeNode[]): Set<string> => {
-      const folders = new Set<string>();
-
-      const traverse = (items: RepositoryTreeNode[]) => {
-        for (const node of items) {
-          if (node.type === "folder") {
-            folders.add(node.relativePath);
-            traverse(node.children);
-          }
-        }
-      };
-
-      traverse(nodes);
-      return folders;
-    },
-    []
-  );
-
-  if (isExpandedAll !== prevIsExpandedAll) {
-    setPrevIsExpandedAll(isExpandedAll);
-
-    if (isExpandedAll) {
-      setExpandedFolders(getAllFolderPaths(treeNodes));
-    } else {
-      setExpandedFolders(new Set());
-    }
-  }
-
-  const handleToggleFolder = useCallback((path: string) => {
-    setExpandedFolders((prev) => {
-      const next = new Set(prev);
-      if (next.has(path)) {
-        next.delete(path);
-      } else {
-        next.add(path);
-      }
-      return next;
-    });
-  }, []);
-
-  const handleToggleSummary = useCallback((fileId: string) => {
-    setExpandedSummaries((prev) => {
-      const next = new Set(prev);
-      if (next.has(fileId)) {
-        next.delete(fileId);
-      } else {
-        next.add(fileId);
-      }
-      return next;
-    });
-  }, []);
 
   return (
     <div className="border border-border bg-card/50 rounded flex flex-col shadow-sm h-full overflow-y-auto w-full backdrop-blur-sm">
@@ -92,7 +37,7 @@ export function RepositoryExplorer({
         {isLoading ? (
           <RepositoryLoadingSkeleton />
         ) : treeNodes.length === 0 ? (
-          <div className="h-full flex items-center justify-center text-xs text-muted-foreground/40 font-sans  select-none py-12">
+          <div className="h-full flex items-center justify-center text-xs text-muted-foreground/40 font-sans select-none py-12">
             Empty directory tree.
           </div>
         ) : (
@@ -102,9 +47,9 @@ export function RepositoryExplorer({
                 key={node.relativePath}
                 node={node}
                 expandedFolders={expandedFolders}
-                onToggleFolder={handleToggleFolder}
+                onToggleFolder={onToggleFolder}
                 expandedSummaries={expandedSummaries}
-                onToggleSummary={handleToggleSummary}
+                onToggleSummary={onToggleSummary}
               />
             ))}
           </ul>
