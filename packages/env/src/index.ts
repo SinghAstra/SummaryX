@@ -10,14 +10,6 @@ const baseSchema = z.object({
 });
 
 /**
- * 2. Isolated Database Schema
- * We keep this separate to prevent leaking database properties to the frontend.
- */
-const databaseMixin = z.object({
-  DATABASE_URL: z.url("DATABASE_URL must be a valid connection string"),
-});
-
-/**
  * 3. API Schema
  */
 export const apiEnvSchema = baseSchema.extend({
@@ -51,7 +43,6 @@ export const apiEnvSchema = baseSchema.extend({
  * 4. Worker Schema
  */
 export const workerEnvSchema = baseSchema.extend({
-  ...databaseMixin.shape,
   REDIS_URL: z.url("REDIS_URL is required for worker operations"),
 });
 

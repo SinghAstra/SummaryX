@@ -3,7 +3,7 @@ import Groq from "groq-sdk";
 import { redisConnection } from "../config/redis.js";
 import { getCachedClient } from "./client-cache.js";
 import { ENGINE_CONFIG, REDIS_KEYS } from "./constants.js";
-import { classifyError, ErrorClassification } from "./error-classifier.js";
+import { classifyError } from "./error-classifier.js";
 import { coolDownKey, getNextKey } from "./key-manager.js";
 import { recordFailure, recordRequestStart, recordSuccess } from "./metrics.js";
 import { acquire, release } from "./queue.js";
@@ -50,6 +50,7 @@ export async function executeAIRequest(
         finalResolvedKeyIndex = keyInfo.index;
 
         await recordRequestStart(keyInfo.index);
+
         const groq: Groq = getCachedClient(keyInfo.key, keyInfo.index);
 
         try {
@@ -64,19 +65,13 @@ export async function executeAIRequest(
           return { data: res, keyIndex: keyInfo.index };
         } catch (error: unknown) {
           const classification = classifyError(error);
-
           if (classification.isRateLimit) {
             await coolDownKey(
               keyInfo.index,
               ENGINE_CONFIG.COOL_DOWN_DURATION_MS
             );
           }
-
-          throw {
-            originalError: error,
-            keyIndex: keyInfo.index,
-            classification,
-          };
+          throw { originalError: error, keyIndex: keyInfo.index };
         }
       },
       runId,
@@ -117,9 +112,7 @@ export async function executeAIRequest(
     const contextError = error as {
       originalError?: unknown;
       keyIndex?: number;
-      classification?: ErrorClassification;
     };
-
     const actualException = contextError.originalError || error;
     logError(actualException);
 
@@ -128,17 +121,11 @@ export async function executeAIRequest(
       .then((v) => (v ? parseInt(v, 10) : 0));
     const failureQueue = await redisConnection.llen(REDIS_KEYS.QUEUE_LIST);
 
-    const classification =
-      contextError.classification || classifyError(actualException);
-    let outputResultLog = classification.label;
-
-    if (!contextError.classification) {
-      const apiError = actualException as { message?: string };
-      outputResultLog = apiError.message || String(actualException);
-    }
+    const apiError = actualException as { message?: string };
+    const errorMessage = apiError.message || String(actualException);
 
     console.log(
-      `[Run ${runId}] 🚨 FATAL | Key Index: ${finalResolvedKeyIndex} | Result: "${outputResultLog}" | Active Slots: ${failureActive}/${ENGINE_CONFIG.MAX_CONCURRENT_REQUESTS} | Queue Size: ${failureQueue} | Time: ${totalExecutionTimeSec}s`
+      `[Run ${runId}] 🚨 FATAL | Key Index: ${finalResolvedKeyIndex} | Result: "${errorMessage}" | Active Slots: ${failureActive}/${ENGINE_CONFIG.MAX_CONCURRENT_REQUESTS} | Queue Size: ${failureQueue} | Time: ${totalExecutionTimeSec}s`
     );
 
     return null;

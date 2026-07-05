@@ -9,6 +9,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { estimateTokenCount, MODEL_CONFIG } from "../ai/model-config.js";
 import { executeAIRequest } from "../ai/request-manager.js";
+import { classifyFile } from "../utils/file-classifier.js";
 import { trackProgress } from "../utils/telemetry.js";
 
 const SYSTEM_PROMPT = `You are a product-focused technical writer. Your task is to explain why a file exists in a codebase and what its primary responsibility is.
@@ -29,7 +30,10 @@ GOOD EXAMPLE (What to do):
 BAD EXAMPLE (What NOT to do):
 "This file imports Prisma and bcrypt. It defines a function called validateUser() that checks passwords, throws an error if missing, and updates the database."`;
 
-export async function processFileSummary(
+/**
+ * Core entry point for processing background file summaries.
+ */
+async function processFileSummary(
   fileId: string,
   repositoryId: string,
   jobId: string,
@@ -57,29 +61,37 @@ export async function processFileSummary(
     const absoluteFilePath = path.join(repo.diskPath, file.relativePath);
     const fileContent = await fs.readFile(absoluteFilePath, "utf8");
 
-    // Calculate upfront token constraints
-    const contentTokens = estimateTokenCount(fileContent);
-    const promptTokens = estimateTokenCount(SYSTEM_PROMPT) + 150;
-    const totalEstimatedTokens = contentTokens + promptTokens;
+    const classification = classifyFile(
+      file.relativePath,
+      path.basename(file.relativePath),
+      fileContent
+    );
 
     let summaryText = "";
 
-    // Proactive size branching
-    if (totalEstimatedTokens > MODEL_CONFIG.maxInputTokens) {
+    if (!classification.shouldSummarizeWithAI) {
+      summaryText = classification.staticSummary;
       console.log(
-        `[Run ${runId}] 🔄 Action: Pre-emptively shifting to Map-Reduce chunking for: ${file.relativePath} (Estimated: ${totalEstimatedTokens} tokens)`
-      );
-      summaryText = await generateChunkedSummary(
-        runId,
-        file.relativePath,
-        fileContent
+        `[Run ${runId}] ⚡ FAST-TRACK | Bypassed AI overhead for ${classification.category} resource: ${file.relativePath}`
       );
     } else {
-      summaryText = await generateSummaryDirectly(
-        runId,
-        file.relativePath,
-        fileContent
-      );
+      const contentTokens = estimateTokenCount(fileContent);
+      const promptTokens = estimateTokenCount(SYSTEM_PROMPT) + 150;
+      const totalEstimatedTokens = contentTokens + promptTokens;
+
+      if (totalEstimatedTokens > MODEL_CONFIG.maxInputTokens) {
+        summaryText = await generateChunkedSummary(
+          runId,
+          file.relativePath,
+          fileContent
+        );
+      } else {
+        summaryText = await generateSummaryDirectly(
+          runId,
+          file.relativePath,
+          fileContent
+        );
+      }
     }
 
     await prisma.repositoryFile.update({
@@ -124,7 +136,7 @@ async function generateSummaryDirectly(
 }
 
 /**
- * Map-Reduce Engine: Safely fragments text assets, summarizes pieces, and builds a merged result
+ * Cap-Constrained Map-Reduce Engine: Limits maximum token consumption by evaluating up to 2 segments.
  */
 async function generateChunkedSummary(
   runId: number,
@@ -146,12 +158,17 @@ async function generateChunkedSummary(
   }
   if (currentChunk) chunks.push(currentChunk);
 
+  const totalOriginalChunks = chunks.length;
+  const isTruncated = totalOriginalChunks > 2;
+
+  const chunksToProcess = isTruncated ? chunks.slice(0, 2) : chunks;
+
   console.log(
-    `[Run ${runId}] 🧩 Fragmented massive file into ${chunks.length} size-compliant chunks.`
+    `[Run ${runId}] 🧩 File: ${relativePath} split into ${totalOriginalChunks} chunks. Processing: ${chunksToProcess.length} (Truncated: ${isTruncated})`
   );
 
   const intermediateSummaries: string[] = [];
-  for (let i = 0; i < chunks.length; i++) {
+  for (let i = 0; i < chunksToProcess.length; i++) {
     const chunkResponse = await executeAIRequest(runId, {
       model: MODEL_CONFIG.activeModel,
       messages: [
@@ -159,8 +176,8 @@ async function generateChunkedSummary(
         {
           role: "user",
           content: `Summary step (${i + 1}/${
-            chunks.length
-          }) for "${relativePath}":\n\nCode:\n${chunks[i]}`,
+            chunksToProcess.length
+          }) for "${relativePath}":\n\nCode:\n${chunksToProcess[i]}`,
         },
       ],
     });
@@ -183,10 +200,15 @@ async function generateChunkedSummary(
     ],
   });
 
-  return (
+  let finalSummary =
     reductionResponse?.choices[0]?.message?.content?.trim() ||
-    "Failed synthesizing fragmented summaries."
-  );
+    "Failed synthesizing fragmented summaries.";
+
+  if (isTruncated) {
+    finalSummary += ` Note: This summary was derived from the initial sections of this large file layout.`;
+  }
+
+  return finalSummary;
 }
 
 /**
@@ -225,3 +247,7 @@ async function updateGlobalProgress(
     });
   }
 }
+
+export const summarizationService = {
+  processFileSummary,
+};

@@ -108,6 +108,27 @@ export const repositoryService = {
       orderBy: { relativePath: "asc" },
     });
 
+    const incompleteSamples = flatFiles
+      .filter((file) => file.summaryStatus !== "COMPLETED")
+      .slice(0, 10);
+
+    if (incompleteSamples.length > 0) {
+      console.log(
+        `⚙️ [DB-Explorer Debug] Found incomplete file summaries (${
+          flatFiles.filter((f) => f.summaryStatus !== "COMPLETED").length
+        } total remaining). Showing up to 10 items:`
+      );
+      incompleteSamples.forEach((file) => {
+        console.log(
+          `  ↳ 📄 Path: ${file.relativePath} | Status: [${file.summaryStatus}]`
+        );
+      });
+    } else {
+      console.log(
+        `⚙️ [DB-Explorer Debug] All file summaries for repository ${id} are completely processed!`
+      );
+    }
+
     return buildRepositoryTree(flatFiles);
   },
 
