@@ -11,6 +11,7 @@ import {
   FolderOpen,
 } from "lucide-react";
 import React, { useCallback, useState } from "react";
+import { RepositoryLoadingSkeleton } from "./repo-loading-skeleton";
 
 interface RepositoryExplorerProps {
   repositoryId: string;
@@ -21,7 +22,7 @@ export function RepositoryExplorer({
   repositoryId,
   isExpandedAll,
 }: RepositoryExplorerProps) {
-  const { data: treeNodes = [] } = useRepositoryFiles(repositoryId);
+  const { data: treeNodes = [], isLoading } = useRepositoryFiles(repositoryId);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
     new Set()
   );
@@ -88,8 +89,10 @@ export function RepositoryExplorer({
   return (
     <div className="border border-border bg-card/50 rounded flex flex-col shadow-sm h-full overflow-y-auto w-full backdrop-blur-sm">
       <div className="flex-1 p-2">
-        {treeNodes.length === 0 ? (
-          <div className="h-full flex items-center justify-center text-xs text-muted-foreground/40 font-sans italic select-none py-12">
+        {isLoading ? (
+          <RepositoryLoadingSkeleton />
+        ) : treeNodes.length === 0 ? (
+          <div className="h-full flex items-center justify-center text-xs text-muted-foreground/40 font-sans  select-none py-12">
             Empty directory tree.
           </div>
         ) : (
@@ -99,8 +102,8 @@ export function RepositoryExplorer({
                 key={node.relativePath}
                 node={node}
                 expandedFolders={expandedFolders}
-                expandedSummaries={expandedSummaries}
                 onToggleFolder={handleToggleFolder}
+                expandedSummaries={expandedSummaries}
                 onToggleSummary={handleToggleSummary}
               />
             ))}
