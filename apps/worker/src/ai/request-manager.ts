@@ -10,10 +10,21 @@ import { acquire, release } from "./queue.js";
 import { executeWithRetry } from "./retry-manager.js";
 import { withTimeout } from "./timeout.js";
 
-/**
- * Core Orchestrator entry point enforcing perfect Visual Parity specifications across all output streams.
- */
-export async function runSimpleAssignment(runId: number): Promise<boolean> {
+export interface ChatCompletionMessage {
+  role: "system" | "user" | "assistant";
+  content: string;
+}
+
+export interface AIRequestPayload {
+  model: string;
+  messages: ChatCompletionMessage[];
+  temperature?: number;
+}
+
+export async function executeAIRequest(
+  runId: number,
+  payload: AIRequestPayload
+): Promise<Groq.Chat.Completions.ChatCompletion | null> {
   const totalTaskStartTime = Date.now();
 
   const initialActive = await redisConnection
@@ -43,14 +54,9 @@ export async function runSimpleAssignment(runId: number): Promise<boolean> {
         try {
           const res = await withTimeout(
             groq.chat.completions.create({
-              model: "llama-3.1-8b-instant",
-              messages: [
-                {
-                  role: "user",
-                  content: "Output exactly one Indian Youtuber name",
-                },
-              ],
-              temperature: 0.1,
+              model: payload.model,
+              messages: payload.messages as any,
+              temperature: payload.temperature ?? 0.1,
             }),
             ENGINE_CONFIG.DEFAULT_REQUEST_TIMEOUT_MS
           );
@@ -81,14 +87,19 @@ export async function runSimpleAssignment(runId: number): Promise<boolean> {
       .then((v) => (v ? parseInt(v, 10) : 0));
     const successQueue = await redisConnection.llen(REDIS_KEYS.QUEUE_LIST);
 
+    const textSnippet =
+      outcome.data.choices[0]?.message?.content?.trim().replace(/\n/g, " ") ||
+      "";
+    const displayResult =
+      textSnippet.length > 40
+        ? `${textSnippet.substring(0, 40)}...`
+        : textSnippet;
+
     console.log(
-      `[Run ${runId}] ✅ SUCCESS | Key Index: ${
-        outcome.keyIndex
-      } | Result: "${outcome.data.choices[0]?.message?.content?.trim()}" | Active Slots: ${successActive}/${
-        ENGINE_CONFIG.MAX_CONCURRENT_REQUESTS
-      } | Queue Size: ${successQueue} | Time: ${totalExecutionTimeSec}s`
+      `[Run ${runId}] ✅ SUCCESS | Key Index: ${outcome.keyIndex} | Result: "${displayResult}" | Active Slots: ${successActive}/${ENGINE_CONFIG.MAX_CONCURRENT_REQUESTS} | Queue Size: ${successQueue} | Time: ${totalExecutionTimeSec}s`
     );
-    return true;
+
+    return outcome.data;
   } catch (error: unknown) {
     const totalExecutionTimeSec = (
       (Date.now() - totalTaskStartTime) /
@@ -114,7 +125,8 @@ export async function runSimpleAssignment(runId: number): Promise<boolean> {
     console.log(
       `[Run ${runId}] 🚨 FATAL | Key Index: ${finalResolvedKeyIndex} | Result: "${errorMessage}" | Active Slots: ${failureActive}/${ENGINE_CONFIG.MAX_CONCURRENT_REQUESTS} | Queue Size: ${failureQueue} | Time: ${totalExecutionTimeSec}s`
     );
-    return false;
+
+    return null;
   } finally {
     await release();
   }
