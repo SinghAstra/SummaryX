@@ -1,15 +1,21 @@
 import { prisma } from "@repo/db";
-import { FILE_SUMMARY_STATUS, logError } from "@repo/shared";
+import {
+  FILE_SUMMARY_STATUS,
+  JOB_STATUS,
+  LOG_LEVEL,
+  REPOSITORY_STATUS,
+} from "@repo/shared";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { executeAIRequest } from "../ai/request-manager.js";
+import { trackProgress } from "../utils/telemetry.js";
 
 export const summarizationService = {
   async processFileSummary(
     fileId: string,
     repositoryId: string,
     runId: number
-  ) {
+  ): Promise<void> {
     const file = await prisma.repositoryFile.findUnique({
       where: { id: fileId },
     });
@@ -59,8 +65,37 @@ export const summarizationService = {
           summaryStatus: FILE_SUMMARY_STATUS.COMPLETED,
         },
       });
-    } catch (error) {
-      logError(error);
+
+      const totalCount = await prisma.repositoryFile.count({
+        where: { repositoryId },
+      });
+      const completedCount = await prisma.repositoryFile.count({
+        where: { repositoryId, summaryStatus: FILE_SUMMARY_STATUS.COMPLETED },
+      });
+
+      await trackProgress({
+        jobId: repositoryId,
+        repositoryId,
+        status: JOB_STATUS.RUNNING,
+        logLevel: LOG_LEVEL.INFO,
+        message: `Analyzing files... (${completedCount}/${totalCount})`,
+      });
+
+      if (completedCount === totalCount) {
+        await prisma.repository.update({
+          where: { id: repositoryId },
+          data: { status: REPOSITORY_STATUS.COMPLETED },
+        });
+
+        await trackProgress({
+          jobId: repositoryId,
+          repositoryId,
+          status: JOB_STATUS.COMPLETED,
+          logLevel: LOG_LEVEL.INFO,
+          message: "All done! Your project overview is completely ready.",
+        });
+      }
+    } catch (error: unknown) {
       await prisma.repositoryFile.update({
         where: { id: fileId },
         data: { summaryStatus: FILE_SUMMARY_STATUS.FAILED },

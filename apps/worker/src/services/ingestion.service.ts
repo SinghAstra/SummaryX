@@ -11,6 +11,7 @@ import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
+import { fileSummarizationQueue } from "../queues/summarization.queue.js";
 import { trackProgress } from "../utils/telemetry.js";
 
 const execAsync = promisify(exec);
@@ -127,7 +128,7 @@ export const ingestionService = {
         repositoryId: repo.id,
         status: JOB_STATUS.RUNNING,
         logLevel: LOG_LEVEL.INFO,
-        message: "Preparing your workspace...",
+        message: "Getting things ready...",
       });
 
       await fs.mkdir(path.dirname(repo.diskPath), { recursive: true });
@@ -138,7 +139,7 @@ export const ingestionService = {
         repositoryId: repo.id,
         status: JOB_STATUS.RUNNING,
         logLevel: LOG_LEVEL.INFO,
-        message: "Downloading your repository files...",
+        message: "Downloading your project files...",
       });
 
       await execAsync(
@@ -151,7 +152,7 @@ export const ingestionService = {
         repositoryId: repo.id,
         status: JOB_STATUS.RUNNING,
         logLevel: LOG_LEVEL.INFO,
-        message: "Analyzing project folders and files...",
+        message: "Looking through your folders...",
       });
 
       const stats: TraversalStats = {
@@ -179,7 +180,7 @@ export const ingestionService = {
         repositoryId: repo.id,
         status: JOB_STATUS.RUNNING,
         logLevel: LOG_LEVEL.INFO,
-        message: "Saving project maps to your dashboard...",
+        message: "Setting up your dashboard views...",
       });
 
       await prisma.$transaction(
@@ -214,6 +215,31 @@ export const ingestionService = {
         { maxWait: 5000, timeout: 30000 }
       );
 
+      const createdFileRecords = await prisma.repositoryFile.findMany({
+        where: {
+          repositoryId: job.repositoryId,
+          summaryStatus: FILE_SUMMARY_STATUS.PENDING,
+        },
+        select: { id: true },
+      });
+
+      if (createdFileRecords.length > 0) {
+        await fileSummarizationQueue.addBulk(
+          createdFileRecords.map((file, idx) => ({
+            name: "summarize-file-task",
+            data: {
+              fileId: file.id,
+              repositoryId: job.repositoryId,
+              runId: idx + 1,
+            },
+            opts: {
+              attempts: 3,
+              backoff: { type: "exponential", delay: 2000 },
+            },
+          }))
+        );
+      }
+
       await prisma.job.update({
         where: { id: jobId },
         data: { status: JOB_STATUS.COMPLETED, completedAt: new Date() },
@@ -224,7 +250,7 @@ export const ingestionService = {
         repositoryId: repo.id,
         status: JOB_STATUS.COMPLETED,
         logLevel: LOG_LEVEL.INFO,
-        message: "Project setup successful!",
+        message: `Project loaded! Starting analysis on ${createdFileRecords.length} files...`,
       });
     } catch (error) {
       await prisma.job.update({
@@ -242,7 +268,7 @@ export const ingestionService = {
         repositoryId: repo.id,
         status: JOB_STATUS.FAILED,
         logLevel: LOG_LEVEL.ERROR,
-        message: "Setup failed. Please retry later.",
+        message: "We couldn't load your project. Please try again.",
       });
 
       logError(error);
