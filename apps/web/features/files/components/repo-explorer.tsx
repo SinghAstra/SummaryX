@@ -153,15 +153,6 @@ function TreeNodeItem({
         <div className="size-4 flex items-center justify-center shrink-0">
           {isFolder &&
             (isFolderOpen ? (
-              <ChevronDown className="size-3.5 text-muted-foreground/60 transition-transform duration-200" />
-            ) : (
-              <ChevronRight className="size-3.5 text-muted-foreground/60 transition-transform duration-200" />
-            ))}
-        </div>
-
-        <div className="size-4 flex items-center justify-center shrink-0">
-          {isFolder &&
-            (isFolderOpen ? (
               <ChevronDown className="size-3.5 text-muted-foreground/60" />
             ) : (
               <ChevronRight className="size-3.5 text-muted-foreground/60" />
