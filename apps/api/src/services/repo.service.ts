@@ -80,6 +80,8 @@ export const repositoryService = {
 
       await repositoryIngestionQueue.add(JOB_NAMES.ANALYZE_REPO, {
         jobId: job.id,
+        repositoryId: newRepo.id,
+        isResync: false,
       });
 
       return { repositoryId: newRepo.id, isDuplicate: false };
@@ -202,5 +204,42 @@ export const repositoryService = {
       createdAt: repo.createdAt.toISOString(),
       updatedAt: repo.updatedAt.toISOString(),
     }));
+  },
+
+  async resyncRepository(
+    id: string,
+    userId: string
+  ): Promise<{ jobId: string }> {
+    const repo = await prisma.repository.findFirst({
+      where: { id, userId },
+    });
+
+    if (!repo) {
+      throw new NotFoundError(
+        COMMON_ERROR_CODES.ROUTE_NOT_FOUND,
+        "Repository not found."
+      );
+    }
+
+    const job = await prisma.job.create({
+      data: {
+        repositoryId: id,
+        status: JOB_STATUS.PENDING,
+        message: "Initializing repository resynchronization sequence...",
+      },
+    });
+
+    await prisma.repository.update({
+      where: { id },
+      data: { status: REPOSITORY_STATUS.PROCESSING },
+    });
+
+    await repositoryIngestionQueue.add(JOB_NAMES.ANALYZE_REPO, {
+      jobId: job.id,
+      repositoryId: id,
+      isResync: true,
+    });
+
+    return { jobId: job.id };
   },
 };

@@ -1,6 +1,7 @@
 import { prisma } from "@repo/db";
 import {
   FILE_SUMMARY_STATUS,
+  JOB_NAMES,
   JOB_STATUS,
   LOG_LEVEL,
   logError,
@@ -26,6 +27,7 @@ const IGNORED_DIRECTORIES = new Set([
   "generated",
   ".prisma",
 ]);
+
 const SUPPORTED_EXTENSIONS = new Set([
   ".ts",
   ".js",
@@ -59,6 +61,9 @@ interface TraversalStats {
   }>;
 }
 
+/**
+ * Traverses directories recursively to build an accurate file map snapshot.
+ */
 async function traverseDirectory(
   basePath: string,
   currentPath: string,
@@ -106,10 +111,14 @@ async function traverseDirectory(
 }
 
 export const ingestionService = {
-  async processRepositoryIngestion(jobId: string): Promise<void> {
-    const job = await prisma.job.findUnique({
-      where: { id: jobId },
-    });
+  /**
+   * Orchestrates repository layout resolution, handling both fresh setups and updates.
+   */
+  async processRepositoryIngestion(
+    jobId: string,
+    isResync = false
+  ): Promise<void> {
+    const job = await prisma.job.findUnique({ where: { id: jobId } });
     if (!job) return;
 
     const repo = await prisma.repository.findUnique({
@@ -123,36 +132,56 @@ export const ingestionService = {
         data: { status: JOB_STATUS.RUNNING, startedAt: new Date() },
       });
 
+      // --- STEP 1: Code Ingestion Strategy ---
+      if (isResync) {
+        await trackProgress({
+          jobId,
+          repositoryId: repo.id,
+          status: JOB_STATUS.RUNNING,
+          logLevel: LOG_LEVEL.INFO,
+          message: "Fetching latest changes...",
+        });
+
+        // Pull down remote updates without wiping out unaffected assets on disk
+        await execAsync(`git fetch --depth 1 && git reset --hard FETCH_HEAD`, {
+          cwd: repo.diskPath,
+          timeout: 60000,
+        });
+      } else {
+        await trackProgress({
+          jobId,
+          repositoryId: repo.id,
+          status: JOB_STATUS.RUNNING,
+          logLevel: LOG_LEVEL.INFO,
+          message: "Getting things ready...",
+        });
+
+        await fs.mkdir(path.dirname(repo.diskPath), { recursive: true });
+        await fs.rm(repo.diskPath, { recursive: true, force: true });
+
+        await trackProgress({
+          jobId,
+          repositoryId: repo.id,
+          status: JOB_STATUS.RUNNING,
+          logLevel: LOG_LEVEL.INFO,
+          message: "Downloading your project files...",
+        });
+
+        await execAsync(
+          `git clone --depth 1 ${repo.githubUrl} ${repo.diskPath}`,
+          {
+            timeout: 60000,
+          }
+        );
+      }
+
+      // --- STEP 2: Structural Traversal Analysis ---
       await trackProgress({
         jobId,
         repositoryId: repo.id,
         status: JOB_STATUS.RUNNING,
         logLevel: LOG_LEVEL.INFO,
-        message: "Getting things ready...",
-      });
-
-      await fs.mkdir(path.dirname(repo.diskPath), { recursive: true });
-      await fs.rm(repo.diskPath, { recursive: true, force: true });
-
-      await trackProgress({
-        jobId,
-        repositoryId: repo.id,
-        status: JOB_STATUS.RUNNING,
-        logLevel: LOG_LEVEL.INFO,
-        message: "Downloading your project files...",
-      });
-
-      await execAsync(
-        `git clone --depth 1 ${repo.githubUrl} ${repo.diskPath}`,
-        { timeout: 60000 }
-      );
-
-      await trackProgress({
-        jobId,
-        repositoryId: repo.id,
-        status: JOB_STATUS.RUNNING,
-        logLevel: LOG_LEVEL.INFO,
-        message: "Looking through your folders...",
+        message: "Comparing files...",
       });
 
       const stats: TraversalStats = {
@@ -175,18 +204,46 @@ export const ingestionService = {
         logError(error);
       }
 
+      // --- STEP 3: In-Memory Delta Computation ---
+      const existingDBFiles = await prisma.repositoryFile.findMany({
+        where: { repositoryId: repo.id },
+      });
+
+      // Convert arrays to unified lookup maps
+      const dbFileMap = new Map(
+        existingDBFiles.map((f) => [f.relativePath.replace(/\\/g, "/"), f])
+      );
+      const fsPaths = new Set(
+        stats.collectedFiles.map((f) => f.relativePath.replace(/\\/g, "/"))
+      );
+
+      const addedFiles = stats.collectedFiles.filter(
+        (f) => !dbFileMap.has(f.relativePath.replace(/\\/g, "/"))
+      );
+
+      const modifiedFiles = stats.collectedFiles.filter((f) => {
+        const match = dbFileMap.get(f.relativePath.replace(/\\/g, "/"));
+        return match && match.hash !== f.hash;
+      });
+
+      const deletedFiles = existingDBFiles.filter(
+        (f) => !fsPaths.has(f.relativePath.replace(/\\/g, "/"))
+      );
+
+      // --- STEP 4: Atomic Telemetry & Database Sync ---
       await trackProgress({
         jobId,
         repositoryId: repo.id,
         status: JOB_STATUS.RUNNING,
         logLevel: LOG_LEVEL.INFO,
-        message: "Setting up your project...",
+        message: `Updating database (${addedFiles.length} added, ${modifiedFiles.length} changed, ${deletedFiles.length} deleted)...`,
       });
 
       await prisma.$transaction(
         async (tx) => {
+          // Sync core global overview stats
           await tx.repository.update({
-            where: { id: job.repositoryId },
+            where: { id: repo.id },
             data: {
               status: REPOSITORY_STATUS.PROCESSING,
               readme: readmeContents,
@@ -198,10 +255,18 @@ export const ingestionService = {
             },
           });
 
-          if (stats.collectedFiles.length > 0) {
+          // Wipe out stale references
+          if (deletedFiles.length > 0) {
+            await tx.repositoryFile.deleteMany({
+              where: { id: { in: deletedFiles.map((f) => f.id) } },
+            });
+          }
+
+          // Register new file payloads
+          if (addedFiles.length > 0) {
             await tx.repositoryFile.createMany({
-              data: stats.collectedFiles.map((file) => ({
-                repositoryId: job.repositoryId,
+              data: addedFiles.map((file) => ({
+                repositoryId: repo.id,
                 relativePath: file.relativePath,
                 extension: file.extension,
                 size: file.size,
@@ -211,47 +276,74 @@ export const ingestionService = {
               skipDuplicates: true,
             });
           }
+
+          // Clear outdated summaries for modified assets
+          for (const file of modifiedFiles) {
+            await tx.repositoryFile.updateMany({
+              where: { repositoryId: repo.id, relativePath: file.relativePath },
+              data: {
+                hash: file.hash,
+                size: file.size,
+                summary: null,
+                summaryStatus: FILE_SUMMARY_STATUS.PENDING,
+              },
+            });
+          }
         },
         { maxWait: 5000, timeout: 30000 }
       );
 
-      const createdFileRecords = await prisma.repositoryFile.findMany({
+      const targetsToQueue = await prisma.repositoryFile.findMany({
         where: {
-          repositoryId: job.repositoryId,
+          repositoryId: repo.id,
           summaryStatus: FILE_SUMMARY_STATUS.PENDING,
         },
         select: { id: true },
       });
 
-      if (createdFileRecords.length > 0) {
+      if (targetsToQueue.length > 0) {
         await fileSummarizationQueue.addBulk(
-          createdFileRecords.map((file, idx) => ({
-            name: "summarize-file-task",
+          targetsToQueue.map((file, idx) => ({
+            name: JOB_NAMES.SUMMARIZE_FILE,
             data: {
               fileId: file.id,
-              repositoryId: job.repositoryId,
+              repositoryId: repo.id,
               jobId: jobId,
               runId: idx + 1,
             },
             opts: {
-              attempts: 3,
+              attempts: 5,
               backoff: { type: "exponential", delay: 2000 },
             },
           }))
         );
+
+        await trackProgress({
+          jobId,
+          repositoryId: repo.id,
+          status: JOB_STATUS.RUNNING,
+          logLevel: LOG_LEVEL.INFO,
+          message: `Summarizing changed files...`,
+        });
+      } else {
+        // Fast-track path: Complete the sequence immediately if no files changed
+        await prisma.repository.update({
+          where: { id: repo.id },
+          data: { status: REPOSITORY_STATUS.COMPLETED },
+        });
+
+        await trackProgress({
+          jobId,
+          repositoryId: repo.id,
+          status: JOB_STATUS.RUNNING,
+          logLevel: LOG_LEVEL.INFO,
+          message: "Sync complete. No changes found.",
+        });
       }
 
       await prisma.job.update({
         where: { id: jobId },
         data: { status: JOB_STATUS.COMPLETED, completedAt: new Date() },
-      });
-
-      await trackProgress({
-        jobId,
-        repositoryId: repo.id,
-        status: JOB_STATUS.RUNNING,
-        logLevel: LOG_LEVEL.INFO,
-        message: `Project loaded! Starting analysis on ${createdFileRecords.length} files...`,
       });
     } catch (error) {
       await prisma.job.update({
@@ -260,7 +352,7 @@ export const ingestionService = {
       });
 
       await prisma.repository.update({
-        where: { id: job.repositoryId },
+        where: { id: repo.id },
         data: { status: REPOSITORY_STATUS.FAILED },
       });
 

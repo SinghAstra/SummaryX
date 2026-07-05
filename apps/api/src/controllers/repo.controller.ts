@@ -6,11 +6,7 @@ import { repositoryService } from "../services/repo.service.js";
 import { successResponse } from "../utils/response.js";
 
 export const repositoryController = {
-  ingest: async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
+  ingest: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const validatedInput = ingestRepoSchema.parse(req.body);
 
@@ -32,11 +28,7 @@ export const repositoryController = {
     }
   },
 
-  getFiles: async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
+  getFiles: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const id = z.string().parse(req.params.id);
 
@@ -55,11 +47,7 @@ export const repositoryController = {
     }
   },
 
-  async getRepository(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
+  async getRepository(req: Request, res: Response, next: NextFunction) {
     try {
       const id = z.string().parse(req.params.id);
 
@@ -81,11 +69,7 @@ export const repositoryController = {
     }
   },
 
-  async getRepositories(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
+  async getRepositories(req: Request, res: Response, next: NextFunction) {
     try {
       if (!req.user) {
         throw new UnauthorizedError(
@@ -100,6 +84,28 @@ export const repositoryController = {
       );
 
       res.status(200).json(successResponse(repositories));
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async resync(req: Request, res: Response, next: NextFunction) {
+    try {
+      const repositoryId = z.string().parse(req.params.id);
+
+      if (!req.user) {
+        throw new UnauthorizedError(
+          AUTH_ERROR_CODES.INVALID_CREDENTIALS,
+          "Please sign in to continue."
+        );
+      }
+
+      const result = await repositoryService.resyncRepository(
+        repositoryId,
+        req.user.id
+      );
+
+      res.status(202).json(successResponse(result));
     } catch (error) {
       next(error);
     }

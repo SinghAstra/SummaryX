@@ -24,7 +24,9 @@ export const jobStatusSchema = z.enum([
 export const logLevelSchema = z.enum([LOG_LEVEL.INFO, LOG_LEVEL.ERROR]);
 
 export const JobDataSchema = z.object({
-  jobId: z.uuid(),
+  jobId: z.string().uuid(),
+  repositoryId: z.string().uuid(),
+  isResync: z.boolean().default(false),
 });
 
 export type JobStatus = z.infer<typeof jobStatusSchema>;
