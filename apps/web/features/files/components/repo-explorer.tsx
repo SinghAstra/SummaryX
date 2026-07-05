@@ -25,6 +25,9 @@ export function RepositoryExplorer({
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
     new Set()
   );
+  const [expandedSummaries, setExpandedSummaries] = useState<Set<string>>(
+    new Set()
+  );
   const [activeFile, setActiveFile] = useState<RepositoryTreeNode | null>(null);
 
   const [prevIsExpandedAll, setPrevIsExpandedAll] =
@@ -71,6 +74,18 @@ export function RepositoryExplorer({
     });
   }, []);
 
+  const handleToggleSummary = useCallback((fileId: string) => {
+    setExpandedSummaries((prev) => {
+      const next = new Set(prev);
+      if (next.has(fileId)) {
+        next.delete(fileId);
+      } else {
+        next.add(fileId);
+      }
+      return next;
+    });
+  }, []);
+
   return (
     <div className="border border-border bg-card/50 rounded flex flex-col shadow-sm h-full overflow-y-auto w-full backdrop-blur-sm">
       <div className="flex-1 p-2">
@@ -85,9 +100,11 @@ export function RepositoryExplorer({
                 key={node.relativePath}
                 node={node}
                 expandedFolders={expandedFolders}
+                expandedSummaries={expandedSummaries}
                 activeFile={activeFile}
                 onToggleFolder={handleToggleFolder}
                 onSelectFile={setActiveFile}
+                onToggleSummary={handleToggleSummary}
               />
             ))}
           </ul>

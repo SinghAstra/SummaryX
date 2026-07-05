@@ -45,9 +45,14 @@ export function useJobLiveStream(
           ) {
             eventSource.close();
 
-            void queryClient.invalidateQueries({
-              queryKey: repoKeys.detail(repositoryId),
-            });
+            void Promise.all([
+              queryClient.invalidateQueries({
+                queryKey: repoKeys.detail(repositoryId),
+              }),
+              queryClient.invalidateQueries({
+                queryKey: repoKeys.lists(),
+              }),
+            ]);
           }
         }
       } catch (error) {
