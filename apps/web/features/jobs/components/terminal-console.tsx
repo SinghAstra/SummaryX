@@ -38,8 +38,13 @@ export function TerminalConsole({ messages }: TerminalConsoleProps) {
       ))}
 
       {messages.length === 0 && (
-        <div className="text-muted-foreground/60 italic">
-          Awaiting terminal connection...
+        <div className="flex items-start gap-3 leading-relaxed border-b border-border/60 px-2 py-0.5">
+          <span className="text-muted-foreground select-none shrink-0 font-medium opacity-80">
+            [SYSTEM]
+          </span>
+          <span className="text-foreground text-left break-all">
+            Awaiting terminal connection...
+          </span>
         </div>
       )}
     </div>
