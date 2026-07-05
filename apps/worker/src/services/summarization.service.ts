@@ -14,6 +14,7 @@ export const summarizationService = {
   async processFileSummary(
     fileId: string,
     repositoryId: string,
+    jobId: string,
     runId: number
   ): Promise<void> {
     const file = await prisma.repositoryFile.findUnique({
@@ -74,7 +75,7 @@ export const summarizationService = {
       });
 
       await trackProgress({
-        jobId: repositoryId,
+        jobId,
         repositoryId,
         status: JOB_STATUS.RUNNING,
         logLevel: LOG_LEVEL.INFO,
@@ -88,7 +89,7 @@ export const summarizationService = {
         });
 
         await trackProgress({
-          jobId: repositoryId,
+          jobId,
           repositoryId,
           status: JOB_STATUS.COMPLETED,
           logLevel: LOG_LEVEL.INFO,

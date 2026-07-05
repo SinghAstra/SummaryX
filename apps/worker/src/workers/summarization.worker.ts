@@ -6,9 +6,14 @@ import { summarizationService } from "../services/summarization.service.js";
 
 export const fileSummarizationWorker = new Worker<SummarizeFileJobData>(
   QUEUE_NAMES.FILE_SUMMARIZATION,
-  async (job: Job<SummarizeFileJobData>) => {
-    const { fileId, repositoryId, runId } = job.data;
-    await summarizationService.processFileSummary(fileId, repositoryId, runId);
+  async (job: Job<SummarizeFileJobData>): Promise<void> => {
+    const { fileId, repositoryId, jobId, runId } = job.data;
+    await summarizationService.processFileSummary(
+      fileId,
+      repositoryId,
+      jobId,
+      runId
+    );
   },
   {
     connection: redisConnection,

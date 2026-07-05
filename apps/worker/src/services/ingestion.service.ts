@@ -230,6 +230,7 @@ export const ingestionService = {
             data: {
               fileId: file.id,
               repositoryId: job.repositoryId,
+              jobId: jobId,
               runId: idx + 1,
             },
             opts: {
@@ -248,7 +249,7 @@ export const ingestionService = {
       await trackProgress({
         jobId,
         repositoryId: repo.id,
-        status: JOB_STATUS.COMPLETED,
+        status: JOB_STATUS.RUNNING,
         logLevel: LOG_LEVEL.INFO,
         message: `Project loaded! Starting analysis on ${createdFileRecords.length} files...`,
       });
