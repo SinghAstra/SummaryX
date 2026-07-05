@@ -6,7 +6,6 @@ import { globalErrorHandler } from "./middlewares/error.middleware.js";
 import { authRouter } from "./routes/auth.routes.js";
 import { jobRouter } from "./routes/job.routes.js";
 import { repoRouter } from "./routes/repo.routes.js";
-import { todoRouter } from "./routes/todo.routes.js";
 
 const app = express();
 
@@ -19,7 +18,6 @@ app.get("/", (_, res) => {
 });
 
 app.use("/api/auth", authRouter);
-app.use("/api/todos", todoRouter);
 app.use("/api/repo", repoRouter);
 app.use("/api/jobs", jobRouter);
 

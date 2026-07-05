@@ -14,7 +14,6 @@ import {
   BadRequestError,
   NotFoundError,
   UnauthorizedError,
-  ValidationError,
 } from "../errors/api-errors.js";
 import { jwtTokenEngine } from "../lib/jwt.js";
 import { jobService } from "../services/job.service.js";
@@ -27,60 +26,6 @@ const writeSseEvent = (res: Response, payload: unknown): void => {
 };
 
 export const jobController = {
-  async createJob(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
-    try {
-      if (!req.user) {
-        throw new UnauthorizedError(
-          AUTH_ERROR_CODES.INVALID_CREDENTIALS,
-          "Please sign in."
-        );
-      }
-
-      const { repoId } = req.body;
-      if (!repoId) {
-        throw new ValidationError("Repository ID is required.");
-      }
-
-      const result = await jobService.createJobRun(req.user.id, repoId);
-
-      res.status(202).json(successResponse(result));
-    } catch (error) {
-      next(error);
-    }
-  },
-
-  async getJob(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      if (!req.user) {
-        throw new UnauthorizedError(
-          AUTH_ERROR_CODES.INVALID_CREDENTIALS,
-          "Please sign in again."
-        );
-      }
-
-      const idParamParse = z.string().uuid().safeParse(req.params.id);
-      if (!idParamParse.success) {
-        throw new BadRequestError(
-          COMMON_ERROR_CODES.VALIDATION_ERROR,
-          "Invalid identifier format."
-        );
-      }
-
-      const jobData = await jobService.getJobById(
-        idParamParse.data,
-        req.user.id
-      );
-
-      res.status(200).json(successResponse(jobData));
-    } catch (error) {
-      next(error);
-    }
-  },
-
   async getJobLogs(
     req: Request,
     res: Response,

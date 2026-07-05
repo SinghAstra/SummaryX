@@ -180,7 +180,7 @@ export const ingestionService = {
         repositoryId: repo.id,
         status: JOB_STATUS.RUNNING,
         logLevel: LOG_LEVEL.INFO,
-        message: "Setting up your dashboard views...",
+        message: "Setting up your projects...",
       });
 
       await prisma.$transaction(
