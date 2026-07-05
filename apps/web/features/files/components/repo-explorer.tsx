@@ -28,7 +28,6 @@ export function RepositoryExplorer({
   const [expandedSummaries, setExpandedSummaries] = useState<Set<string>>(
     new Set()
   );
-  const [activeFile, setActiveFile] = useState<RepositoryTreeNode | null>(null);
 
   const [prevIsExpandedAll, setPrevIsExpandedAll] =
     useState<boolean>(isExpandedAll);
@@ -101,9 +100,7 @@ export function RepositoryExplorer({
                 node={node}
                 expandedFolders={expandedFolders}
                 expandedSummaries={expandedSummaries}
-                activeFile={activeFile}
                 onToggleFolder={handleToggleFolder}
-                onSelectFile={setActiveFile}
                 onToggleSummary={handleToggleSummary}
               />
             ))}
@@ -117,28 +114,27 @@ export function RepositoryExplorer({
 interface TreeNodeItemProps {
   node: RepositoryTreeNode;
   expandedFolders: Set<string>;
-  activeFile: RepositoryTreeNode | null;
+  expandedSummaries: Set<string>;
   onToggleFolder: (path: string) => void;
-  onSelectFile: (file: RepositoryTreeNode) => void;
+  onToggleSummary: (path: string) => void;
 }
 
 function TreeNodeItem({
   node,
   expandedFolders,
-  activeFile,
   onToggleFolder,
-  onSelectFile,
+  expandedSummaries,
+  onToggleSummary,
 }: TreeNodeItemProps) {
   const isFolder = node.type === "folder";
   const isOpen = expandedFolders.has(node.relativePath);
-  const isActive = activeFile?.relativePath === node.relativePath;
 
   const handleClick = (e: React.MouseEvent): void => {
     e.stopPropagation();
     if (isFolder) {
       onToggleFolder(node.relativePath);
     } else {
-      onSelectFile(node);
+      onToggleSummary(node.relativePath);
     }
   };
 
@@ -148,9 +144,7 @@ function TreeNodeItem({
         onClick={handleClick}
         className={cn(
           "flex items-center gap-2 px-2 py-1.5 rounded-md transition-all duration-150 cursor-pointer group select-none relative",
-          isActive
-            ? "bg-primary/10 text-primary border-l-2 border-primary pl-1.5 rounded-l-none"
-            : "hover:bg-muted/50 text-muted-foreground hover:text-foreground"
+          "hover:bg-muted/50 text-muted-foreground hover:text-foreground"
         )}
       >
         <div className="size-4 flex items-center justify-center shrink-0">
@@ -162,6 +156,15 @@ function TreeNodeItem({
             ))}
         </div>
 
+        <div className="size-4 flex items-center justify-center shrink-0">
+          {isFolder &&
+            (isOpen ? (
+              <ChevronDown className="size-3.5 text-muted-foreground/60" />
+            ) : (
+              <ChevronRight className="size-3.5 text-muted-foreground/60" />
+            ))}
+        </div>
+
         {isFolder ? (
           isOpen ? (
             <FolderOpen className="size-4 text-primary/70 fill-primary/5 shrink-0" />
@@ -169,28 +172,16 @@ function TreeNodeItem({
             <Folder className="size-4 text-primary/70 fill-primary/5 shrink-0" />
           )
         ) : (
-          <FileText
-            className={cn(
-              "size-4 shrink-0",
-              isActive
-                ? "text-primary"
-                : "text-muted-foreground/40 group-hover:text-muted-foreground/70"
-            )}
-          />
+          <FileText className="size-4 shrink-0 text-muted-foreground/40 group-hover:text-muted-foreground/70" />
         )}
 
-        <span
-          className={cn(
-            "truncate font-medium transition-colors select-none",
-            !isFolder && !isActive && "text-foreground/80"
-          )}
-        >
+        <span className="truncate font-medium text-foreground/80">
           {node.name}
         </span>
 
         {!isFolder && node.summaryStatus === "COMPLETED" && (
-          <span className="ml-auto inline-flex items-center text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-sans border border-primary/10 select-none scale-90 opacity-90">
-            Mapped
+          <span className="ml-auto inline-flex items-center text-[10px] text-green-500 px-1.5 py-0.5 rounded border border-border/10 select-none scale-90 opacity-90">
+            Analyzed
           </span>
         )}
       </div>
@@ -203,18 +194,12 @@ function TreeNodeItem({
                 key={child.relativePath}
                 node={child}
                 expandedFolders={expandedFolders}
-                activeFile={activeFile}
                 onToggleFolder={onToggleFolder}
-                onSelectFile={onSelectFile}
+                expandedSummaries={expandedSummaries}
+                onToggleSummary={onToggleSummary}
               />
             ))}
           </ul>
-        </div>
-      )}
-
-      {isFolder && isOpen && node.children.length === 0 && (
-        <div className="pl-8 py-1 text-[11px] text-muted-foreground/30 font-sans italic select-none">
-          Empty directory
         </div>
       )}
     </li>
