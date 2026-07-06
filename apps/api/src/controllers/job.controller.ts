@@ -2,11 +2,11 @@ import { prisma } from "@repo/db";
 import {
   AUTH_ERROR_CODES,
   COMMON_ERROR_CODES,
-  getJobTelemetryChannel,
   JOB_STATUS,
   logError,
   telemetryEventSchema,
 } from "@repo/shared";
+import { getJobTelemetryChannel } from "@repo/shared/server";
 import { type NextFunction, type Request, type Response } from "express";
 import z from "zod";
 import { redisConnection } from "../config/redis.js";

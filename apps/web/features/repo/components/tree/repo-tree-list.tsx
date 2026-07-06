@@ -1,7 +1,7 @@
 "use client";
 
 import { type RepositoryTreeNode } from "@repo/shared";
-import { TreeNodeItem } from "../../files/components/tree/tree-node-item";
+import { TreeNodeItem } from "./tree-node-item";
 
 interface RepoTreeListProps {
   nodes: RepositoryTreeNode[];

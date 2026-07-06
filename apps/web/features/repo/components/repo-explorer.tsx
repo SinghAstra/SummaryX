@@ -22,7 +22,13 @@ export function RepositoryExplorer({
   const { data: treeNodes = [], isLoading } = useRepositoryFiles(repositoryId);
 
   if (isLoading) {
-    return <RepositoryLoadingSkeleton />;
+    return (
+      <div className="border bg-card/50 rounded flex flex-col shadow-sm h-full overflow-y-auto w-full backdrop-blur-sm">
+        <div className="flex-1 p-2">
+          <RepositoryLoadingSkeleton />
+        </div>
+      </div>
+    );
   }
 
   if (treeNodes.length === 0) {

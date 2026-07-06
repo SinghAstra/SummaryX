@@ -5,9 +5,8 @@ import {
   JOB_STATUS,
   logError,
   REPOSITORY_STATUS,
-  trackProgress,
 } from "@repo/shared";
-import { fileSummarizationQueue } from "@repo/shared/queue";
+import { fileSummarizationQueue, trackProgress } from "@repo/shared/server";
 import { exec } from "node:child_process";
 import crypto from "node:crypto";
 import fs from "node:fs/promises";

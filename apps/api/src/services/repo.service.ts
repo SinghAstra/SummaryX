@@ -9,11 +9,11 @@ import {
   parseGitHubUrl,
   REPOSITORY_STATUS,
   RepositoryTreeNode,
-  trackProgress,
 } from "@repo/shared";
 import {
   fileSummarizationQueue,
   repositoryIngestionQueue,
+  trackProgress,
 } from "@repo/shared/server";
 import crypto from "node:crypto";
 import os from "node:os";

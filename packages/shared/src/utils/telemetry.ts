@@ -1,10 +1,9 @@
 import { prisma } from "@repo/db";
-import {
-  getJobTelemetryChannel,
-  TelemetryEvent,
-  type JobStatus,
-} from "@repo/shared";
+
 import { redisConnection } from "../config/redis";
+import { TelemetryEvent } from "../responses";
+import { JobStatus } from "../schemas";
+import { getJobTelemetryChannel } from "./get-job-telemetry-channel";
 
 interface TelemetryOptions {
   jobId: string;

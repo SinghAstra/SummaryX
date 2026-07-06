@@ -3,8 +3,8 @@ import {
   FILE_SUMMARY_STATUS,
   JOB_STATUS,
   REPOSITORY_STATUS,
-  trackProgress,
 } from "@repo/shared";
+import { trackProgress } from "@repo/shared/server";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { estimateTokenCount, MODEL_CONFIG } from "../ai/model-config.js";
