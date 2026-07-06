@@ -1,5 +1,5 @@
 import z from "zod";
-import { jobStatusSchema } from "./job";
+import { jobStatusSchema } from "./job.schema";
 
 export const jobItemSchema = z.object({
   id: z.uuid(),

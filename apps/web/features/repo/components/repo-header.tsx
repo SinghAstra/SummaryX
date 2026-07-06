@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import {
   ChevronsUpDown,
   Copy,
+  Disc3,
   ExternalLink,
   GitFork,
   LogOut,
@@ -148,7 +149,7 @@ export function RepoHeader({
                 aria-label="Resync Codebase"
                 className="rounded-full text-muted-foreground hover:text-foreground border bg-card/50 hover:bg-card/70 size-8 transition-all duration-200"
               >
-                <RefreshCw
+                <Disc3
                   className={cn(
                     "size-3.5 transition-transform duration-500",
                     isProcessing && "animate-spin"
