@@ -1,5 +1,5 @@
+import { queueSubscriber, redisConnection } from "@repo/shared";
 import crypto from "node:crypto";
-import { queueSubscriber, redisConnection } from "../config/redis.js";
 import { ENGINE_CONFIG, getQueueChannelKey, REDIS_KEYS } from "./constants.js";
 import { peekNextKeyIndex } from "./key-manager.js";
 import { trackQueueLength } from "./metrics.js";
@@ -17,7 +17,7 @@ queueSubscriber.on("message", (channel: string, message: string): void => {
   }
 });
 
-async function initializeDistributedQueue(): Promise<void> {
+export async function initializeDistributedQueue(): Promise<void> {
   try {
     await redisConnection.del(REDIS_KEYS.ACTIVE_COUNT);
     await redisConnection.del(REDIS_KEYS.QUEUE_LIST);
@@ -32,8 +32,6 @@ async function initializeDistributedQueue(): Promise<void> {
   }
 }
 
-void initializeDistributedQueue();
-
 export async function acquire(
   runId: number,
   totalTaskStartTime: number
@@ -45,7 +43,7 @@ export async function acquire(
     const queueSize = await redisConnection.llen(REDIS_KEYS.QUEUE_LIST);
     const timeSec = ((Date.now() - totalTaskStartTime) / 1000).toFixed(2);
     console.log(
-      `[Run ${runId}] 🟢 CLAIMED | Key Index: ${nextEstimatedIndex} | Result: N/A | Active Slots: ${currentActive}/${ENGINE_CONFIG.MAX_CONCURRENT_REQUESTS} | Queue Size: ${queueSize} | Time: ${timeSec}s`
+      `[Run ${runId}] 🟢 CLAIMED | Key Index: ${nextEstimatedIndex} | Active Slots: ${currentActive}/${ENGINE_CONFIG.MAX_CONCURRENT_REQUESTS} | Queue Size: ${queueSize} | Time: ${timeSec}s`
     );
     return;
   }
@@ -62,7 +60,7 @@ export async function acquire(
 
   const queueTimeSec = ((Date.now() - totalTaskStartTime) / 1000).toFixed(2);
   console.log(
-    `[Run ${runId}] 💤 QUEUED | Key Index: ${nextEstimatedIndex} | Result: N/A | Active Slots: ${ENGINE_CONFIG.MAX_CONCURRENT_REQUESTS}/${ENGINE_CONFIG.MAX_CONCURRENT_REQUESTS} | Queue Size: ${currentQueueLength} | Time: ${queueTimeSec}s`
+    `[Run ${runId}] 💤 QUEUED | Key Index: ${nextEstimatedIndex} | Active Slots: ${ENGINE_CONFIG.MAX_CONCURRENT_REQUESTS}/${ENGINE_CONFIG.MAX_CONCURRENT_REQUESTS} | Queue Size: ${currentQueueLength} | Time: ${queueTimeSec}s`
   );
 
   await queueSubscriber.subscribe(privateChannel);
@@ -78,7 +76,7 @@ export async function acquire(
   const releaseTimeSec = ((Date.now() - totalTaskStartTime) / 1000).toFixed(2);
 
   console.log(
-    `[Run ${runId}] 🔓 RELEASED | Key Index: ${nextEstimatedIndex} | Result: N/A | Active Slots: ${postActive}/${ENGINE_CONFIG.MAX_CONCURRENT_REQUESTS} | Queue Size: ${postQueueSize} | Time: ${releaseTimeSec}s`
+    `[Run ${runId}] 🔓 RELEASED | Key Index: ${nextEstimatedIndex} | Active Slots: ${postActive}/${ENGINE_CONFIG.MAX_CONCURRENT_REQUESTS} | Queue Size: ${postQueueSize} | Time: ${releaseTimeSec}s`
   );
 }
 

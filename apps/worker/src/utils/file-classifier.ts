@@ -7,9 +7,9 @@ export type FileCategory =
   | "IGNORED";
 
 interface ClassificationResult {
-  readonly category: FileCategory;
-  readonly shouldSummarizeWithAI: boolean;
-  readonly staticSummary: string; // 🟢 Now always required for non-AI files
+  category: FileCategory;
+  shouldSummarizeWithAI: boolean;
+  staticSummary: string;
 }
 
 const IGNORED_DIRECTORIES = [

@@ -14,6 +14,8 @@ export const redisConnection = new Redis(redisUrl, {
   maxRetriesPerRequest: null,
 });
 
+export const queueSubscriber = redisConnection.duplicate();
+
 redisConnection.on("connect", () => {
   console.log("🔌 Redis primary connection link established.");
 });
@@ -24,6 +26,16 @@ redisConnection.on("ready", () => {
 
 redisConnection.on("error", (error) => {
   console.error("🚨 Redis primary connection fault detected:", {
+    message: error.message,
+  });
+});
+
+queueSubscriber.on("connect", () => {
+  console.log("🔌 Redis subscriber connection link established.");
+});
+
+queueSubscriber.on("error", (error) => {
+  console.error("🚨 Redis subscriber connection fault detected:", {
     message: error.message,
   });
 });

@@ -3,13 +3,13 @@ import {
   FILE_SUMMARY_STATUS,
   JOB_STATUS,
   REPOSITORY_STATUS,
+  trackProgress,
 } from "@repo/shared";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { estimateTokenCount, MODEL_CONFIG } from "../ai/model-config.js";
 import { executeAIRequest } from "../ai/request-manager.js";
 import { classifyFile } from "../utils/file-classifier.js";
-import { trackProgress } from "../utils/telemetry.js";
 
 const SYSTEM_PROMPT = `You are a product-focused technical writer. Your task is to explain why a file exists in a codebase and what its primary responsibility is.
 

@@ -1,18 +1,18 @@
 import { prisma } from "@repo/db";
 import {
   FILE_SUMMARY_STATUS,
+  fileSummarizationQueue,
   JOB_NAMES,
   JOB_STATUS,
   logError,
   REPOSITORY_STATUS,
+  trackProgress,
 } from "@repo/shared";
 import { exec } from "node:child_process";
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
-import { fileSummarizationQueue } from "../queues/summarization.queue.js";
-import { trackProgress } from "../utils/telemetry.js";
 
 const execAsync = promisify(exec);
 
@@ -131,7 +131,6 @@ export const ingestionService = {
         data: { status: JOB_STATUS.RUNNING, startedAt: new Date() },
       });
 
-      // --- STEP 1: Code Ingestion Strategy ---
       if (isResync) {
         await trackProgress({
           jobId,
@@ -170,7 +169,6 @@ export const ingestionService = {
         );
       }
 
-      // --- STEP 2: Structural Traversal Analysis ---
       await trackProgress({
         jobId,
         repositoryId: repo.id,
@@ -198,12 +196,10 @@ export const ingestionService = {
         logError(error);
       }
 
-      // --- STEP 3: In-Memory Delta Computation ---
       const existingDBFiles = await prisma.repositoryFile.findMany({
         where: { repositoryId: repo.id },
       });
 
-      // Convert arrays to unified lookup maps
       const dbFileMap = new Map(
         existingDBFiles.map((f) => [f.relativePath.replace(/\\/g, "/"), f])
       );
@@ -224,7 +220,6 @@ export const ingestionService = {
         (f) => !fsPaths.has(f.relativePath.replace(/\\/g, "/"))
       );
 
-      // --- STEP 4: Atomic Telemetry & Database Sync ---
       await trackProgress({
         jobId,
         repositoryId: repo.id,
