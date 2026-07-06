@@ -3,7 +3,6 @@ import {
   FILE_SUMMARY_STATUS,
   JOB_NAMES,
   JOB_STATUS,
-  LOG_LEVEL,
   logError,
   REPOSITORY_STATUS,
 } from "@repo/shared";
@@ -138,7 +137,6 @@ export const ingestionService = {
           jobId,
           repositoryId: repo.id,
           status: JOB_STATUS.RUNNING,
-          logLevel: LOG_LEVEL.INFO,
           message: "Fetching latest changes...",
         });
 
@@ -151,7 +149,6 @@ export const ingestionService = {
           jobId,
           repositoryId: repo.id,
           status: JOB_STATUS.RUNNING,
-          logLevel: LOG_LEVEL.INFO,
           message: "Getting things ready...",
         });
 
@@ -162,7 +159,6 @@ export const ingestionService = {
           jobId,
           repositoryId: repo.id,
           status: JOB_STATUS.RUNNING,
-          logLevel: LOG_LEVEL.INFO,
           message: "Downloading your project files...",
         });
 
@@ -179,7 +175,6 @@ export const ingestionService = {
         jobId,
         repositoryId: repo.id,
         status: JOB_STATUS.RUNNING,
-        logLevel: LOG_LEVEL.INFO,
         message: "Comparing files...",
       });
 
@@ -234,7 +229,6 @@ export const ingestionService = {
         jobId,
         repositoryId: repo.id,
         status: JOB_STATUS.RUNNING,
-        logLevel: LOG_LEVEL.INFO,
         message: `Updating database (${addedFiles.length} added, ${modifiedFiles.length} changed, ${deletedFiles.length} deleted)...`,
       });
 
@@ -317,7 +311,6 @@ export const ingestionService = {
           jobId,
           repositoryId: repo.id,
           status: JOB_STATUS.RUNNING,
-          logLevel: LOG_LEVEL.INFO,
           message: `Summarizing changed files...`,
         });
       } else {
@@ -330,7 +323,6 @@ export const ingestionService = {
           jobId,
           repositoryId: repo.id,
           status: JOB_STATUS.COMPLETED,
-          logLevel: LOG_LEVEL.INFO,
           message: "Sync complete. No changes found.",
         });
       }
@@ -354,7 +346,6 @@ export const ingestionService = {
         jobId,
         repositoryId: repo.id,
         status: JOB_STATUS.FAILED,
-        logLevel: LOG_LEVEL.ERROR,
         message: "We couldn't load your project. Please try again.",
       });
 

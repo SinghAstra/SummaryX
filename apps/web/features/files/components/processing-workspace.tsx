@@ -2,9 +2,11 @@
 
 import { useJobLiveStream } from "@/features/jobs/hooks/use-job-live-stream";
 import { useJobLogs } from "@/features/jobs/hooks/use-job-logs";
-import { RepositoryStatus } from "@repo/shared";
+import { repoKeys } from "@/features/repo/query-keys";
+import { JOB_STATUS, RepositoryStatus } from "@repo/shared";
+import { useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { ProcessingHeader } from "./processing-header";
 import { TerminalConsole } from "./terminal-console";
 
@@ -18,8 +20,11 @@ interface ProcessingWorkspaceProps {
 
 export function ProcessingWorkspace({ repo }: ProcessingWorkspaceProps) {
   const { data: session } = useSession();
+  const queryClient = useQueryClient();
   const activeJobId = repo.latestJobId ?? "";
-  const { data: initialLogs = [] } = useJobLogs(activeJobId);
+
+  const { data: jobData } = useJobLogs(activeJobId);
+  const currentStatus = jobData?.status;
 
   const { liveMessages } = useJobLiveStream(
     activeJobId,
@@ -27,10 +32,26 @@ export function ProcessingWorkspace({ repo }: ProcessingWorkspaceProps) {
     session?.accessToken
   );
 
-  console.log("liveMessages is ", liveMessages);
+  useEffect(() => {
+    if (!currentStatus) return;
+
+    const isTerminalState =
+      currentStatus === JOB_STATUS.COMPLETED ||
+      currentStatus === JOB_STATUS.FAILED ||
+      currentStatus === JOB_STATUS.CANCELLED;
+
+    if (isTerminalState) {
+      void Promise.all([
+        queryClient.invalidateQueries({ queryKey: repoKeys.detail(repo.id) }),
+        queryClient.invalidateQueries({ queryKey: repoKeys.files(repo.id) }),
+        queryClient.invalidateQueries({ queryKey: repoKeys.lists() }),
+      ]);
+    }
+  }, [currentStatus, repo.id, queryClient]);
 
   const allTerminalMessages = useMemo(() => {
-    const historicalMapped = initialLogs.map((log) => ({
+    const logsArray = jobData?.logs ?? [];
+    const historicalMapped = logsArray.map((log) => ({
       message: log.message,
       timestamp: log.createdAt,
     }));
@@ -43,7 +64,7 @@ export function ProcessingWorkspace({ repo }: ProcessingWorkspaceProps) {
       seen.add(item.message);
       return true;
     });
-  }, [initialLogs, liveMessages]);
+  }, [jobData?.logs, liveMessages]);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">

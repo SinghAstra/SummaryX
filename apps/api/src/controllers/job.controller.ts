@@ -26,11 +26,7 @@ const writeSseEvent = (res: Response, payload: unknown): void => {
 };
 
 export const jobController = {
-  async getJobLogs(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
+  async getJobLogs(req: Request, res: Response, next: NextFunction) {
     try {
       if (!req.user) {
         throw new UnauthorizedError(

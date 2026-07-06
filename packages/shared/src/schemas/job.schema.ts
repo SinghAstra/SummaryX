@@ -16,11 +16,21 @@ export const jobStatusSchema = z.enum([
   JOB_STATUS.CANCELLED,
 ]);
 
-export const JobDataSchema = z.object({
+export const repoIngestionJobDataSchema = z.object({
   jobId: z.uuid(),
   repositoryId: z.string().uuid(),
-  isResync: z.boolean().default(false),
+  isResync: z.boolean(),
+});
+
+export const fileSummarizationJobDataSchema = z.object({
+  fileId: z.uuid(),
+  repositoryId: z.string().uuid(),
+  jobId: z.uuid(),
+  runId: z.number().int().nonnegative(),
 });
 
 export type JobStatus = z.infer<typeof jobStatusSchema>;
-export type JobData = z.infer<typeof JobDataSchema>;
+export type RepoIngestionJobData = z.infer<typeof repoIngestionJobDataSchema>;
+export type FileSummarizationJobData = z.infer<
+  typeof fileSummarizationJobDataSchema
+>;

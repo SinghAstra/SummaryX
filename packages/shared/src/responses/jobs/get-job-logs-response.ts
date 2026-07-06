@@ -1,6 +1,14 @@
 import { z } from "zod";
 import { jobStatusSchema } from "../../schemas";
-import { logItemSchema } from "../../schemas/job/log-item";
+
+export const logItemSchema = z.object({
+  id: z.uuid(),
+  jobId: z.uuid(),
+  message: z.string(),
+  createdAt: z.string(),
+});
+
+export type LogItem = z.infer<typeof logItemSchema>;
 
 export const getJobLogsResponseSchema = z.object({
   status: jobStatusSchema,

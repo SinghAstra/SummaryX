@@ -2,7 +2,6 @@ import { prisma } from "@repo/db";
 import {
   FILE_SUMMARY_STATUS,
   JOB_STATUS,
-  LOG_LEVEL,
   REPOSITORY_STATUS,
 } from "@repo/shared";
 import fs from "node:fs/promises";
@@ -229,7 +228,6 @@ async function updateGlobalProgress(
     jobId,
     repositoryId,
     status: JOB_STATUS.RUNNING,
-    logLevel: LOG_LEVEL.INFO,
     message: `Analyzing files... (${completedCount}/${totalCount})`,
   });
 
@@ -242,7 +240,6 @@ async function updateGlobalProgress(
       jobId,
       repositoryId,
       status: JOB_STATUS.COMPLETED,
-      logLevel: LOG_LEVEL.INFO,
       message: "All done! Your project overview is completely ready.",
     });
   }

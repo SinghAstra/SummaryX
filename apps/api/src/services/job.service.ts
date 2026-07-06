@@ -6,6 +6,11 @@ export const jobService = {
   async getJobLogsById(jobId: string): Promise<GetJobLogsResponse> {
     const job = await prisma.job.findUnique({
       where: { id: jobId },
+      include: {
+        logs: {
+          orderBy: { createdAt: "asc" },
+        },
+      },
     });
 
     if (!job) {
@@ -15,17 +20,14 @@ export const jobService = {
       );
     }
 
-    const logs = await prisma.jobLog.findMany({
-      where: { jobId },
-      orderBy: { createdAt: "asc" },
-    });
-
-    return logs.map((log) => ({
-      id: log.id,
-      jobId: log.jobId,
-      level: log.level,
-      message: log.message,
-      createdAt: log.createdAt.toISOString(),
-    }));
+    return {
+      status: job.status,
+      logs: job.logs.map((log) => ({
+        id: log.id,
+        jobId: log.jobId,
+        message: log.message,
+        createdAt: log.createdAt.toISOString(),
+      })),
+    };
   },
 };

@@ -1,0 +1,29 @@
+import { Redis } from "ioredis";
+
+const redisUrl = process.env.REDIS_URL;
+
+if (!redisUrl) {
+  throw new Error(
+    "🚨 [REDIS ENGINE FAULT] process.env.REDIS_URL is completely undefined.\n" +
+      "   Ensure your application entry point calls 'dotenv.config()' and runs its " +
+      "   validation layers BEFORE importing any components from the shared library bundle."
+  );
+}
+
+export const redisConnection = new Redis(redisUrl, {
+  maxRetriesPerRequest: null,
+});
+
+redisConnection.on("connect", () => {
+  console.log("🔌 Redis primary connection link established.");
+});
+
+redisConnection.on("ready", () => {
+  console.log("✅ Redis primary cluster status: READY");
+});
+
+redisConnection.on("error", (error) => {
+  console.error("🚨 Redis primary connection fault detected:", {
+    message: error.message,
+  });
+});

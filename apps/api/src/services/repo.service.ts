@@ -1,6 +1,7 @@
 import { prisma } from "@repo/db";
 import {
   COMMON_ERROR_CODES,
+  FILE_SUMMARY_STATUS,
   GetRepositoriesResponse,
   GetRepositoryResponse,
   JOB_NAMES,
@@ -240,5 +241,118 @@ export const repositoryService = {
     });
 
     return { jobId: job.id };
+  },
+
+  async boostRepository(id: string, userId: string) {
+    const repo = await prisma.repository.findFirst({
+      where: { id, userId },
+      include: {
+        jobs: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+        },
+      },
+    });
+
+    if (!repo) {
+      throw new NotFoundError(
+        COMMON_ERROR_CODES.ROUTE_NOT_FOUND,
+        "Repository not found."
+      );
+    }
+
+    const latestJob = repo.jobs[0] ?? null;
+
+    const incompleteFiles = await prisma.repositoryFile.findMany({
+      where: {
+        repositoryId: id,
+        summaryStatus: {
+          not: FILE_SUMMARY_STATUS.COMPLETED,
+        },
+      },
+    });
+
+    if (incompleteFiles.length === 0) {
+      await prisma.repository.update({
+        where: { id },
+        data: { status: REPOSITORY_STATUS.COMPLETED },
+      });
+
+      if (latestJob) {
+        await prisma.job.update({
+          where: { id: latestJob.id },
+          data: { status: JOB_STATUS.COMPLETED, completedAt: new Date() },
+        });
+
+        await trackProgress({
+          jobId: latestJob.id,
+          repositoryId: id,
+          status: JOB_STATUS.COMPLETED,
+          logLevel: LOG_LEVEL.INFO,
+          message: "Sync complete. No changes found.",
+        });
+      }
+
+      return { jobId: latestJob?.id || "" };
+    }
+
+    const newJob = await prisma.job.create({
+      data: {
+        repositoryId: id,
+        status: JOB_STATUS.PENDING,
+      },
+    });
+
+    await trackProgress({
+      jobId: newJob.id,
+      repositoryId: id,
+      status: JOB_STATUS.RUNNING,
+      logLevel: LOG_LEVEL.INFO,
+      message: BOOST_TELEMETRY_MESSAGES.START_BOOST,
+    });
+
+    await prisma.$transaction([
+      ...(latestJob && latestJob.status === JOB_STATUS.RUNNING
+        ? [
+            prisma.job.update({
+              where: { id: latestJob.id },
+              data: { status: JOB_STATUS.CANCELLED, cancelledAt: new Date() },
+            }),
+          ]
+        : []),
+      prisma.repositoryFile.updateMany({
+        where: {
+          repositoryId: id,
+          summaryStatus: {
+            not: FILE_SUMMARY_STATUS.COMPLETED,
+          },
+        },
+        data: {
+          summaryStatus: FILE_SUMMARY_STATUS.PENDING,
+          retryCount: 0,
+          lastError: null,
+        },
+      }),
+    ]);
+
+    const runId = Math.floor(Math.random() * 100000);
+
+    await fileSummarizationQueue.addBulk(
+      incompleteFiles.map((file, idx) => ({
+        name: JOB_NAMES.SUMMARIZE_FILE,
+        data: {
+          fileId: file.id,
+          repositoryId: id,
+          jobId: newJob.id,
+          runId: runId + idx,
+        },
+        opts: {
+          attempts: 5,
+          backoff: { type: "exponential", delay: 2000 },
+        },
+      }))
+    );
+
+    return { jobId: newJob.id };
   },
 };
