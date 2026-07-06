@@ -6,8 +6,8 @@ import {
 } from "@repo/shared";
 import { getServerSession } from "next-auth";
 import { z } from "zod";
-import { authOptions } from "../auth";
-import { env } from "../env";
+import { authOptions } from "./auth";
+import { env } from "./env";
 
 interface RequestOptions extends Omit<RequestInit, "body"> {
   body?: unknown;

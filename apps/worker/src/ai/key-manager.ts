@@ -1,11 +1,11 @@
+import { redisConnection } from "@repo/shared";
 import dotenv from "dotenv";
-import { redisConnection } from "../config/redis.js";
 import { getCoolDownKeyPath } from "./constants.js";
 import { recordCoolDownTriggered } from "./metrics.js";
 
 dotenv.config();
 
-const rawKeysString = process.env.GROQ_API_KEY || "";
+const rawKeysString = process.env.GROQ_API_KEYS || "";
 
 const apiKeysPool: readonly string[] = rawKeysString
   .split(",")

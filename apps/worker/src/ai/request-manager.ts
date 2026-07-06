@@ -1,6 +1,5 @@
-import { logError } from "@repo/shared";
+import { logError, redisConnection } from "@repo/shared";
 import Groq from "groq-sdk";
-import { redisConnection } from "../config/redis.js";
 import { getCachedClient } from "./client-cache.js";
 import { ENGINE_CONFIG, REDIS_KEYS } from "./constants.js";
 import { classifyError } from "./error-classifier.js";

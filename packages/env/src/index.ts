@@ -44,6 +44,9 @@ export const apiEnvSchema = baseSchema.extend({
  */
 export const workerEnvSchema = baseSchema.extend({
   REDIS_URL: z.url("REDIS_URL is required for worker operations"),
+  GROQ_API_KEYS: z
+    .string()
+    .min(1, "GROQ_API_KEYS is required for AI summarization tasks"),
 });
 
 /**

@@ -1,4 +1,4 @@
-import { redisConnection } from "../config/redis.js";
+import { redisConnection } from "@repo/shared";
 import { getKeyUsageMetricKey, REDIS_KEYS } from "./constants.js";
 
 export interface ClusterMetricsSummary {
