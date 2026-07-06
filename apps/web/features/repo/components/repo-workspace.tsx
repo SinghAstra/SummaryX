@@ -1,13 +1,13 @@
 "use client";
 
-import { RepositoryExplorer } from "@/features/files/components/repo-explorer";
+import { RepositoryExplorer } from "@/features/repo/components/repo-explorer";
+import { RepoHeader } from "@/features/repo/components/repo-header";
+import { useRepositoryFiles } from "@/features/repo/hooks/use-repo-files";
 import {
   compileProjectSummaryText,
   extractAllCompletedFilePaths,
   extractAllFolderPaths,
-} from "@/features/files/utils/tree-utils";
-import { RepoHeader } from "@/features/repo/components/repo-header";
-import { useRepositoryFiles } from "@/features/repo/hooks/use-repo-files";
+} from "@/features/repo/utils/tree-utils";
 import { logError } from "@repo/shared";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";

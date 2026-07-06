@@ -3,27 +3,22 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useSidebar } from "@/components/ui/sidebar";
 import { siteConfig } from "@/config/site";
 import { Logo } from "@/features/dashboard/components/logo";
 import { STATUS_BORDER_MAP } from "@/features/dashboard/components/sidebar";
+import { useBoostRepository } from "@/features/repo/hooks/use-boost-repo";
 import { useRepository } from "@/features/repo/hooks/use-repo";
 import { ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/utils";
-import {
-    ExternalLink,
-    GitFork,
-    LogOut,
-    Menu,
-    User,
-} from "lucide-react";
+import { ExternalLink, GitFork, LogOut, Menu, User, Zap } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -39,6 +34,10 @@ export function ProcessingHeader() {
 
   const { data: repository } = useRepository(repositoryId ?? "");
   const isRepoView = !!repositoryId && !!repository;
+
+  const { mutate: boostRepo, isPending: isBoosting } = useBoostRepository(
+    repositoryId ?? ""
+  );
 
   const handleLogout = async () => {
     await signOut({ callbackUrl: ROUTES.SIGN_IN });
@@ -111,7 +110,25 @@ export function ProcessingHeader() {
           )}
         </div>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-3">
+          {isRepoView && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => boostRepo()}
+              disabled={isBoosting}
+              className="flex items-center gap-1.5 h-8 font-medium text-xs px-2.5 border-amber-500/30 text-amber-600 bg-amber-500/5 hover:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20 transition-all cursor-pointer"
+            >
+              <Zap
+                className={cn(
+                  "size-3.5",
+                  isBoosting ? "animate-bounce fill-current" : "fill-none"
+                )}
+              />
+              {isBoosting ? "Boosting..." : "Boost Engine"}
+            </Button>
+          )}
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
