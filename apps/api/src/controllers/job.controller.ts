@@ -47,10 +47,7 @@ export const jobController = {
         );
       }
 
-      const logsHistory = await jobService.getJobLogsById(
-        idParamParse.data,
-        req.user.id
-      );
+      const logsHistory = await jobService.getJobLogsById(idParamParse.data);
 
       res.status(200).json(successResponse(logsHistory));
     } catch (error) {
@@ -58,11 +55,7 @@ export const jobController = {
     }
   },
 
-  async streamJobTelemetry(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
+  async streamJobTelemetry(req: Request, res: Response, next: NextFunction) {
     let telemetrySubscriber: ReturnType<
       typeof redisConnection.duplicate
     > | null = null;

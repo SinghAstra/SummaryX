@@ -77,7 +77,7 @@ export function RepoHeader({
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full backdrop-blur-md select-none shrink-0 border-b border-border/40 bg-background/95">
+    <header className="sticky top-0 z-40 w-full backdrop-blur-md select-none shrink-0">
       <div className="p-2 px-3 flex items-center justify-between w-full">
         <div className="flex items-center gap-1 min-w-0">
           <button
@@ -146,16 +146,12 @@ export function RepoHeader({
                   isProcessing ? "Syncing Workspace..." : "Resync Codebase"
                 }
                 aria-label="Resync Codebase"
-                className={cn(
-                  "rounded-full text-muted-foreground hover:text-foreground border bg-card/50 hover:bg-card/70 size-8 transition-all duration-200",
-                  isProcessing &&
-                    "bg-muted text-amber-500 border-amber-500/20 opacity-90 cursor-not-allowed"
-                )}
+                className="rounded-full text-muted-foreground hover:text-foreground border bg-card/50 hover:bg-card/70 size-8 transition-all duration-200"
               >
                 <RefreshCw
                   className={cn(
                     "size-3.5 transition-transform duration-500",
-                    isProcessing && "animate-spin text-amber-500"
+                    isProcessing && "animate-spin"
                   )}
                 />
               </Button>

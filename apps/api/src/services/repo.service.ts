@@ -225,7 +225,6 @@ export const repositoryService = {
       data: {
         repositoryId: id,
         status: JOB_STATUS.PENDING,
-        message: "Initializing repository resynchronization sequence...",
       },
     });
 

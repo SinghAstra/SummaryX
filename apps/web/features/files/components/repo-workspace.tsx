@@ -28,18 +28,14 @@ export function RepositoryWorkspace({ repo }: RepositoryWorkspaceProps) {
     new Set()
   );
 
-  // 🟢 State tracking token to capture background array size deltas
   const [prevCompletedCount, setPrevCompletedCount] = useState<number>(0);
 
   const allFolderPaths = extractAllFolderPaths(treeNodes);
   const allCompletedFilePaths = extractAllCompletedFilePaths(treeNodes);
 
-  // 🟢 Pure Render-Phase State Adjustment (No useEffect needed!)
-  // If a new summary completes in the background, this evaluates instantly during render
   if (allCompletedFilePaths.length !== prevCompletedCount) {
     setPrevCompletedCount(allCompletedFilePaths.length);
 
-    // If the user currently has all folders expanded, auto-expand the incoming summary dropdowns
     if (
       allFolderPaths.length > 0 &&
       expandedFolders.size === allFolderPaths.length
@@ -48,7 +44,6 @@ export function RepositoryWorkspace({ repo }: RepositoryWorkspaceProps) {
     }
   }
 
-  // Derive the active header highlight configuration states
   const isExpandedAll =
     allFolderPaths.length > 0 &&
     expandedFolders.size === allFolderPaths.length &&

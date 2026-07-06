@@ -329,7 +329,7 @@ export const ingestionService = {
         await trackProgress({
           jobId,
           repositoryId: repo.id,
-          status: JOB_STATUS.RUNNING,
+          status: JOB_STATUS.COMPLETED,
           logLevel: LOG_LEVEL.INFO,
           message: "Sync complete. No changes found.",
         });

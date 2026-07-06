@@ -1,12 +1,12 @@
 "use client";
 
-import { TerminalConsole } from "@/features/jobs/components/terminal-console";
 import { useJobLiveStream } from "@/features/jobs/hooks/use-job-live-stream";
 import { useJobLogs } from "@/features/jobs/hooks/use-job-logs";
 import { RepositoryStatus } from "@repo/shared";
 import { useSession } from "next-auth/react";
 import { useMemo } from "react";
 import { ProcessingHeader } from "./processing-header";
+import { TerminalConsole } from "./terminal-console";
 
 interface ProcessingWorkspaceProps {
   repo: {
