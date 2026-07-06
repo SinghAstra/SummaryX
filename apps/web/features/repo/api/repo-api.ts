@@ -1,6 +1,8 @@
-import { apiClient } from "@/lib/api-client/client";
+import { apiClient } from "@/lib/api-client";
 import {
   type ApiResponse,
+  BoostRepoResponse,
+  boostRepoResponseSchema,
   type CreateRepoResponse,
   createRepoResponseSchema,
   type GetRepositoriesResponse,
@@ -44,5 +46,8 @@ export const repoApi = {
       {},
       resyncRepoResponseSchema
     );
+  },
+  boostRepository: (id: string): Promise<ApiResponse<BoostRepoResponse>> => {
+    return apiClient.post(`/api/repo/${id}/boost`, {}, boostRepoResponseSchema);
   },
 };
