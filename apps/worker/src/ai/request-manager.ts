@@ -1,4 +1,5 @@
-import { logError, redisConnection } from "@repo/shared";
+import { logError } from "@repo/shared";
+import { redisConnection } from "@repo/shared/server";
 import Groq from "groq-sdk";
 import { getCachedClient } from "./client-cache.js";
 import { ENGINE_CONFIG, REDIS_KEYS } from "./constants.js";

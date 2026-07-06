@@ -1,13 +1,13 @@
 import { prisma } from "@repo/db";
 import {
   FILE_SUMMARY_STATUS,
-  fileSummarizationQueue,
   JOB_NAMES,
   JOB_STATUS,
   logError,
   REPOSITORY_STATUS,
   trackProgress,
 } from "@repo/shared";
+import { fileSummarizationQueue } from "@repo/shared/queue";
 import { exec } from "node:child_process";
 import crypto from "node:crypto";
 import fs from "node:fs/promises";

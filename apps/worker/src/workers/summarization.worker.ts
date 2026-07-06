@@ -1,9 +1,5 @@
-import {
-  FileSummarizationJobData,
-  logError,
-  QUEUE_NAMES,
-  redisConnection,
-} from "@repo/shared";
+import { FileSummarizationJobData, logError, QUEUE_NAMES } from "@repo/shared";
+import { redisConnection } from "@repo/shared/server";
 import { Worker, type Job } from "bullmq";
 import { summarizationService } from "../services/summarization.service.js";
 

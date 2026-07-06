@@ -1,4 +1,4 @@
-import { redisConnection } from "@repo/shared";
+import { redisConnection } from "@repo/shared/server";
 import dotenv from "dotenv";
 import { getCoolDownKeyPath } from "./constants.js";
 import { recordCoolDownTriggered } from "./metrics.js";

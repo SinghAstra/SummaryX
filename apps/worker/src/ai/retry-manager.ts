@@ -1,4 +1,4 @@
-import { redisConnection } from "@repo/shared";
+import { redisConnection } from "@repo/shared/server";
 import { ENGINE_CONFIG, REDIS_KEYS } from "./constants.js";
 import { classifyError } from "./error-classifier.js";
 import { recordRetry } from "./metrics.js";

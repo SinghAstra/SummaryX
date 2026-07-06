@@ -1,4 +1,4 @@
-import { queueSubscriber, redisConnection } from "@repo/shared";
+import { queueSubscriber, redisConnection } from "@repo/shared/server";
 import crypto from "node:crypto";
 import { ENGINE_CONFIG, getQueueChannelKey, REDIS_KEYS } from "./constants.js";
 import { peekNextKeyIndex } from "./key-manager.js";

@@ -2,17 +2,19 @@ import { prisma } from "@repo/db";
 import {
   COMMON_ERROR_CODES,
   FILE_SUMMARY_STATUS,
-  fileSummarizationQueue,
   GetRepositoriesResponse,
   GetRepositoryResponse,
   JOB_NAMES,
   JOB_STATUS,
   parseGitHubUrl,
   REPOSITORY_STATUS,
-  repositoryIngestionQueue,
   RepositoryTreeNode,
   trackProgress,
 } from "@repo/shared";
+import {
+  fileSummarizationQueue,
+  repositoryIngestionQueue,
+} from "@repo/shared/server";
 import crypto from "node:crypto";
 import os from "node:os";
 import path from "node:path";
