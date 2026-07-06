@@ -68,7 +68,7 @@ async function traverseDirectory(
   basePath: string,
   currentPath: string,
   stats: TraversalStats
-): Promise<void> {
+) {
   const entries = await fs.readdir(currentPath, { withFileTypes: true });
 
   for (const entry of entries) {
@@ -142,7 +142,6 @@ export const ingestionService = {
           message: "Fetching latest changes...",
         });
 
-        // Pull down remote updates without wiping out unaffected assets on disk
         await execAsync(`git fetch --depth 1 && git reset --hard FETCH_HEAD`, {
           cwd: repo.diskPath,
           timeout: 60000,
@@ -241,7 +240,6 @@ export const ingestionService = {
 
       await prisma.$transaction(
         async (tx) => {
-          // Sync core global overview stats
           await tx.repository.update({
             where: { id: repo.id },
             data: {
@@ -255,14 +253,12 @@ export const ingestionService = {
             },
           });
 
-          // Wipe out stale references
           if (deletedFiles.length > 0) {
             await tx.repositoryFile.deleteMany({
               where: { id: { in: deletedFiles.map((f) => f.id) } },
             });
           }
 
-          // Register new file payloads
           if (addedFiles.length > 0) {
             await tx.repositoryFile.createMany({
               data: addedFiles.map((file) => ({
@@ -277,7 +273,6 @@ export const ingestionService = {
             });
           }
 
-          // Clear outdated summaries for modified assets
           for (const file of modifiedFiles) {
             await tx.repositoryFile.updateMany({
               where: { repositoryId: repo.id, relativePath: file.relativePath },
@@ -326,7 +321,6 @@ export const ingestionService = {
           message: `Summarizing changed files...`,
         });
       } else {
-        // Fast-track path: Complete the sequence immediately if no files changed
         await prisma.repository.update({
           where: { id: repo.id },
           data: { status: REPOSITORY_STATUS.COMPLETED },

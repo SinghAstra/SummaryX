@@ -10,6 +10,8 @@ import {
   type GetRepositoryResponse,
   getRepositoryResponseSchema,
   type IngestRepoInput,
+  ResyncRepoResponse,
+  resyncRepoResponseSchema,
 } from "@repo/shared";
 
 export const repoApi = {
@@ -33,6 +35,14 @@ export const repoApi = {
     return apiClient.get(
       `/api/repo/${id}/files`,
       getRepositoryFilesResponseSchema
+    );
+  },
+
+  resyncRepository: (id: string): Promise<ApiResponse<ResyncRepoResponse>> => {
+    return apiClient.post(
+      `/api/repo/${id}/resync`,
+      {},
+      resyncRepoResponseSchema
     );
   },
 };
