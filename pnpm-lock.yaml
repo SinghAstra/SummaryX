@@ -221,8 +221,6 @@ importers:
 
   packages/auth: {}
 
-  packages/config: {}
-
   packages/db:
     dependencies:
       '@prisma/client':
@@ -248,6 +246,9 @@ importers:
 
   packages/shared:
     dependencies:
+      '@repo/db':
+        specifier: workspace:*
+        version: link:../db
       bullmq:
         specifier: ^5.79.1
         version: 5.79.1

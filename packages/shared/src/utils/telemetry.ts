@@ -4,7 +4,7 @@ import {
   TelemetryEvent,
   type JobStatus,
 } from "@repo/shared";
-import { telemetryPublisher } from "../config/redis.js";
+import { redisConnection } from "../config/redis";
 
 interface TelemetryOptions {
   jobId: string;
@@ -33,7 +33,7 @@ export async function trackProgress({
 
   console.log("eventPayload is ", eventPayload);
 
-  await telemetryPublisher.publish(
+  await redisConnection.publish(
     channelCoordinate,
     JSON.stringify(eventPayload)
   );

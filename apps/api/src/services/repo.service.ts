@@ -2,20 +2,22 @@ import { prisma } from "@repo/db";
 import {
   COMMON_ERROR_CODES,
   FILE_SUMMARY_STATUS,
+  fileSummarizationQueue,
   GetRepositoriesResponse,
   GetRepositoryResponse,
   JOB_NAMES,
   JOB_STATUS,
   parseGitHubUrl,
   REPOSITORY_STATUS,
+  repositoryIngestionQueue,
   RepositoryTreeNode,
+  trackProgress,
 } from "@repo/shared";
 import crypto from "node:crypto";
 import os from "node:os";
 import path from "node:path";
 import { BadRequestError, NotFoundError } from "../errors/api-errors.js";
 import { buildRepositoryTree } from "../lib/build-tree.js";
-import { repositoryIngestionQueue } from "../queues/ingestion.queue.js";
 
 interface IngestParams {
   readonly userId: string;
@@ -288,7 +290,6 @@ export const repositoryService = {
           jobId: latestJob.id,
           repositoryId: id,
           status: JOB_STATUS.COMPLETED,
-          logLevel: LOG_LEVEL.INFO,
           message: "Sync complete. No changes found.",
         });
       }
@@ -307,8 +308,7 @@ export const repositoryService = {
       jobId: newJob.id,
       repositoryId: id,
       status: JOB_STATUS.RUNNING,
-      logLevel: LOG_LEVEL.INFO,
-      message: BOOST_TELEMETRY_MESSAGES.START_BOOST,
+      message: "Starting Repository Boost...",
     });
 
     await prisma.$transaction([
@@ -345,10 +345,6 @@ export const repositoryService = {
           repositoryId: id,
           jobId: newJob.id,
           runId: runId + idx,
-        },
-        opts: {
-          attempts: 5,
-          backoff: { type: "exponential", delay: 2000 },
         },
       }))
     );
