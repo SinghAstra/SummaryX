@@ -2,12 +2,15 @@ import { Router } from "express";
 import { repositoryController } from "../controllers/repo.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 
-export const repoRouter: Router = Router();
+const router: Router = Router();
 
-repoRouter.use(authMiddleware);
+router.use(authMiddleware);
 
-repoRouter.post("/", repositoryController.ingest);
-repoRouter.get("/:id/files", repositoryController.getFiles);
-repoRouter.get("/:id", repositoryController.getRepository);
-repoRouter.get("/", repositoryController.getRepositories);
-repoRouter.post("/:id/resync", repositoryController.resync);
+router.post("/", repositoryController.ingest);
+router.get("/:id/files", repositoryController.getFiles);
+router.get("/:id", repositoryController.getRepository);
+router.get("/", repositoryController.getRepositories);
+router.post("/:id/resync", repositoryController.resync);
+router.post("/:id/boost", repositoryController.boost);
+
+export { router as repoRouter };

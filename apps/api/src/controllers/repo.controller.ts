@@ -110,4 +110,30 @@ export const repositoryController = {
       next(error);
     }
   },
+
+  boost: async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const repositoryId = z.uuid().parse(req.params.id);
+
+      if (!req.user) {
+        throw new UnauthorizedError(
+          AUTH_ERROR_CODES.INVALID_CREDENTIALS,
+          "Please sign in to continue."
+        );
+      }
+
+      const result = await repositoryService.boostRepository(
+        repositoryId,
+        req.user.id
+      );
+
+      res.status(202).json(successResponse(result));
+    } catch (error) {
+      next(error);
+    }
+  },
 };
