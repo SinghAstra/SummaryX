@@ -13,14 +13,17 @@ import {
 import { useSidebar } from "@/components/ui/sidebar";
 import { siteConfig } from "@/config/site";
 import { Logo } from "@/features/dashboard/components/logo";
+import { STATUS_BORDER_MAP } from "@/features/dashboard/components/sidebar";
 import { ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 import {
   ChevronsUpDown,
+  Copy,
   ExternalLink,
   GitFork,
   LogOut,
   Menu,
+  RefreshCw,
   User,
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
@@ -28,6 +31,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { z } from "zod";
 import { useRepository } from "../hooks/use-repo";
+import { useResyncRepository } from "../hooks/use-resync-repo";
 
 interface RepoHeaderProps {
   readonly isExpandedAll: boolean;
@@ -48,10 +52,15 @@ export function RepoHeader({
   const repositoryId = repoIdValidation.success ? repoIdValidation.data : null;
 
   const { data: repository } = useRepository(repositoryId ?? "");
+  const { mutate: triggerResync, isPending: isResyncPending } =
+    useResyncRepository(repositoryId ?? "");
+
   const isRepoView = !!repositoryId && !!repository;
 
   const isProcessing =
-    repository?.status === "PROCESSING" || repository?.status === "PENDING";
+    repository?.status === "PROCESSING" ||
+    repository?.status === "PENDING" ||
+    isResyncPending;
 
   const handleLogout = async () => {
     await signOut({ callbackUrl: ROUTES.SIGN_IN });
@@ -68,7 +77,7 @@ export function RepoHeader({
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full backdrop-blur-md select-none shrink-0">
+    <header className="sticky top-0 z-40 w-full backdrop-blur-md select-none shrink-0 border-b border-border/40 bg-background/95">
       <div className="p-2 px-3 flex items-center justify-between w-full">
         <div className="flex items-center gap-1 min-w-0">
           <button
@@ -92,9 +101,10 @@ export function RepoHeader({
                     <AvatarImage
                       src={repository.avatar}
                       alt={`${repository.name} logo`}
-                      className={`object-cover border-yellow-400 border-2 ${
-                        isProcessing ? "border-yellow-400" : "border-green-400"
-                      }`}
+                      className={cn(
+                        "object-cover",
+                        STATUS_BORDER_MAP[repository.status]
+                      )}
                     />
                     <AvatarFallback className="rounded bg-primary/10 text-primary border border-primary/10">
                       <GitFork className="size-3 text-primary" />
@@ -124,22 +134,50 @@ export function RepoHeader({
         </div>
 
         <div className="ml-auto flex items-center gap-2">
-          {isRepoView && !isProcessing && (
-            <div className="flex items-center gap-2 animate-in fade-in duration-300">
+          {isRepoView && (
+            <div className="flex items-center gap-1.5 animate-in fade-in duration-300">
               <Button
                 type="button"
                 variant="ghost"
-                size="sm"
-                onClick={onCopySummaryAll}
-                className="text-xs text-muted-foreground hover:text-foreground cursor-pointer border bg-card/50 hover:bg-card/70"
+                size="icon"
+                disabled={isProcessing}
+                onClick={() => triggerResync()}
+                title={
+                  isProcessing ? "Syncing Workspace..." : "Resync Codebase"
+                }
+                aria-label="Resync Codebase"
+                className={cn(
+                  "rounded-full text-muted-foreground hover:text-foreground border bg-card/50 hover:bg-card/70 size-8 transition-all duration-200",
+                  isProcessing &&
+                    "bg-muted text-amber-500 border-amber-500/20 opacity-90 cursor-not-allowed"
+                )}
               >
-                Copy Summary
+                <RefreshCw
+                  className={cn(
+                    "size-3.5 transition-transform duration-500",
+                    isProcessing && "animate-spin text-amber-500"
+                  )}
+                />
               </Button>
 
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
+                disabled={isProcessing}
+                onClick={onCopySummaryAll}
+                title="Copy All Summaries"
+                aria-label="Copy All Summaries"
+                className="rounded-full text-muted-foreground hover:text-foreground border bg-card/50 hover:bg-card/70 size-8 disabled:opacity-40"
+              >
+                <Copy className="size-3.5" />
+              </Button>
+
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                disabled={isProcessing}
                 onClick={onToggleExpandAll}
                 aria-label={
                   isExpandedAll
@@ -148,13 +186,13 @@ export function RepoHeader({
                 }
                 title={isExpandedAll ? "Collapse All" : "Expand All"}
                 className={cn(
-                  "rounded-full text-muted-foreground hover:text-foreground transition-colors border bg-card/50 hover:bg-card/70 size-8",
+                  "rounded-full text-muted-foreground hover:text-foreground transition-colors border bg-card/50 hover:bg-card/70 size-8 disabled:opacity-40",
                   isExpandedAll && "bg-secondary text-primary border-primary/20"
                 )}
               >
                 <ChevronsUpDown
                   className={cn(
-                    "size-4 transition-transform duration-200",
+                    "size-3.5 transition-transform duration-200",
                     isExpandedAll && "rotate-180 text-primary"
                   )}
                 />
