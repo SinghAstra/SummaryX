@@ -17,6 +17,7 @@ import {
   trackProgress,
 } from "@repo/shared/server";
 import crypto from "node:crypto";
+import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { BadRequestError, NotFoundError } from "../errors/api-errors.js";
@@ -364,5 +365,60 @@ export const repositoryService = {
     );
 
     return { jobId: newJob.id };
+  },
+
+  async deleteRepository(id: string, userId: string) {
+    const repo = await prisma.repository.findFirst({
+      where: { id, userId },
+    });
+
+    if (!repo) {
+      throw new NotFoundError(
+        REPO_ERROR_CODES.REPO_NOT_FOUND,
+        "Repository not found or access denied."
+      );
+    }
+
+    await prisma.repository.delete({
+      where: { id },
+    });
+
+    fs.rm(repo.diskPath, { recursive: true, force: true }).catch((err) => {
+      console.error(
+        `⚠️ Failed to clean disk space for repository mapping ${id}:`,
+        err
+      );
+    });
+
+    return { message: "Repository successfully removed." };
+  },
+
+  async deleteMultipleRepositories(ids: string[], userId: string) {
+    const repos = await prisma.repository.findMany({
+      where: { id: { in: ids }, userId },
+      select: { id: true, diskPath: true },
+    });
+
+    if (repos.length === 0) {
+      return { message: "No matching repositories found to remove." };
+    }
+
+    await prisma.repository.deleteMany({
+      where: {
+        id: { in: repos.map((r) => r.id) },
+        userId,
+      },
+    });
+
+    for (const repo of repos) {
+      fs.rm(repo.diskPath, { recursive: true, force: true }).catch((err) => {
+        console.error(
+          `⚠️ Failed to clear bulk disk path for repository asset ${repo.id}:`,
+          err
+        );
+      });
+    }
+
+    return { message: `${repos.length} repositories successfully removed.` };
   },
 };
