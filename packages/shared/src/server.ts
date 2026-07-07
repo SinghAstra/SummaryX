@@ -1,3 +1,3 @@
-export * from "./config/redis.js";
-export * from "./queue.js";
-export * from "./utils/server.js";
+export * from "./config/redis";
+export * from "./queue";
+export * from "./utils/server";

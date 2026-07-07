@@ -9,6 +9,7 @@ import {
   QueryClient,
 } from "@tanstack/react-query";
 import { type Metadata } from "next";
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Repository Workspace - SummaryX",
@@ -29,7 +30,9 @@ export default async function RepositoryPage({ params }: RepositoryPageProps) {
     queryFn: () => repoQueryFn(id),
   });
 
-  const repo = queryClient.getQueryData<GetRepositoryResponse>(repoKeys.detail(id));
+  const repo = queryClient.getQueryData<GetRepositoryResponse>(
+    repoKeys.detail(id)
+  );
 
   if (repo?.status === REPOSITORY_STATUS.COMPLETED) {
     await queryClient.prefetchQuery({
