@@ -24,7 +24,6 @@ import {
   GitFork,
   LogOut,
   Menu,
-  RefreshCw,
   User,
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
@@ -35,9 +34,9 @@ import { useRepository } from "../hooks/use-repo";
 import { useResyncRepository } from "../hooks/use-resync-repo";
 
 interface RepoHeaderProps {
-  readonly isExpandedAll: boolean;
-  readonly onToggleExpandAll: () => void;
-  readonly onCopySummaryAll: () => void;
+  isExpandedAll: boolean;
+  onToggleExpandAll: () => void;
+  onCopySummaryAll: () => void;
 }
 
 export function RepoHeader({

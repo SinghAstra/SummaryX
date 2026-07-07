@@ -30,6 +30,7 @@ import {
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { toast } from "sonner";
 import { z } from "zod";
 
 interface ProcessingHeaderProps {
@@ -51,12 +52,21 @@ export function ProcessingHeader({
   const { data: repository } = useRepository(repositoryId ?? "");
   const isRepoView = !!repositoryId && !!repository;
 
-  const { mutate: boostRepo, isPending: isBoosting } = useBoostRepository(
+  const { mutateAsync: boostRepo, isPending: isBoosting } = useBoostRepository(
     repositoryId ?? ""
   );
 
   const handleBoostExecution = () => {
-    boostRepo();
+    toast.promise(boostRepo(), {
+      loading: "Boosting Engine...",
+      success: "Engine Boosted ",
+    });
+  };
+  const handleRetryExecution = () => {
+    toast.promise(boostRepo(), {
+      loading: " Starting Retry...",
+      success: "Retry Started ",
+    });
   };
 
   const handleLogout = async () => {
@@ -154,7 +164,7 @@ export function ProcessingHeader({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleBoostExecution}
+                  onClick={handleRetryExecution}
                   disabled={isBoosting}
                   className="flex items-center gap-1.5"
                 >

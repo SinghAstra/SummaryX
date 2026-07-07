@@ -1,5 +1,6 @@
 import { REPOSITORY_STATUS } from "@repo/shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { boostRepositoryAction } from "../actions/boost-repo-action";
 import { repoKeys } from "../query-keys";
 
@@ -33,6 +34,9 @@ export function useBoostRepository(repositoryId: string) {
         }),
         queryClient.invalidateQueries({ queryKey: repoKeys.lists() }),
       ]);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
     },
   });
 }
