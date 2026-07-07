@@ -18,13 +18,29 @@ import { useBoostRepository } from "@/features/repo/hooks/use-boost-repo";
 import { useRepository } from "@/features/repo/hooks/use-repo";
 import { ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/utils";
-import { ExternalLink, GitFork, LogOut, Menu, User, Zap } from "lucide-react";
+import {
+  ExternalLink,
+  GitFork,
+  LogOut,
+  Menu,
+  RotateCcw,
+  User,
+  Zap,
+} from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { z } from "zod";
 
-export function ProcessingHeader() {
+interface ProcessingHeaderProps {
+  showBoost: boolean;
+  isFailedState: boolean;
+}
+
+export function ProcessingHeader({
+  showBoost,
+  isFailedState,
+}: ProcessingHeaderProps) {
   const { toggleSidebar } = useSidebar();
   const { data: session } = useSession();
   const params = useParams();
@@ -38,6 +54,10 @@ export function ProcessingHeader() {
   const { mutate: boostRepo, isPending: isBoosting } = useBoostRepository(
     repositoryId ?? ""
   );
+
+  const handleBoostExecution = () => {
+    boostRepo();
+  };
 
   const handleLogout = async () => {
     await signOut({ callbackUrl: ROUTES.SIGN_IN });
@@ -111,22 +131,40 @@ export function ProcessingHeader() {
         </div>
 
         <div className="ml-auto flex items-center gap-3">
-          {isRepoView && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => boostRepo()}
-              disabled={isBoosting}
-              className=" text-xs px-2.5 "
-            >
-              <Zap
-                className={cn(
-                  "size-3.5",
-                  isBoosting ? "animate-bounce fill-current" : "fill-none"
-                )}
-              />
-              {isBoosting ? "Boosting..." : "Boost Engine"}
-            </Button>
+          {isRepoView && showBoost && (
+            <div className="flex items-center gap-2 animate-in fade-in slide-in-from-top-1 duration-200">
+              {showBoost && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleBoostExecution}
+                  disabled={isBoosting}
+                  className="flex items-center gap-1.5"
+                >
+                  <Zap
+                    className={cn(
+                      "size-3.5",
+                      isBoosting && "animate-bounce fill-current"
+                    )}
+                  />
+                  {isBoosting ? "Boosting..." : "Boost Engine"}
+                </Button>
+              )}
+              {isFailedState && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleBoostExecution}
+                  disabled={isBoosting}
+                  className="flex items-center gap-1.5"
+                >
+                  <RotateCcw
+                    className={cn("size-3.5", isBoosting && "animate-spin")}
+                  />
+                  {isBoosting ? "Retrying..." : "Retry"}
+                </Button>
+              )}
+            </div>
           )}
 
           <DropdownMenu>
