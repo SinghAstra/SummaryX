@@ -120,3 +120,18 @@ export function parseGitHubUrl(url: string): { owner: string; name: string } {
   }
   return { owner: match[1], name: match[2] };
 }
+
+export const deleteRepoInputSchema = z.object({
+  id: z.uuid("Invalid repository identification format"),
+});
+
+export const deleteMultipleReposInputSchema = z.object({
+  ids: z
+    .array(z.uuid("Invalid repository identification format"))
+    .min(1, "You must select at least one repository to delete"),
+});
+
+export type DeleteRepoInput = z.infer<typeof deleteRepoInputSchema>;
+export type DeleteMultipleReposInput = z.infer<
+  typeof deleteMultipleReposInputSchema
+>;
