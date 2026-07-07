@@ -29,6 +29,7 @@ import {
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { toast } from "sonner";
 import { z } from "zod";
 import { useRepository } from "../hooks/use-repo";
 import { useResyncRepository } from "../hooks/use-resync-repo";
@@ -52,15 +53,10 @@ export function RepoHeader({
   const repositoryId = repoIdValidation.success ? repoIdValidation.data : null;
 
   const { data: repository } = useRepository(repositoryId ?? "");
-  const { mutate: triggerResync, isPending: isResyncPending } =
+  const { mutateAsync: triggerResync, isPending: isResyncPending } =
     useResyncRepository(repositoryId ?? "");
 
   const isRepoView = !!repositoryId && !!repository;
-
-  const isProcessing =
-    repository?.status === "PROCESSING" ||
-    repository?.status === "PENDING" ||
-    isResyncPending;
 
   const handleLogout = async () => {
     await signOut({ callbackUrl: ROUTES.SIGN_IN });
@@ -74,6 +70,13 @@ export function RepoHeader({
       .join("")
       .toUpperCase()
       .slice(0, 2);
+  };
+
+  const handleResyncCode = () => {
+    toast.promise(triggerResync(), {
+      loading: "Starting Resync...",
+      success: "Resync Started ",
+    });
   };
 
   return (
@@ -140,10 +143,10 @@ export function RepoHeader({
                 type="button"
                 variant="ghost"
                 size="icon"
-                disabled={isProcessing}
-                onClick={() => triggerResync()}
+                disabled={isResyncPending}
+                onClick={handleResyncCode}
                 title={
-                  isProcessing ? "Syncing Workspace..." : "Resync Codebase"
+                  isResyncPending ? "Syncing Workspace..." : "Resync Codebase"
                 }
                 aria-label="Resync Codebase"
                 className="rounded-full text-muted-foreground hover:text-foreground border bg-card/50 hover:bg-card/70 size-8 transition-all duration-200"
@@ -151,7 +154,7 @@ export function RepoHeader({
                 <Disc3
                   className={cn(
                     "size-3.5 transition-transform duration-500",
-                    isProcessing && "animate-spin"
+                    isResyncPending && "animate-spin"
                   )}
                 />
               </Button>
@@ -160,7 +163,6 @@ export function RepoHeader({
                 type="button"
                 variant="ghost"
                 size="icon"
-                disabled={isProcessing}
                 onClick={onCopySummaryAll}
                 title="Copy All Summaries"
                 aria-label="Copy All Summaries"
@@ -173,7 +175,6 @@ export function RepoHeader({
                 type="button"
                 variant="ghost"
                 size="icon"
-                disabled={isProcessing}
                 onClick={onToggleExpandAll}
                 aria-label={
                   isExpandedAll

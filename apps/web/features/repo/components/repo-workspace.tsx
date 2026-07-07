@@ -77,7 +77,7 @@ export function RepositoryWorkspace({ repo }: RepositoryWorkspaceProps) {
     }
   };
 
-  const handleCopySummaryAll = async (): Promise<void> => {
+  const handleCopySummaryAll = async () => {
     if (treeNodes.length === 0) return;
 
     const compiledText = compileProjectSummaryText(treeNodes);
