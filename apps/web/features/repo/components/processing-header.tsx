@@ -117,7 +117,7 @@ export function ProcessingHeader() {
               size="sm"
               onClick={() => boostRepo()}
               disabled={isBoosting}
-              className="flex items-center gap-1.5 h-8 font-medium text-xs px-2.5 border-amber-500/30 text-amber-600 bg-amber-500/5 hover:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20 transition-all cursor-pointer"
+              className=" text-xs px-2.5 "
             >
               <Zap
                 className={cn(
