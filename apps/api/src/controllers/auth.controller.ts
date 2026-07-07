@@ -71,6 +71,7 @@ export const authController = {
       next(error);
     }
   },
+
   forgotPassword: async (
     req: Request,
     res: Response,

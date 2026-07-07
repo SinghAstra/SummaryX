@@ -1,4 +1,8 @@
-import { AUTH_ERROR_CODES, ingestRepoSchema } from "@repo/shared";
+import {
+  AUTH_ERROR_CODES,
+  deleteMultipleReposInputSchema,
+  ingestRepoSchema,
+} from "@repo/shared";
 import { type NextFunction, type Request, type Response } from "express";
 import z from "zod";
 import { UnauthorizedError } from "../errors/api-errors.js";
@@ -111,11 +115,7 @@ export const repositoryController = {
     }
   },
 
-  boost: async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
+  async boost(req: Request, res: Response, next: NextFunction) {
     try {
       const repositoryId = z.uuid().parse(req.params.id);
 
@@ -132,6 +132,46 @@ export const repositoryController = {
       );
 
       res.status(202).json(successResponse(result));
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async deleteSingle(req: Request, res: Response, next: NextFunction) {
+    try {
+      const id = z.string().parse(req.params.id);
+
+      if (!req.user) {
+        throw new UnauthorizedError(
+          AUTH_ERROR_CODES.INVALID_CREDENTIALS,
+          "Please sign in to continue."
+        );
+      }
+
+      const result = await repositoryService.deleteRepository(id, req.user.id);
+
+      res.status(200).json(successResponse(result));
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async deleteBulk(req: Request, res: Response, next: NextFunction) {
+    try {
+      if (!req.user) {
+        throw new UnauthorizedError(
+          AUTH_ERROR_CODES.INVALID_CREDENTIALS,
+          "Please sign in to continue."
+        );
+      }
+
+      const { ids } = deleteMultipleReposInputSchema.parse(req.body);
+      const result = await repositoryService.deleteMultipleRepositories(
+        ids,
+        req.user.id
+      );
+
+      res.status(200).json(successResponse(result));
     } catch (error) {
       next(error);
     }
