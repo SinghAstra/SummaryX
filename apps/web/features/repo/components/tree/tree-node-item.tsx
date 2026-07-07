@@ -3,11 +3,11 @@
 import { cn } from "@/lib/utils";
 import { type RepositoryTreeNode } from "@repo/shared";
 import {
-    ChevronDown,
-    ChevronRight,
-    FileText,
-    Folder,
-    FolderOpen,
+  ChevronDown,
+  ChevronRight,
+  FileText,
+  Folder,
+  FolderOpen,
 } from "lucide-react";
 import React from "react";
 
@@ -82,13 +82,13 @@ export function TreeNodeItem({
             )}
 
             {node.summaryStatus === "PROCESSING" && (
-              <span className="text-[10px] bg-amber-500/10 text-amber-500 px-1.5 py-0.5 rounded border border-amber-500/10 select-none">
+              <span className="text-[10px] bg-muted text-muted-foreground/70 px-1.5 py-0.5 rounded border border-border/40 select-none">
                 Analyzing...
               </span>
             )}
 
             {node.summaryStatus === "FAILED" && (
-              <span className="text-[10px] bg-destructive/10 text-destructive px-1.5 py-0.5 rounded border border-destructive/10 select-none">
+              <span className="text-[10px] bg-muted text-muted-foreground/70 px-1.5 py-0.5 rounded border border-border/40 select-none">
                 Failed
               </span>
             )}

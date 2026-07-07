@@ -59,9 +59,6 @@ interface TraversalStats {
   }>;
 }
 
-/**
- * Traverses directories recursively to build an accurate file map snapshot.
- */
 async function traverseDirectory(
   basePath: string,
   currentPath: string,
@@ -109,13 +106,7 @@ async function traverseDirectory(
 }
 
 export const ingestionService = {
-  /**
-   * Orchestrates repository layout resolution, handling both fresh setups and updates.
-   */
-  async processRepositoryIngestion(
-    jobId: string,
-    isResync = false
-  ): Promise<void> {
+  async processRepositoryIngestion(jobId: string, isResync = false) {
     const job = await prisma.job.findUnique({ where: { id: jobId } });
     if (!job) return;
 
@@ -162,9 +153,7 @@ export const ingestionService = {
 
         await execAsync(
           `git clone --depth 1 ${repo.githubUrl} ${repo.diskPath}`,
-          {
-            timeout: 60000,
-          }
+          { timeout: 60000 }
         );
       }
 
@@ -226,43 +215,49 @@ export const ingestionService = {
         message: `Updating database (${addedFiles.length} added, ${modifiedFiles.length} changed, ${deletedFiles.length} deleted)...`,
       });
 
-      await prisma.$transaction(
-        async (tx) => {
-          await tx.repository.update({
-            where: { id: repo.id },
-            data: {
-              status: REPOSITORY_STATUS.PROCESSING,
-              readme: readmeContents,
-              totalFiles: stats.totalFiles,
-              supportedFiles: stats.supportedFiles,
-              ignoredFiles: stats.ignoredFiles,
-              totalFolders: stats.totalFolders,
-              totalSize: stats.totalSize,
-            },
-          });
+      await prisma.$transaction([
+        prisma.repository.update({
+          where: { id: repo.id },
+          data: {
+            status: REPOSITORY_STATUS.PROCESSING,
+            readme: readmeContents,
+            totalFiles: stats.totalFiles,
+            supportedFiles: stats.supportedFiles,
+            ignoredFiles: stats.ignoredFiles,
+            totalFolders: stats.totalFolders,
+            totalSize: stats.totalSize,
+          },
+        }),
+        ...(deletedFiles.length > 0
+          ? [
+              prisma.repositoryFile.deleteMany({
+                where: { id: { in: deletedFiles.map((f) => f.id) } },
+              }),
+            ]
+          : []),
+        ...(addedFiles.length > 0
+          ? [
+              prisma.repositoryFile.createMany({
+                data: addedFiles.map((file) => ({
+                  repositoryId: repo.id,
+                  relativePath: file.relativePath,
+                  extension: file.extension,
+                  size: file.size,
+                  hash: file.hash,
+                  summaryStatus: FILE_SUMMARY_STATUS.PENDING,
+                })),
+                skipDuplicates: true,
+              }),
+            ]
+          : []),
+      ]);
 
-          if (deletedFiles.length > 0) {
-            await tx.repositoryFile.deleteMany({
-              where: { id: { in: deletedFiles.map((f) => f.id) } },
-            });
-          }
-
-          if (addedFiles.length > 0) {
-            await tx.repositoryFile.createMany({
-              data: addedFiles.map((file) => ({
-                repositoryId: repo.id,
-                relativePath: file.relativePath,
-                extension: file.extension,
-                size: file.size,
-                hash: file.hash,
-                summaryStatus: FILE_SUMMARY_STATUS.PENDING,
-              })),
-              skipDuplicates: true,
-            });
-          }
-
-          for (const file of modifiedFiles) {
-            await tx.repositoryFile.updateMany({
+      const CHUNK_SIZE = 100;
+      for (let i = 0; i < modifiedFiles.length; i += CHUNK_SIZE) {
+        const chunk = modifiedFiles.slice(i, i + CHUNK_SIZE);
+        await Promise.all(
+          chunk.map((file) =>
+            prisma.repositoryFile.updateMany({
               where: { repositoryId: repo.id, relativePath: file.relativePath },
               data: {
                 hash: file.hash,
@@ -270,11 +265,10 @@ export const ingestionService = {
                 summary: null,
                 summaryStatus: FILE_SUMMARY_STATUS.PENDING,
               },
-            });
-          }
-        },
-        { maxWait: 5000, timeout: 30000 }
-      );
+            })
+          )
+        );
+      }
 
       const targetsToQueue = await prisma.repositoryFile.findMany({
         where: {

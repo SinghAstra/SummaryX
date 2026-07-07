@@ -141,7 +141,7 @@ export function ProcessingHeader({
         </div>
 
         <div className="ml-auto flex items-center gap-3">
-          {isRepoView && showBoost && (
+          {isRepoView && (
             <div className="flex items-center gap-2 animate-in fade-in slide-in-from-top-1 duration-200">
               {showBoost && (
                 <Button
