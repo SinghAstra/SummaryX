@@ -31,7 +31,7 @@ export function RepoSubmissionPanel() {
         reset();
         router.push(`/repo/${data.repositoryId}`);
         return data.isDuplicate
-          ? "Opening existing repository workspace."
+          ? "Repository Already exists."
           : "Repository linked! Analysis started.";
       },
       error: (err: Error) => err.message,

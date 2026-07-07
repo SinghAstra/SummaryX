@@ -7,6 +7,7 @@ import {
   JOB_NAMES,
   JOB_STATUS,
   parseGitHubUrl,
+  REPO_ERROR_CODES,
   REPOSITORY_STATUS,
   RepositoryTreeNode,
 } from "@repo/shared";
@@ -43,6 +44,17 @@ export const repositoryService = {
       );
     }
 
+    const existingRepo = await prisma.repository.findFirst({
+      where: {
+        userId,
+        githubUrl,
+      },
+    });
+
+    if (existingRepo) {
+      return { repositoryId: existingRepo.id, isDuplicate: true };
+    }
+
     try {
       const pingResponse = await fetch(githubUrl, {
         method: "HEAD",
@@ -51,7 +63,7 @@ export const repositoryService = {
       if (!pingResponse.ok) throw new Error();
     } catch {
       throw new BadRequestError(
-        "REPOSITORY_UNREACHABLE",
+        REPO_ERROR_CODES.REPOSITORY_UNREACHABLE,
         "Repository unreachable or private."
       );
     }
