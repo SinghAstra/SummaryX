@@ -5,6 +5,8 @@ import {
   boostRepoResponseSchema,
   type CreateRepoResponse,
   createRepoResponseSchema,
+  DeleteRepoResponse,
+  deleteRepoResponseSchema,
   type GetRepositoriesResponse,
   getRepositoriesResponseSchema,
   type GetRepositoryFilesResponse,
@@ -47,7 +49,19 @@ export const repoApi = {
       resyncRepoResponseSchema
     );
   },
+
   boostRepository: (id: string): Promise<ApiResponse<BoostRepoResponse>> => {
     return apiClient.post(`/api/repo/${id}/boost`, {}, boostRepoResponseSchema);
+  },
+  deleteRepository: (id: string): Promise<ApiResponse<DeleteRepoResponse>> => {
+    return apiClient.delete(`/api/repo/${id}`, deleteRepoResponseSchema);
+  },
+
+  deleteMultipleRepositories: (
+    ids: string[]
+  ): Promise<ApiResponse<DeleteRepoResponse>> => {
+    return apiClient.delete("/api/repo/bulk", deleteRepoResponseSchema, {
+      body: { ids },
+    });
   },
 };
