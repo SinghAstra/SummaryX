@@ -21,6 +21,8 @@ export function RepositoryExplorer({
 }: RepositoryExplorerProps) {
   const { data: treeNodes = [], isLoading } = useRepositoryFiles(repositoryId);
 
+  console.log("isLoading in RepoExplorer", isLoading);
+
   if (isLoading) {
     return (
       <div className="border bg-card/50 rounded flex flex-col shadow-sm h-full overflow-y-auto w-full backdrop-blur-sm">

@@ -15,17 +15,19 @@ interface ProviderProps {
 export function Providers({ children }: ProviderProps) {
   return (
     <Suspense fallback={<LoadingFallback />}>
-      <QueryProvider>
-        <TooltipProvider>
-          <SessionProvider>
-            <SidebarProvider>{children}</SidebarProvider>
-          </SessionProvider>
+      <SidebarProvider>
+        <QueryProvider>
+          <TooltipProvider>
+            <SessionProvider>
+              <SidebarProvider>{children}</SidebarProvider>
+            </SessionProvider>
 
-          {process.env.NODE_ENV === "development" && (
-            <ReactQueryDevtools initialIsOpen={false} />
-          )}
-        </TooltipProvider>
-      </QueryProvider>
+            {process.env.NODE_ENV === "development" && (
+              <ReactQueryDevtools initialIsOpen={false} />
+            )}
+          </TooltipProvider>
+        </QueryProvider>
+      </SidebarProvider>
     </Suspense>
   );
 }
