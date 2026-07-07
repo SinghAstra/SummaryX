@@ -53,6 +53,7 @@ export const repoApi = {
   boostRepository: (id: string): Promise<ApiResponse<BoostRepoResponse>> => {
     return apiClient.post(`/api/repo/${id}/boost`, {}, boostRepoResponseSchema);
   },
+
   deleteRepository: (id: string): Promise<ApiResponse<DeleteRepoResponse>> => {
     return apiClient.delete(`/api/repo/${id}`, deleteRepoResponseSchema);
   },
