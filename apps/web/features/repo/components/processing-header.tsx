@@ -13,9 +13,9 @@ import {
 import { useSidebar } from "@/components/ui/sidebar";
 import { siteConfig } from "@/config/site";
 import { Logo } from "@/features/dashboard/components/logo";
-import { STATUS_BORDER_MAP } from "@/features/dashboard/components/sidebar";
 import { useBoostRepository } from "@/features/repo/hooks/use-boost-repo";
 import { useRepository } from "@/features/repo/hooks/use-repo";
+import { STATUS_BORDER_MAP } from "@/lib/constants";
 import { ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 import {

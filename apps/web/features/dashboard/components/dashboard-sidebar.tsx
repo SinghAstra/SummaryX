@@ -1,6 +1,5 @@
 "use client";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Sidebar,
   SidebarContent,
@@ -19,27 +18,20 @@ import { useDeleteRepository } from "@/features/repo/hooks/use-delete-repo";
 import { useUserRepositories } from "@/features/repo/hooks/use-repos";
 import { ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/utils";
-import { RepositoryStatus } from "@repo/shared";
-import { GitFork, Plus, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import React from "react";
 import { toast } from "sonner";
 import { Logo } from "./logo";
+import { SidebarRepoItem } from "./sidebar-repo-item";
 
 const navItems = [{ title: "New", url: ROUTES.DASHBOARD, icon: Plus }];
-
-export const STATUS_BORDER_MAP: Record<RepositoryStatus, string> = {
-  PENDING: "border border-yellow-400 border-2",
-  PROCESSING: "border border-yellow-400 border-2",
-  COMPLETED: "border border-green-400 border-2",
-  FAILED: "border border-red-400 border-2",
-} as const;
 
 export function DashboardSidebar() {
   const { state, isMobile, setOpenMobile } = useSidebar();
   const pathname = usePathname();
   const router = useRouter();
+
   const { data: repositories = [], isLoading: isReposLoading } =
     useUserRepositories();
   const { mutateAsync: deleteRepo, isPending: isDeleting } =
@@ -59,12 +51,11 @@ export function DashboardSidebar() {
     }
   };
 
-  const handleDeleteExecution = async (e: React.MouseEvent, id: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-
+  const handleDeleteExecution = async (id: string) => {
     toast.promise(deleteRepo(id), {
       loading: "Deleting Repository...",
+      success: "Repository deleted successfully",
+      error: "Failed to delete repository",
     });
 
     if (pathname === `/repo/${id}`) {
@@ -160,53 +151,16 @@ export function DashboardSidebar() {
                     const isActive = pathname === targetUrl;
 
                     return (
-                      <SidebarMenuItem
+                      <SidebarRepoItem
                         key={repo.id}
-                        className="group relative flex items-center w-full"
-                      >
-                        <SidebarMenuButton
-                          asChild
-                          isActive={isActive}
-                          className={cn(
-                            getButtonStyles(isActive),
-                            "w-full pr-10"
-                          )}
-                        >
-                          <Link
-                            href={targetUrl}
-                            onClick={handleMobileNavigationClose}
-                            className="cursor-pointer flex items-center gap-2.5 w-full"
-                          >
-                            <Avatar className="h-6 w-6 shrink-0 transition-all">
-                              <AvatarImage
-                                src={repo.avatar || undefined}
-                                alt={`${repo.name} identity asset`}
-                                className={cn(
-                                  "object-cover",
-                                  STATUS_BORDER_MAP[repo.status]
-                                )}
-                              />
-                              <AvatarFallback className="rounded bg-background flex items-center justify-center text-muted-foreground">
-                                <GitFork className="size-3 text-muted-foreground/60" />
-                              </AvatarFallback>
-                            </Avatar>
-
-                            <span className="truncate text-sm font-medium tracking-tight">
-                              {repo.name}
-                            </span>
-                          </Link>
-                        </SidebarMenuButton>
-
-                        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center">
-                          <button
-                            className="opacity-0 group-hover/menu-item:opacity-100 p-1 rounded hover:bg-sidebar-accent text-muted-foreground hover:text-foreground transition-all duration-150 ease-in-out scale-95 group-hover/menu-item:scale-100 focus:opacity-100 cursor-pointer outline-none animate-in fade-in slide-in-from-right-1"
-                            onClick={(e) => handleDeleteExecution(e, repo.id)}
-                            disabled={isDeleting}
-                          >
-                            <Trash2 className="size-3.5" />
-                          </button>
-                        </div>
-                      </SidebarMenuItem>
+                        repo={repo}
+                        isActive={isActive}
+                        isDeleting={isDeleting}
+                        targetUrl={targetUrl}
+                        onCloseMobile={handleMobileNavigationClose}
+                        onDelete={handleDeleteExecution}
+                        buttonStyles={getButtonStyles(isActive)}
+                      />
                     );
                   })
                 )}

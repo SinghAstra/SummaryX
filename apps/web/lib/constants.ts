@@ -1,3 +1,4 @@
+import { RepositoryStatus } from "@repo/shared";
 import { Cpu, Link2, Sparkles } from "lucide-react";
 
 export const processSteps = [
@@ -127,3 +128,10 @@ export const FAQ = [
       "It's perfect for developers onboarding to a new job, open-source contributors trying to make a quick fix, or tech leads auditing a new library before adding it to their system.",
   },
 ];
+
+export const STATUS_BORDER_MAP: Record<RepositoryStatus, string> = {
+  PENDING: "border border-yellow-400 border-2",
+  PROCESSING: "border border-yellow-400 border-2",
+  COMPLETED: "border border-green-400 border-2",
+  FAILED: "border border-red-400 border-2",
+} as const;

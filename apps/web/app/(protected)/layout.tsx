@@ -1,4 +1,4 @@
-import { DashboardSidebar } from "@/features/dashboard/components/sidebar";
+import { DashboardSidebar } from "@/features/dashboard/components/dashboard-sidebar";
 import { repoListQueryFn } from "@/features/repo/hooks/use-repos";
 import { repoKeys } from "@/features/repo/query-keys";
 import { QueryClient } from "@tanstack/react-query";
