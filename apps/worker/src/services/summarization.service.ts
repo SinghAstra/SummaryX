@@ -101,7 +101,7 @@ async function processFileSummary(
       },
     });
 
-    await updateGlobalProgress(repositoryId, jobId);
+    await updateGlobalProgress(repositoryId, jobId, repo.diskPath);
   } catch (error: unknown) {
     await prisma.repositoryFile.update({
       where: { id: fileId },
@@ -215,8 +215,9 @@ async function generateChunkedSummary(
  */
 async function updateGlobalProgress(
   repositoryId: string,
-  jobId: string
-): Promise<void> {
+  jobId: string,
+  diskPath: string
+) {
   const totalCount = await prisma.repositoryFile.count({
     where: { repositoryId },
   });
@@ -242,6 +243,17 @@ async function updateGlobalProgress(
       status: JOB_STATUS.COMPLETED,
       message: "All done! Your project overview is completely ready.",
     });
+    try {
+      await fs.rm(diskPath, { recursive: true, force: true });
+      console.log(
+        `[CLEANUP] Successfully deleted repository from disk: ${diskPath}`
+      );
+    } catch (error) {
+      console.error(
+        `[CLEANUP ERROR] Failed to delete directory ${diskPath}:`,
+        error
+      );
+    }
   }
 }
 

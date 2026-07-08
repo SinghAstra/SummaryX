@@ -1,7 +1,6 @@
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
 import {
   Sidebar,
   SidebarContent,
@@ -38,7 +37,7 @@ export const STATUS_BORDER_MAP: Record<RepositoryStatus, string> = {
 } as const;
 
 export function DashboardSidebar() {
-  const { state, isMobile, setOpen } = useSidebar();
+  const { state, isMobile, setOpenMobile } = useSidebar();
   const pathname = usePathname();
   const router = useRouter();
   const { data: repositories = [], isLoading: isReposLoading } =
@@ -56,7 +55,7 @@ export function DashboardSidebar() {
 
   const handleMobileNavigationClose = () => {
     if (isMobile) {
-      setOpen(false);
+      setOpenMobile(false);
     }
   };
 
