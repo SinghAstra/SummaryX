@@ -121,36 +121,21 @@ export const ingestionService = {
         data: { status: JOB_STATUS.RUNNING, startedAt: new Date() },
       });
 
-      if (isResync) {
-        await trackProgress({
-          jobId,
-          repositoryId: repo.id,
-          status: JOB_STATUS.RUNNING,
-          message: "Fetching latest changes...",
-        });
+      await trackProgress({
+        jobId,
+        repositoryId: repo.id,
+        status: JOB_STATUS.RUNNING,
+        message: "Synchronizing workspace...",
+      });
 
+      if (isResync) {
         await execAsync(`git fetch --depth 1 && git reset --hard FETCH_HEAD`, {
           cwd: repo.diskPath,
           timeout: 60000,
         });
       } else {
-        await trackProgress({
-          jobId,
-          repositoryId: repo.id,
-          status: JOB_STATUS.RUNNING,
-          message: "Getting things ready...",
-        });
-
         await fs.mkdir(path.dirname(repo.diskPath), { recursive: true });
         await fs.rm(repo.diskPath, { recursive: true, force: true });
-
-        await trackProgress({
-          jobId,
-          repositoryId: repo.id,
-          status: JOB_STATUS.RUNNING,
-          message: "Downloading your project files...",
-        });
-
         await execAsync(
           `git clone --depth 1 ${repo.githubUrl} ${repo.diskPath}`,
           { timeout: 60000 }
@@ -161,7 +146,7 @@ export const ingestionService = {
         jobId,
         repositoryId: repo.id,
         status: JOB_STATUS.RUNNING,
-        message: "Comparing files...",
+        message: "Scanning files...",
       });
 
       const stats: TraversalStats = {
@@ -212,7 +197,7 @@ export const ingestionService = {
         jobId,
         repositoryId: repo.id,
         status: JOB_STATUS.RUNNING,
-        message: `Updating database (${addedFiles.length} added, ${modifiedFiles.length} changed, ${deletedFiles.length} deleted)...`,
+        message: `Updating index (${addedFiles.length} added, ${modifiedFiles.length} modified, ${deletedFiles.length} deleted)...`,
       });
 
       await prisma.$transaction([
@@ -299,7 +284,7 @@ export const ingestionService = {
           jobId,
           repositoryId: repo.id,
           status: JOB_STATUS.RUNNING,
-          message: `Summarizing changed files...`,
+          message: `Initializing AI analysis for ${targetsToQueue.length} files...`,
         });
       } else {
         await prisma.repository.update({
@@ -311,7 +296,7 @@ export const ingestionService = {
           jobId,
           repositoryId: repo.id,
           status: JOB_STATUS.COMPLETED,
-          message: "Sync complete. No changes found.",
+          message: "Workspace is up to date.",
         });
       }
 
@@ -334,7 +319,7 @@ export const ingestionService = {
         jobId,
         repositoryId: repo.id,
         status: JOB_STATUS.FAILED,
-        message: "We couldn't load your project. Please try again.",
+        message: "Process failed. Please try again.",
       });
 
       logError(error);
