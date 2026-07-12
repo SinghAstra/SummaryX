@@ -20,7 +20,7 @@ export function ProcessingWorkspace({ repo }: ProcessingWorkspaceProps) {
   const { data: session } = useSession();
   const activeJobId = repo.latestJobId ?? "";
 
-  const { data: jobData } = useJobLogs(activeJobId);
+  const { data: jobData } = useJobLogs(repo.id, activeJobId);
   const { liveMessages } = useJobLiveStream(
     activeJobId,
     repo.id,
