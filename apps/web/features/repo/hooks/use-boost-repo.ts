@@ -1,3 +1,4 @@
+import { jobKeys } from "@/features/jobs/query-keys";
 import { REPOSITORY_STATUS } from "@repo/shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -28,6 +29,9 @@ export function useBoostRepository(repositoryId: string) {
       void Promise.all([
         queryClient.invalidateQueries({
           queryKey: repoKeys.detail(repositoryId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: jobKeys.logs(data.jobId),
         }),
         queryClient.invalidateQueries({
           queryKey: repoKeys.files(repositoryId),

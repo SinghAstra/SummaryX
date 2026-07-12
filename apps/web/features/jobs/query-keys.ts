@@ -1,3 +1,3 @@
-export const JOBS_QUERY_KEYS = {
+export const jobKeys = {
   logs: (id: string) => ["logs", id] as const,
 } as const;
