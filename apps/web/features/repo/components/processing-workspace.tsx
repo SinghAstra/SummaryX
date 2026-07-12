@@ -2,9 +2,7 @@
 
 import { useJobLiveStream } from "@/features/jobs/hooks/use-job-live-stream";
 import { useJobLogs } from "@/features/jobs/hooks/use-job-logs";
-import { repoKeys } from "@/features/repo/query-keys";
-import { JOB_STATUS, type RepositoryStatus } from "@repo/shared";
-import { useQueryClient } from "@tanstack/react-query";
+import { type RepositoryStatus } from "@repo/shared";
 import { useSession } from "next-auth/react";
 import { useEffect, useMemo, useState } from "react";
 import { ProcessingHeader } from "./processing-header";
@@ -20,18 +18,16 @@ interface ProcessingWorkspaceProps {
 
 export function ProcessingWorkspace({ repo }: ProcessingWorkspaceProps) {
   const { data: session } = useSession();
-  const queryClient = useQueryClient();
   const activeJobId = repo.latestJobId ?? "";
 
   const { data: jobData } = useJobLogs(activeJobId);
-  const currentStatus = jobData?.status;
-
   const { liveMessages } = useJobLiveStream(
     activeJobId,
     repo.id,
     session?.accessToken
   );
-  const [now, setNow] = useState(() => Date.now());
+
+  const [showBoostButton, setShowBoostButton] = useState(false);
 
   const allTerminalMessages = useMemo(() => {
     const logsArray = jobData?.logs ?? [];
@@ -50,46 +46,24 @@ export function ProcessingWorkspace({ repo }: ProcessingWorkspaceProps) {
     });
   }, [jobData?.logs, liveMessages]);
 
-  const lastLogAt = useMemo(() => {
-    const last = allTerminalMessages.at(-1);
-    if (!last) return null;
-    return new Date(last.timestamp).getTime();
-  }, [allTerminalMessages]);
-
-  const secondsSinceLastLog = useMemo(() => {
-    if (repo.status === "COMPLETED" || !lastLogAt) return 0;
-    return Math.floor((now - lastLogAt) / 1000);
-  }, [repo.status, lastLogAt, now]);
-
   useEffect(() => {
-    if (repo.status !== "PROCESSING") return;
+    const resetTimer = setTimeout(() => {
+      setShowBoostButton((prev) => (prev ? false : prev));
+    }, 0);
 
-    const interval = setInterval(() => {
-      setNow(Date.now());
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [repo.status, activeJobId]);
-
-  useEffect(() => {
-    if (!currentStatus) return;
-
-    const isTerminalState =
-      currentStatus === JOB_STATUS.COMPLETED ||
-      currentStatus === JOB_STATUS.FAILED ||
-      currentStatus === JOB_STATUS.CANCELLED;
-
-    if (isTerminalState) {
-      void Promise.all([
-        queryClient.invalidateQueries({ queryKey: repoKeys.detail(repo.id) }),
-        queryClient.invalidateQueries({ queryKey: repoKeys.files(repo.id) }),
-        queryClient.invalidateQueries({ queryKey: repoKeys.lists() }),
-      ]);
+    if (repo.status !== "PROCESSING") {
+      return () => clearTimeout(resetTimer);
     }
-  }, [currentStatus, repo.id, queryClient]);
 
-  const showBoostButton =
-    repo.status === "PROCESSING" && secondsSinceLastLog >= 30;
+    const stallTimer = setTimeout(() => {
+      setShowBoostButton(true);
+    }, 30000);
+
+    return () => {
+      clearTimeout(resetTimer);
+      clearTimeout(stallTimer);
+    };
+  }, [repo.status, allTerminalMessages.length]);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
