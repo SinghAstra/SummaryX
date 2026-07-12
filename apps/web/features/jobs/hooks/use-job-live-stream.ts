@@ -18,6 +18,13 @@ export function useJobLiveStream(
   const queryClient = useQueryClient();
   const [liveMessages, setLiveMessages] = useState<TerminalMessage[]>([]);
 
+  const [prevJobId, setPrevJobId] = useState(jobId);
+
+  if (jobId !== prevJobId) {
+    setPrevJobId(jobId);
+    setLiveMessages([]);
+  }
+
   useEffect(() => {
     if (!jobId || !accessToken) return;
 
@@ -27,8 +34,6 @@ export function useJobLiveStream(
     eventSource.onmessage = (event) => {
       try {
         const payload = JSON.parse(event.data) as TelemetryEvent;
-
-        console.log("payload is ", payload);
 
         if (payload.message) {
           setLiveMessages((prev) => [
@@ -46,9 +51,6 @@ export function useJobLiveStream(
             eventSource.close();
 
             void Promise.all([
-              queryClient.invalidateQueries({
-                queryKey: repoKeys.files(repositoryId),
-              }),
               queryClient.invalidateQueries({
                 queryKey: repoKeys.detail(repositoryId),
               }),
