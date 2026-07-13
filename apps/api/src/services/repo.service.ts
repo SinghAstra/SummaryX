@@ -17,9 +17,6 @@ import {
   trackProgress,
 } from "@repo/shared/server";
 import crypto from "node:crypto";
-import fs from "node:fs/promises";
-import os from "node:os";
-import path from "node:path";
 import { BadRequestError, NotFoundError } from "../errors/api-errors.js";
 import { buildRepositoryTree } from "../lib/build-tree.js";
 
@@ -30,14 +27,18 @@ interface IngestParams {
 
 export const repositoryService = {
   async createRepository(params: IngestParams) {
-    const { userId, githubUrl } = params;
+    const { userId, githubUrl: rawGithubUrl } = params;
     let owner: string;
     let name: string;
+    let normalizedGithubUrl: string;
 
     try {
-      const parsed = parseGitHubUrl(githubUrl);
-      owner = parsed.owner;
-      name = parsed.name;
+      const parsed = parseGitHubUrl(rawGithubUrl);
+
+      owner = parsed.owner.toLowerCase();
+      name = parsed.name.toLowerCase();
+
+      normalizedGithubUrl = `https://github.com/${owner}/${name}`;
     } catch {
       throw new BadRequestError(
         COMMON_ERROR_CODES.SCHEMA_MISMATCH,
@@ -48,16 +49,18 @@ export const repositoryService = {
     const existingRepo = await prisma.repository.findFirst({
       where: {
         userId,
-        githubUrl,
+        githubUrl: normalizedGithubUrl,
       },
     });
+
+    console.log("existingRepo is ", existingRepo);
 
     if (existingRepo) {
       return { repositoryId: existingRepo.id, isDuplicate: true };
     }
 
     try {
-      const pingResponse = await fetch(githubUrl, {
+      const pingResponse = await fetch(normalizedGithubUrl, {
         method: "HEAD",
         redirect: "follow",
       });
@@ -70,7 +73,6 @@ export const repositoryService = {
     }
 
     const repositoryId = crypto.randomUUID();
-    const uniqueDiskPath = path.join(os.tmpdir(), "summary-x", repositoryId);
 
     const repositoryAvatarUrl = `https://github.com/${owner}.png`;
 
@@ -79,11 +81,10 @@ export const repositoryService = {
         data: {
           id: repositoryId,
           userId,
-          githubUrl,
+          githubUrl: normalizedGithubUrl,
           name,
           owner,
           avatar: repositoryAvatarUrl,
-          diskPath: uniqueDiskPath,
           status: REPOSITORY_STATUS.PENDING,
           totalSize: BigInt(0),
         },
@@ -181,7 +182,6 @@ export const repositoryService = {
       name: repo.name,
       owner: repo.owner,
       avatar: repo.avatar,
-      diskPath: repo.diskPath,
       status: repo.status,
       readme: repo.readme,
       latestJobId: repo.jobs[0]?.id || null,
@@ -210,7 +210,6 @@ export const repositoryService = {
       name: repo.name,
       owner: repo.owner,
       avatar: repo.avatar,
-      diskPath: repo.diskPath,
       status: repo.status,
       readme: repo.readme,
       totalFiles: repo.totalFiles,
@@ -383,13 +382,6 @@ export const repositoryService = {
       where: { id },
     });
 
-    fs.rm(repo.diskPath, { recursive: true, force: true }).catch((err) => {
-      console.error(
-        `⚠️ Failed to clean disk space for repository mapping ${id}:`,
-        err
-      );
-    });
-
     return { message: "Repository successfully removed." };
   },
 
@@ -409,15 +401,6 @@ export const repositoryService = {
         userId,
       },
     });
-
-    for (const repo of repos) {
-      fs.rm(repo.diskPath, { recursive: true, force: true }).catch((err) => {
-        console.error(
-          `⚠️ Failed to clear bulk disk path for repository asset ${repo.id}:`,
-          err
-        );
-      });
-    }
 
     return { message: `${repos.length} repositories successfully removed.` };
   },

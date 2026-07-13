@@ -37,7 +37,6 @@ export const repositoryDataSchema = z.object({
   name: z.string(),
   owner: z.string(),
   avatar: z.url(),
-  diskPath: z.string(),
   status: repositoryStatusSchema,
   readme: z.string().nullable(),
   totalFiles: z.number().int().nonnegative(),

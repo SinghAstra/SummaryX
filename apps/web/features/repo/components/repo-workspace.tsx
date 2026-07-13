@@ -28,7 +28,7 @@ export function RepositoryWorkspace({ repo }: RepositoryWorkspaceProps) {
     new Set()
   );
 
-  const [prevCompletedCount, setPrevCompletedCount] = useState<number>(0);
+  const [prevCompletedCount, setPrevCompletedCount] = useState(0);
 
   const allFolderPaths = extractAllFolderPaths(treeNodes);
   const allCompletedFilePaths = extractAllCompletedFilePaths(treeNodes);
