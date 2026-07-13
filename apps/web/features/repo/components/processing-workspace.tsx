@@ -27,8 +27,6 @@ export function ProcessingWorkspace({ repo }: ProcessingWorkspaceProps) {
     session?.accessToken
   );
 
-  const [showBoostButton, setShowBoostButton] = useState(false);
-
   const allTerminalMessages = useMemo(() => {
     const logsArray = jobData?.logs ?? [];
     const historicalMapped = logsArray.map((log) => ({
@@ -46,31 +44,9 @@ export function ProcessingWorkspace({ repo }: ProcessingWorkspaceProps) {
     });
   }, [jobData?.logs, liveMessages]);
 
-  useEffect(() => {
-    const resetTimer = setTimeout(() => {
-      setShowBoostButton((prev) => (prev ? false : prev));
-    }, 0);
-
-    if (repo.status !== "PROCESSING") {
-      return () => clearTimeout(resetTimer);
-    }
-
-    const stallTimer = setTimeout(() => {
-      setShowBoostButton(true);
-    }, 30000);
-
-    return () => {
-      clearTimeout(resetTimer);
-      clearTimeout(stallTimer);
-    };
-  }, [repo.status, allTerminalMessages.length]);
-
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      <ProcessingHeader
-        showBoost={showBoostButton}
-        isFailedState={repo.status === "FAILED"}
-      />
+      <ProcessingHeader  />
       <main className="flex-1 overflow-y-auto h-full p-1 md:p-2 lg:p-4 animate-in fade-in duration-300">
         <TerminalConsole messages={allTerminalMessages} />
       </main>

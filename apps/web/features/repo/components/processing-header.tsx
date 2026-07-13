@@ -33,15 +33,9 @@ import { useParams } from "next/navigation";
 import { toast } from "sonner";
 import { z } from "zod";
 
-interface ProcessingHeaderProps {
-  showBoost: boolean;
-  isFailedState: boolean;
-}
 
-export function ProcessingHeader({
-  showBoost,
-  isFailedState,
-}: ProcessingHeaderProps) {
+
+export function ProcessingHeader() {
   const { toggleSidebar } = useSidebar();
   const { data: session } = useSession();
   const params = useParams();
@@ -60,12 +54,6 @@ export function ProcessingHeader({
     toast.promise(boostRepo(), {
       loading: "Boosting Engine...",
       success: "Engine Boosted",
-    });
-  };
-  const handleRetryExecution = () => {
-    toast.promise(boostRepo(), {
-      loading: "Starting Retry...",
-      success: "Retry Started",
     });
   };
 
@@ -143,44 +131,23 @@ export function ProcessingHeader({
         <div className="ml-auto flex items-center gap-2 sm:gap-3 shrink-0">
           {isRepoView && (
             <div className="flex items-center gap-1.5 sm:gap-2 animate-in fade-in slide-in-from-top-1 duration-200">
-              {showBoost && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleBoostExecution}
-                  disabled={isBoosting}
-                  className="flex items-center gap-1.5 px-2 sm:px-3"
-                >
-                  <Zap
-                    className={cn(
-                      "size-3.5 sm:size-4 shrink-0",
-                      isBoosting && "animate-bounce fill-current"
-                    )}
-                  />
-                  <span className="hidden sm:inline">
-                    {isBoosting ? "Boosting..." : "Boost Engine"}
-                  </span>
-                </Button>
-              )}
-              {isFailedState && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleRetryExecution}
-                  disabled={isBoosting}
-                  className="flex items-center gap-1.5 px-2 sm:px-3"
-                >
-                  <RotateCcw
-                    className={cn(
-                      "size-3.5 sm:size-4 shrink-0",
-                      isBoosting && "animate-spin"
-                    )}
-                  />
-                  <span className="hidden sm:inline">
-                    {isBoosting ? "Retrying..." : "Retry"}
-                  </span>
-                </Button>
-              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleBoostExecution}
+                disabled={isBoosting}
+                className="flex items-center gap-1.5 px-2 sm:px-3"
+              >
+                <Zap
+                  className={cn(
+                    "size-3.5 sm:size-4 shrink-0",
+                    isBoosting && "animate-bounce fill-current"
+                  )}
+                />
+                <span className="hidden sm:inline">
+                  {isBoosting ? "Boosting..." : "Boost Engine"}
+                </span>
+              </Button>
             </div>
           )}
 
