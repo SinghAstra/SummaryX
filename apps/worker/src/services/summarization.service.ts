@@ -11,6 +11,7 @@ import path from "node:path";
 import { estimateTokenCount, MODEL_CONFIG } from "../ai/model-config.js";
 import { executeAIRequest } from "../ai/request-manager.js";
 import { classifyFile } from "../utils/file-classifier.js";
+import { getWorkspacePath } from "../utils/workspace.js";
 
 const SYSTEM_PROMPT = `You are a product-focused technical writer. Your task is to explain why a file exists in a codebase and what its primary responsibility is.
 
@@ -57,8 +58,10 @@ async function processFileSummary(
     data: { summaryStatus: FILE_SUMMARY_STATUS.PROCESSING },
   });
 
+  const workspacePath = getWorkspacePath(repositoryId);
+
   try {
-    const absoluteFilePath = path.join(repo.diskPath, file.relativePath);
+    const absoluteFilePath = path.join(workspacePath, file.relativePath);
     const fileContent = await fs.readFile(absoluteFilePath, "utf8");
 
     const classification = classifyFile(
@@ -102,7 +105,7 @@ async function processFileSummary(
       },
     });
 
-    await updateGlobalProgress(repositoryId, jobId, repo.diskPath);
+    await updateGlobalProgress(repositoryId, jobId, workspacePath);
   } catch (error: unknown) {
     await prisma.repositoryFile.update({
       where: { id: fileId },

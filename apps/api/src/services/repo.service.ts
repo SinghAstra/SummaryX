@@ -17,6 +17,9 @@ import {
   trackProgress,
 } from "@repo/shared/server";
 import crypto from "node:crypto";
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import { BadRequestError, NotFoundError } from "../errors/api-errors.js";
 import { buildRepositoryTree } from "../lib/build-tree.js";
 
@@ -73,7 +76,6 @@ export const repositoryService = {
     }
 
     const repositoryId = crypto.randomUUID();
-
     const repositoryAvatarUrl = `https://github.com/${owner}.png`;
 
     try {

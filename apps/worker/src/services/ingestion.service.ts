@@ -12,6 +12,7 @@ import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
+import { getWorkspacePath } from "../utils/workspace.js";
 
 const execAsync = promisify(exec);
 
@@ -114,6 +115,7 @@ export const ingestionService = {
       where: { id: job.repositoryId },
     });
     if (!repo) return;
+    const workspacePath = getWorkspacePath(repo.id);
 
     try {
       await prisma.job.update({
@@ -130,14 +132,14 @@ export const ingestionService = {
 
       if (isResync) {
         await execAsync(`git fetch --depth 1 && git reset --hard FETCH_HEAD`, {
-          cwd: repo.diskPath,
+          cwd: workspacePath,
           timeout: 60000,
         });
       } else {
-        await fs.mkdir(path.dirname(repo.diskPath), { recursive: true });
-        await fs.rm(repo.diskPath, { recursive: true, force: true });
+        await fs.mkdir(path.dirname(workspacePath), { recursive: true });
+        await fs.rm(workspacePath, { recursive: true, force: true });
         await execAsync(
-          `git clone --depth 1 ${repo.githubUrl} ${repo.diskPath}`,
+          `git clone --depth 1 ${repo.githubUrl} ${workspacePath}`,
           { timeout: 60000 }
         );
       }
@@ -157,17 +159,7 @@ export const ingestionService = {
         totalSize: BigInt(0),
         collectedFiles: [],
       };
-      await traverseDirectory(repo.diskPath, repo.diskPath, stats);
-
-      let readmeContents: string | null = null;
-      try {
-        readmeContents = await fs.readFile(
-          path.join(repo.diskPath, "README.md"),
-          "utf8"
-        );
-      } catch (error) {
-        logError(error);
-      }
+      await traverseDirectory(workspacePath, workspacePath, stats);
 
       const existingDBFiles = await prisma.repositoryFile.findMany({
         where: { repositoryId: repo.id },
@@ -205,7 +197,6 @@ export const ingestionService = {
           where: { id: repo.id },
           data: {
             status: REPOSITORY_STATUS.PROCESSING,
-            readme: readmeContents,
             totalFiles: stats.totalFiles,
             supportedFiles: stats.supportedFiles,
             ignoredFiles: stats.ignoredFiles,
