@@ -27,7 +27,6 @@ export function useJobLiveStream(
 
   useEffect(() => {
     if (!jobId || !accessToken) return;
-
     const sseUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/jobs/${jobId}/events?token=${accessToken}`;
     const eventSource = new EventSource(sseUrl);
 

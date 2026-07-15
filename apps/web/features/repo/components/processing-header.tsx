@@ -23,7 +23,6 @@ import {
   GitFork,
   LogOut,
   Menu,
-  RotateCcw,
   User,
   Zap,
 } from "lucide-react";
