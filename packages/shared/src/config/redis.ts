@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 import { Redis } from "ioredis";
+
 dotenv.config();
 
 const redisUrl = process.env.REDIS_URL;
@@ -14,6 +15,11 @@ if (!redisUrl) {
 
 export const redisConnection = new Redis(redisUrl, {
   maxRetriesPerRequest: null,
+  enableReadyCheck: false,
+  family: 4, 
+  tls: {
+    rejectUnauthorized: false, 
+  },
 });
 
 export const queueSubscriber = redisConnection.duplicate();
