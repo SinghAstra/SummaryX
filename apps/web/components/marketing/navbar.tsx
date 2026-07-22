@@ -11,6 +11,7 @@ import { useState } from "react";
 
 const Navbar = () => {
   const { scrollY } = useScroll();
+
   const [hasScrolled, setHasScrolled] = useState(false);
 
   useMotionValueEvent(scrollY, "change", (latest) => {

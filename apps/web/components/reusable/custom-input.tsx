@@ -49,13 +49,18 @@ export const CustomInput = React.forwardRef<HTMLInputElement, CustomInputProps>(
     ref
   ) => {
     let inputType = type;
+
     let StateSuffixIcon = SuffixIcon;
+
     let clickHandler = onSuffixIconClick;
+
     const [showPassword, setShowPassword] = useState(false);
 
     if (isPassword) {
       inputType = showPassword ? "text" : "password";
+
       StateSuffixIcon = showPassword ? EyeOff : Eye;
+
       clickHandler = () => setShowPassword((prev) => !prev);
     }
 

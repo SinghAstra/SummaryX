@@ -32,7 +32,9 @@ export async function executeAIRequest(
   const initialActive = await redisConnection
     .get(REDIS_KEYS.ACTIVE_COUNT)
     .then((v) => (v ? parseInt(v, 10) : 0));
+
   const initialQueue = await redisConnection.llen(REDIS_KEYS.QUEUE_LIST);
+
   const startTimeSec = ((Date.now() - totalTaskStartTime) / 1000).toFixed(2);
 
   console.log(
@@ -45,8 +47,9 @@ export async function executeAIRequest(
 
   try {
     const outcome = await executeWithRetry(
-      async (attempt: number) => {
+      async () => {
         const keyInfo = await getNextKey();
+
         finalResolvedKeyIndex = keyInfo.index;
 
         await recordRequestStart(keyInfo.index);
@@ -57,20 +60,23 @@ export async function executeAIRequest(
           const res = await withTimeout(
             groq.chat.completions.create({
               model: payload.model,
-              messages: payload.messages as any,
+              messages: payload.messages,
               temperature: payload.temperature ?? 0.1,
             }),
             ENGINE_CONFIG.DEFAULT_REQUEST_TIMEOUT_MS
           );
+
           return { data: res, keyIndex: keyInfo.index };
         } catch (error: unknown) {
           const classification = classifyError(error);
+
           if (classification.isRateLimit) {
             await coolDownKey(
               keyInfo.index,
               ENGINE_CONFIG.COOL_DOWN_DURATION_MS
             );
           }
+
           throw { originalError: error, keyIndex: keyInfo.index };
         }
       },
@@ -82,16 +88,19 @@ export async function executeAIRequest(
       (Date.now() - totalTaskStartTime) /
       1000
     ).toFixed(2);
+
     await recordSuccess(Date.now() - totalTaskStartTime);
 
     const successActive = await redisConnection
       .get(REDIS_KEYS.ACTIVE_COUNT)
       .then((v) => (v ? parseInt(v, 10) : 0));
+
     const successQueue = await redisConnection.llen(REDIS_KEYS.QUEUE_LIST);
 
     const textSnippet =
       outcome.data.choices[0]?.message?.content?.trim().replace(/\n/g, " ") ||
       "";
+
     const displayResult =
       textSnippet.length > 40
         ? `${textSnippet.substring(0, 40)}...`
@@ -107,21 +116,26 @@ export async function executeAIRequest(
       (Date.now() - totalTaskStartTime) /
       1000
     ).toFixed(2);
+
     await recordFailure(Date.now() - totalTaskStartTime);
 
     const contextError = error as {
       originalError?: unknown;
       keyIndex?: number;
     };
+
     const actualException = contextError.originalError || error;
+
     logError(actualException);
 
     const failureActive = await redisConnection
       .get(REDIS_KEYS.ACTIVE_COUNT)
       .then((v) => (v ? parseInt(v, 10) : 0));
+
     const failureQueue = await redisConnection.llen(REDIS_KEYS.QUEUE_LIST);
 
     const apiError = actualException as { message?: string };
+
     const errorMessage = apiError.message || String(actualException);
 
     console.log(

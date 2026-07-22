@@ -6,13 +6,11 @@ import type React from "react";
 import { CSSProperties } from "react";
 
 export type MovingBorderSpeed = "slow" | "normal" | "fast";
+
 export type MovingBorderDirection = "clockwise" | "counterclockwise";
+
 export type MovingBorderBlendMode =
-  | "normal"
-  | "screen"
-  | "overlay"
-  | "multiply"
-  | "lighten";
+  "normal" | "screen" | "overlay" | "multiply" | "lighten";
 
 export interface MovingBorderProps {
   // Color & appearance
@@ -51,6 +49,7 @@ const MovingBorder = ({
   };
 
   const animationDuration = speedMap[speed];
+
   const rotation = direction === "clockwise" ? 360 : -360;
 
   const dimensions = {

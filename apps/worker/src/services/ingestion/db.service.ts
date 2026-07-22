@@ -4,31 +4,32 @@ import { TraversalStats } from "./types";
 
 export async function syncDatabaseWithFiles(
   repoId: string,
-  stats: TraversalStats,
+  stats: TraversalStats
 ) {
   const existingDBFiles = await prisma.repositoryFile.findMany({
     where: { repositoryId: repoId },
   });
 
   const dbFileMap = new Map(
-    existingDBFiles.map((f) => [f.relativePath.replace(/\\/g, "/"), f]),
+    existingDBFiles.map((f) => [f.relativePath.replace(/\\/g, "/"), f])
   );
 
   const fsPaths = new Set(
-    stats.collectedFiles.map((f) => f.relativePath.replace(/\\/g, "/")),
+    stats.collectedFiles.map((f) => f.relativePath.replace(/\\/g, "/"))
   );
 
   const addedFiles = stats.collectedFiles.filter(
-    (f) => !dbFileMap.has(f.relativePath.replace(/\\/g, "/")),
+    (f) => !dbFileMap.has(f.relativePath.replace(/\\/g, "/"))
   );
 
   const modifiedFiles = stats.collectedFiles.filter((f) => {
     const match = dbFileMap.get(f.relativePath.replace(/\\/g, "/"));
+
     return match && match.hash !== f.hash;
   });
 
   const deletedFiles = existingDBFiles.filter(
-    (f) => !fsPaths.has(f.relativePath.replace(/\\/g, "/")),
+    (f) => !fsPaths.has(f.relativePath.replace(/\\/g, "/"))
   );
 
   await prisma.$transaction([
@@ -68,8 +69,10 @@ export async function syncDatabaseWithFiles(
   ]);
 
   const CHUNK_SIZE = 100;
+
   for (let i = 0; i < modifiedFiles.length; i += CHUNK_SIZE) {
     const chunk = modifiedFiles.slice(i, i + CHUNK_SIZE);
+
     await Promise.all(
       chunk.map((file) =>
         prisma.repositoryFile.updateMany({
@@ -80,8 +83,8 @@ export async function syncDatabaseWithFiles(
             summary: null,
             summaryStatus: FILE_SUMMARY_STATUS.PENDING,
           },
-        }),
-      ),
+        })
+      )
     );
   }
 

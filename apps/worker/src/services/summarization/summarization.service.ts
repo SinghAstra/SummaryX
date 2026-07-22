@@ -16,18 +16,19 @@ async function processFileSummary(
   fileId: string,
   repositoryId: string,
   jobId: string,
-  runId: number,
+  runId: number
 ): Promise<void> {
   const file = await prisma.repositoryFile.findUnique({
     where: { id: fileId },
   });
+
   const repo = await prisma.repository.findUnique({
     where: { id: repositoryId },
   });
 
   if (!file || !repo) {
     throw new Error(
-      `SUMMARIZATION_ERROR: Missing records for File: ${fileId} or Repo: ${repositoryId}`,
+      `SUMMARIZATION_ERROR: Missing records for File: ${fileId} or Repo: ${repositoryId}`
     );
   }
 
@@ -40,37 +41,41 @@ async function processFileSummary(
 
   try {
     const absoluteFilePath = path.join(workspacePath, file.relativePath);
+
     const fileContent = await fs.readFile(absoluteFilePath, "utf8");
 
     const classification = classifyFile(
       file.relativePath,
       path.basename(file.relativePath),
-      fileContent,
+      fileContent
     );
 
     let summaryText = "";
 
     if (!classification.shouldSummarizeWithAI) {
       summaryText = classification.staticSummary;
+
       console.log(
-        `[Run ${runId}] ⚡ FAST-TRACK | Bypassed AI overhead for ${classification.category} resource: ${file.relativePath}`,
+        `[Run ${runId}] ⚡ FAST-TRACK | Bypassed AI overhead for ${classification.category} resource: ${file.relativePath}`
       );
     } else {
       const contentTokens = estimateTokenCount(fileContent);
+
       const promptTokens = 350;
+
       const totalEstimatedTokens = contentTokens + promptTokens;
 
       if (totalEstimatedTokens > MODEL_CONFIG.maxInputTokens) {
         summaryText = await generateChunkedSummary(
           runId,
           file.relativePath,
-          fileContent,
+          fileContent
         );
       } else {
         summaryText = await generateSummaryDirectly(
           runId,
           file.relativePath,
-          fileContent,
+          fileContent
         );
       }
     }
@@ -89,6 +94,7 @@ async function processFileSummary(
       where: { id: fileId },
       data: { summaryStatus: FILE_SUMMARY_STATUS.FAILED },
     });
+
     throw error;
   }
 }

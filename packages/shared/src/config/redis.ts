@@ -16,9 +16,9 @@ if (!redisUrl) {
 export const redisConnection = new Redis(redisUrl, {
   maxRetriesPerRequest: null,
   enableReadyCheck: false,
-  family: 4, 
+  family: 4,
   tls: {
-    rejectUnauthorized: false, 
+    rejectUnauthorized: false,
   },
 });
 

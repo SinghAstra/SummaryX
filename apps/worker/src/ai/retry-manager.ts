@@ -17,6 +17,7 @@ export async function executeWithRetry<T>(
   totalTaskStartTime: number
 ): Promise<RetryOperationResult<T>> {
   let attempts = 0;
+
   let lastAttemptedKeyIndex = 0;
 
   while (attempts < ENGINE_CONFIG.RETRY.maxRetries) {
@@ -24,10 +25,13 @@ export async function executeWithRetry<T>(
 
     if (attempts > 1) {
       await recordRetry();
+
       const retryActive = await redisConnection
         .get(REDIS_KEYS.ACTIVE_COUNT)
         .then((v) => (v ? parseInt(v, 10) : 0));
+
       const retryQueue = await redisConnection.llen(REDIS_KEYS.QUEUE_LIST);
+
       const retryTimeSec = ((Date.now() - totalTaskStartTime) / 1000).toFixed(
         2
       );
@@ -44,7 +48,9 @@ export async function executeWithRetry<T>(
         originalError: unknown;
         keyIndex: number;
       };
+
       lastAttemptedKeyIndex = contextError.keyIndex ?? 0;
+
       const actualException = contextError.originalError || error;
 
       const classification = classifyError(actualException);
@@ -52,7 +58,9 @@ export async function executeWithRetry<T>(
       const errActive = await redisConnection
         .get(REDIS_KEYS.ACTIVE_COUNT)
         .then((v) => (v ? parseInt(v, 10) : 0));
+
       const errQueue = await redisConnection.llen(REDIS_KEYS.QUEUE_LIST);
+
       const errTimeSec = ((Date.now() - totalTaskStartTime) / 1000).toFixed(2);
 
       console.log(
@@ -68,10 +76,12 @@ export async function executeWithRetry<T>(
 
       const exponentialDelay =
         ENGINE_CONFIG.RETRY.backoffBaseMs * Math.pow(2, attempts - 1);
+
       const finalWait = Math.min(
         ENGINE_CONFIG.RETRY.maxBackoffMs,
         exponentialDelay
       );
+
       await new Promise((resolve) => setTimeout(resolve, finalWait));
     }
   }

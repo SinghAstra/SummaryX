@@ -81,12 +81,15 @@ function validate<T>(
     );
 
     const formattedErrors = result.error.format();
+
     for (const [key, value] of Object.entries(formattedErrors)) {
       if (key !== "_errors" && value && "_errors" in value) {
         console.error(`   👉 ${key}: ${value._errors.join(", ")}`);
       }
     }
+
     console.error("\nApplication startup aborted.\n");
+
     process.exit(1);
   }
 

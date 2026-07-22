@@ -19,6 +19,7 @@ export const authMiddleware = async (
     }
 
     const token = authHeader.split(" ")[1];
+
     if (!token) {
       throw new UnauthorizedError(
         AUTH_ERROR_CODES.INVALID_CREDENTIALS,
@@ -27,6 +28,7 @@ export const authMiddleware = async (
     }
 
     const payload = jwtTokenEngine.verifyAccessToken(token);
+
     if (!payload) {
       throw new UnauthorizedError(
         AUTH_ERROR_CODES.INVALID_CREDENTIALS,

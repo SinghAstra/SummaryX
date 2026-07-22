@@ -5,9 +5,11 @@ import { NextResponse } from "next/server";
 
 export async function proxy(request: NextRequest) {
   const token = await getToken({ req: request });
+
   const { pathname } = request.nextUrl;
 
   const isAuthRoute = AUTH_ROUTES.includes(pathname);
+
   const isProtectedRoute = PROTECTED_ROUTES.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`)
   );

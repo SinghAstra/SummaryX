@@ -6,7 +6,9 @@ import GoogleProvider from "next-auth/providers/google";
 import { ROUTES } from "./routes";
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+
 const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET;
 
 if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
@@ -69,6 +71,7 @@ export const authOptions: NextAuthOptions = {
       if (account && user) {
         if (account.provider === "credentials") {
           token.accessToken = user.accessToken;
+
           token.id = user.id;
         }
 
@@ -84,17 +87,21 @@ export const authOptions: NextAuthOptions = {
           }
 
           token.accessToken = res.data.accessToken;
+
           token.id = res.data.user.id;
         }
       }
+
       return token;
     },
 
     async session({ session, token }) {
       if (token) {
         session.accessToken = token.accessToken;
+
         session.user.id = token.id;
       }
+
       return session;
     },
   },

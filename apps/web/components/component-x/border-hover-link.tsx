@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 
 export type BorderPosition = "top" | "bottom" | "left" | "right";
+
 export type BorderHoverAnimationDirection = "ltr" | "rtl";
 
 export interface BorderHoverLinkProps {

@@ -17,6 +17,7 @@ export default async function ProtectedLayout({
     queryKey: repoKeys.lists(),
     queryFn: repoListQueryFn,
   });
+
   return (
     <div className="flex h-screen bg-background w-full">
       <DashboardSidebar />

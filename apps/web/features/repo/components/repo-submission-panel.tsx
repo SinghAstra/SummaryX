@@ -12,6 +12,7 @@ import { useIngestRepo } from "../hooks/use-ingest-repo";
 
 export function RepoSubmissionPanel() {
   const router = useRouter();
+
   const { mutateAsync: ingestRepo, isPending } = useIngestRepo();
 
   const {
@@ -29,7 +30,9 @@ export function RepoSubmissionPanel() {
       loading: "Connecting to GitHub...",
       success: (data) => {
         reset();
+
         router.push(`/repo/${data.repositoryId}`);
+
         return data.isDuplicate
           ? "Repository Already exists."
           : "Repository linked! Analysis started.";

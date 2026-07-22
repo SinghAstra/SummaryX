@@ -11,4 +11,5 @@ async function bootstrap() {
 void bootstrap();
 
 export * from "./workers/ingestion.worker.js";
+
 export * from "./workers/summarization.worker.js";

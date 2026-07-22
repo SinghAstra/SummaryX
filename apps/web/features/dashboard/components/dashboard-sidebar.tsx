@@ -29,11 +29,14 @@ const navItems = [{ title: "New", url: ROUTES.DASHBOARD, icon: Plus }];
 
 export function DashboardSidebar() {
   const { state, isMobile, setOpenMobile } = useSidebar();
+
   const pathname = usePathname();
+
   const router = useRouter();
 
   const { data: repositories = [], isLoading: isReposLoading } =
     useUserRepositories();
+
   const { mutateAsync: deleteRepo, isPending: isDeleting } =
     useDeleteRepository();
 
@@ -101,6 +104,7 @@ export function DashboardSidebar() {
             <SidebarMenu className="flex flex-col gap-1">
               {navItems.map((item) => {
                 const isActive = pathname === item.url;
+
                 const Icon = item.icon;
 
                 return (
@@ -148,6 +152,7 @@ export function DashboardSidebar() {
                 ) : (
                   repositories.map((repo) => {
                     const targetUrl = `/repo/${repo.id}`;
+
                     const isActive = pathname === targetUrl;
 
                     return (

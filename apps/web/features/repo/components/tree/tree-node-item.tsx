@@ -27,11 +27,14 @@ export function TreeNodeItem({
   onToggleSummary,
 }: TreeNodeItemProps) {
   const isFolder = node.type === "folder";
+
   const isFolderOpen = expandedFolders.has(node.relativePath);
+
   const isSummaryOpen = expandedSummaries.has(node.relativePath);
 
   const handleClick = (e: React.MouseEvent): void => {
     e.stopPropagation();
+
     if (isFolder) {
       onToggleFolder(node.relativePath);
     } else if (node.summaryStatus === "COMPLETED") {

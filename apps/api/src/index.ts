@@ -10,15 +10,19 @@ import { repoRouter } from "./routes/repo.routes.js";
 const app = express();
 
 app.use(cors());
+
 app.use(express.json());
 
 app.get("/", (_, res) => {
   console.log("Health check endpoint accessed");
+
   res.json({ status: "healthy" });
 });
 
 app.use("/api/auth", authRouter);
+
 app.use("/api/repo", repoRouter);
+
 app.use("/api/jobs", jobRouter);
 
 app.use((req, _res, next) => {

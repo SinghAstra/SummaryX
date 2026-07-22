@@ -8,7 +8,7 @@ const execAsync = promisify(exec);
 export async function syncWorkspace(
   workspacePath: string,
   githubUrl: string,
-  isResync: boolean,
+  isResync: boolean
 ): Promise<void> {
   if (isResync) {
     await execAsync(`git fetch --depth 1 && git reset --hard FETCH_HEAD`, {
@@ -17,7 +17,9 @@ export async function syncWorkspace(
     });
   } else {
     await fs.mkdir(path.dirname(workspacePath), { recursive: true });
+
     await fs.rm(workspacePath, { recursive: true, force: true });
+
     await execAsync(`git clone --depth 1 ${githubUrl} ${workspacePath}`, {
       timeout: 60000,
     });

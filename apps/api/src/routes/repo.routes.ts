@@ -7,12 +7,19 @@ const router: Router = Router();
 router.use(authMiddleware);
 
 router.post("/", repositoryController.ingest);
+
 router.get("/:id/files", repositoryController.getFiles);
+
 router.get("/:id", repositoryController.getRepository);
+
 router.get("/", repositoryController.getRepositories);
+
 router.post("/:id/resync", repositoryController.resync);
+
 router.post("/:id/boost", repositoryController.boost);
+
 router.delete("/bulk", repositoryController.deleteBulk);
+
 router.delete("/:id", repositoryController.deleteSingle);
 
 export { router as repoRouter };

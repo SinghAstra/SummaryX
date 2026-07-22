@@ -12,6 +12,7 @@ const ContinueWithGoogle = () => {
   const handleContinueWithGoogle = async () => {
     try {
       setIsGoogleLoading(true);
+
       await signIn("google", {
         redirect: true,
         callbackUrl: ROUTES.DASHBOARD,
@@ -22,6 +23,7 @@ const ContinueWithGoogle = () => {
       setIsGoogleLoading(false);
     }
   };
+
   return (
     <Button
       type="button"

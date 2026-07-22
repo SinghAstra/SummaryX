@@ -5,16 +5,20 @@ import { useUserContext } from "./user-provider";
 
 export const InputUserName = () => {
   const { userName, setUserName } = useUserContext();
+
   const [inputValue, setInputValue] = useState(userName);
 
   const renderCount = useRef(0);
+
   useEffect(() => {
     renderCount.current++;
+
     console.log(`InputUserName Rendered: ${renderCount.current} times`);
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
     setUserName(inputValue);
   };
 

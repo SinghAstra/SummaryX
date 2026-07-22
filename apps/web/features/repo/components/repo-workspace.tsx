@@ -24,6 +24,7 @@ export function RepositoryWorkspace({ repo }: RepositoryWorkspaceProps) {
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
     new Set()
   );
+
   const [expandedSummaries, setExpandedSummaries] = useState<Set<string>>(
     new Set()
   );
@@ -31,6 +32,7 @@ export function RepositoryWorkspace({ repo }: RepositoryWorkspaceProps) {
   const [prevCompletedCount, setPrevCompletedCount] = useState(0);
 
   const allFolderPaths = extractAllFolderPaths(treeNodes);
+
   const allCompletedFilePaths = extractAllCompletedFilePaths(treeNodes);
 
   if (allCompletedFilePaths.length !== prevCompletedCount) {
@@ -52,8 +54,10 @@ export function RepositoryWorkspace({ repo }: RepositoryWorkspaceProps) {
   const handleToggleFolder = useCallback((path: string) => {
     setExpandedFolders((prev) => {
       const next = new Set(prev);
+
       if (next.has(path)) next.delete(path);
       else next.add(path);
+
       return next;
     });
   }, []);
@@ -61,8 +65,10 @@ export function RepositoryWorkspace({ repo }: RepositoryWorkspaceProps) {
   const handleToggleSummary = useCallback((fileId: string) => {
     setExpandedSummaries((prev) => {
       const next = new Set(prev);
+
       if (next.has(fileId)) next.delete(fileId);
       else next.add(fileId);
+
       return next;
     });
   }, []);
@@ -70,9 +76,11 @@ export function RepositoryWorkspace({ repo }: RepositoryWorkspaceProps) {
   const handleToggleExpandAll = (): void => {
     if (isExpandedAll) {
       setExpandedFolders(new Set());
+
       setExpandedSummaries(new Set());
     } else {
       setExpandedFolders(new Set(allFolderPaths));
+
       setExpandedSummaries(new Set(allCompletedFilePaths));
     }
   };
@@ -81,18 +89,22 @@ export function RepositoryWorkspace({ repo }: RepositoryWorkspaceProps) {
     if (treeNodes.length === 0) return;
 
     const compiledText = compileProjectSummaryText(treeNodes);
+
     if (!compiledText) {
       toast.error("No file summaries are ready to copy yet.");
+
       return;
     }
 
     try {
       await navigator.clipboard.writeText(compiledText);
+
       toast.success(
         `Copied ${allCompletedFilePaths.length} file summaries to clipboard!`
       );
     } catch (error) {
       logError(error);
+
       toast.error("Failed to copy summaries to clipboard.");
     }
   };

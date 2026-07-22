@@ -19,6 +19,7 @@ export const jwtTokenEngine = {
       return jwt.verify(token, env.JWT_SECRET) as TokenPayload;
     } catch (error) {
       logError(error);
+
       return null;
     }
   },

@@ -9,6 +9,7 @@ export const ThemeToggle = () => {
 
   useEffect(() => {
     renderCount.current++;
+
     console.log(`ThemeToggle Rendered: ${renderCount.current} times`);
   });
 

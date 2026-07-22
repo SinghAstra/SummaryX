@@ -22,6 +22,7 @@ export function OTPProvider({
   length?: number;
 }) {
   const [values, setValues] = useState<string[]>(Array(length).fill(""));
+
   const [focusIndex, setFocusIndex] = useState(0);
 
   return (
@@ -35,9 +36,11 @@ export function OTPProvider({
 
 export function useOTP() {
   const context = useContext(OTPContext);
+
   if (!context) {
     throw new Error("useOTP must be used within OTPProvider");
   }
+
   return context;
 }
 
@@ -63,6 +66,7 @@ interface OTPInputBoxProps {
 
 export function OTPInputBox({ index }: OTPInputBoxProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+
   const { values, setValues, focusIndex, setFocusIndex } = useOTP();
 
   useEffect(() => {
@@ -81,7 +85,9 @@ export function OTPInputBox({ index }: OTPInputBoxProps) {
     if (value && !/^\d$/.test(value)) return;
 
     const newValues = [...values];
+
     newValues[index] = value;
+
     setValues(newValues);
 
     // Move to next input if digit entered
@@ -93,7 +99,9 @@ export function OTPInputBox({ index }: OTPInputBoxProps) {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Backspace") {
       const newValues = [...values];
+
       newValues[index] = "";
+
       setValues(newValues);
 
       // Move to previous input on backspace
@@ -109,20 +117,25 @@ export function OTPInputBox({ index }: OTPInputBoxProps) {
 
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
+
     const pastedData = e.clipboardData.getData("text");
+
     const digits = pastedData
       .replace(/\D/g, "")
       .split("")
       .slice(0, values.length - index);
 
     const newValues = [...values];
+
     digits.forEach((digit, i) => {
       newValues[index + i] = digit;
     });
+
     setValues(newValues);
 
     // Focus last input or next empty input
     const nextEmptyIndex = newValues.findIndex((v, i) => i >= index && !v);
+
     if (nextEmptyIndex !== -1) {
       setFocusIndex(nextEmptyIndex);
     } else {

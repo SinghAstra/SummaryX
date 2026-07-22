@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState } from "react";
 
 type Theme = "light" | "dark";
+
 interface ThemeContextType {
   theme: Theme;
   setTheme: React.Dispatch<React.SetStateAction<Theme>>;
@@ -20,8 +21,10 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
 
 export const useThemeContext = () => {
   const context = useContext(ThemeContext);
+
   if (context === undefined) {
     throw new Error("useThemeContext must be used inside ThemeProvider");
   }
+
   return context;
 };

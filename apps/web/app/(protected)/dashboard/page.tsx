@@ -1,5 +1,6 @@
 import { RepoSubmissionPanel } from "@/features/repo/components/repo-submission-panel";
 import type { Metadata } from "next";
+
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {

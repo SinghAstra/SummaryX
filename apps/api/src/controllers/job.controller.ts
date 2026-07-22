@@ -36,6 +36,7 @@ export const jobController = {
       }
 
       const idParamParse = z.string().uuid().safeParse(req.params.id);
+
       if (!idParamParse.success) {
         throw new BadRequestError(
           COMMON_ERROR_CODES.VALIDATION_ERROR,
@@ -55,6 +56,7 @@ export const jobController = {
     let telemetrySubscriber: ReturnType<
       typeof redisConnection.duplicate
     > | null = null;
+
     let isCleanedUp = false;
 
     try {
@@ -72,17 +74,20 @@ export const jobController = {
       }
 
       const jobId = idParamParse.data;
+
       const { token } = queryParse.data;
 
       const channelCoordinate = getJobTelemetryChannel(jobId);
 
       const cleanup = async (): Promise<void> => {
         if (isCleanedUp) return;
+
         isCleanedUp = true;
 
         try {
           if (telemetrySubscriber) {
             await telemetrySubscriber.unsubscribe(channelCoordinate);
+
             await telemetrySubscriber.quit();
           }
         } catch (error) {
@@ -95,6 +100,7 @@ export const jobController = {
       };
 
       const payloadContext = await jwtTokenEngine.verifyAccessToken(token);
+
       if (!payloadContext) {
         throw new UnauthorizedError(
           AUTH_ERROR_CODES.INVALID_CREDENTIALS,
@@ -114,9 +120,13 @@ export const jobController = {
       }
 
       res.setHeader("Content-Type", "text/event-stream");
+
       res.setHeader("Cache-Control", "no-cache");
+
       res.setHeader("Connection", "keep-alive");
+
       res.setHeader("X-Accel-Buffering", "no");
+
       res.flushHeaders();
 
       res.write(`retry: ${SSE_RETRY_MS}\n\n`);
@@ -125,6 +135,7 @@ export const jobController = {
 
       telemetrySubscriber.on("error", (error) => {
         logError(error);
+
         void cleanup();
       });
 
@@ -147,7 +158,9 @@ export const jobController = {
             ) {
               void cleanup();
             }
-          } catch (parseError) {
+          } catch (error) {
+            logError(error);
+
             writeSseEvent(res, { error: "MALFORMED_TELEMETRY_FRAME" });
           }
         }

@@ -16,6 +16,7 @@ export const globalErrorHandler = (
         message: error.message,
       },
     });
+
     return;
   }
 

@@ -17,9 +17,6 @@ import {
   trackProgress,
 } from "@repo/shared/server";
 import crypto from "node:crypto";
-import fs from "node:fs/promises";
-import os from "node:os";
-import path from "node:path";
 import { BadRequestError, NotFoundError } from "../errors/api-errors.js";
 import { buildRepositoryTree } from "../lib/build-tree.js";
 
@@ -31,14 +28,18 @@ interface IngestParams {
 export const repositoryService = {
   async createRepository(params: IngestParams) {
     const { userId, githubUrl: rawGithubUrl } = params;
+
     let owner: string;
+
     let name: string;
+
     let normalizedGithubUrl: string;
 
     try {
       const parsed = parseGitHubUrl(rawGithubUrl);
 
       owner = parsed.owner.toLowerCase();
+
       name = parsed.name.toLowerCase();
 
       normalizedGithubUrl = `https://github.com/${owner}/${name}`;
@@ -67,6 +68,7 @@ export const repositoryService = {
         method: "HEAD",
         redirect: "follow",
       });
+
       if (!pingResponse.ok) throw new Error();
     } catch {
       throw new BadRequestError(
@@ -76,39 +78,36 @@ export const repositoryService = {
     }
 
     const repositoryId = crypto.randomUUID();
+
     const repositoryAvatarUrl = `https://github.com/${owner}.png`;
 
-    try {
-      const newRepo = await prisma.repository.create({
-        data: {
-          id: repositoryId,
-          userId,
-          githubUrl: normalizedGithubUrl,
-          name,
-          owner,
-          avatar: repositoryAvatarUrl,
-          status: REPOSITORY_STATUS.PENDING,
-          totalSize: BigInt(0),
-        },
-      });
+    const newRepo = await prisma.repository.create({
+      data: {
+        id: repositoryId,
+        userId,
+        githubUrl: normalizedGithubUrl,
+        name,
+        owner,
+        avatar: repositoryAvatarUrl,
+        status: REPOSITORY_STATUS.PENDING,
+        totalSize: BigInt(0),
+      },
+    });
 
-      const job = await prisma.job.create({
-        data: {
-          repositoryId: newRepo.id,
-          status: JOB_STATUS.PENDING,
-        },
-      });
-
-      await repositoryIngestionQueue.add(JOB_NAMES.ANALYZE_REPO, {
-        jobId: job.id,
+    const job = await prisma.job.create({
+      data: {
         repositoryId: newRepo.id,
-        isResync: false,
-      });
+        status: JOB_STATUS.PENDING,
+      },
+    });
 
-      return { repositoryId: newRepo.id, isDuplicate: false };
-    } catch (error: any) {
-      throw error;
-    }
+    await repositoryIngestionQueue.add(JOB_NAMES.ANALYZE_REPO, {
+      jobId: job.id,
+      repositoryId: newRepo.id,
+      isResync: false,
+    });
+
+    return { repositoryId: newRepo.id, isDuplicate: false };
   },
 
   async getRepositoryFiles(
@@ -141,6 +140,7 @@ export const repositoryService = {
           flatFiles.filter((f) => f.summaryStatus !== "COMPLETED").length
         } total remaining). Showing up to 10 items:`
       );
+
       incompleteSamples.forEach((file) => {
         console.log(
           `  ↳ 📄 Path: ${file.relativePath} | Status: [${file.summaryStatus}]`

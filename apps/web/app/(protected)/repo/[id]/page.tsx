@@ -9,6 +9,7 @@ import {
   QueryClient,
 } from "@tanstack/react-query";
 import { type Metadata } from "next";
+
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
@@ -23,6 +24,7 @@ interface RepositoryPageProps {
 
 export default async function RepositoryPage({ params }: RepositoryPageProps) {
   const { id } = await params;
+
   const queryClient = new QueryClient();
 
   await queryClient.prefetchQuery({

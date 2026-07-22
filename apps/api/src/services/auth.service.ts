@@ -32,6 +32,7 @@ export const authService = {
     const { email, password } = signUpFormValues;
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
+
     if (existingUser) {
       throw new ConflictError(
         AUTH_ERROR_CODES.EMAIL_ALREADY_EXISTS,
@@ -40,12 +41,14 @@ export const authService = {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+
     const transactionResult = await prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
         data: { email, passwordHash: hashedPassword },
       });
 
       const token = crypto.randomUUID();
+
       const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
       await tx.verificationToken.create({
@@ -70,6 +73,7 @@ export const authService = {
     const verificationRecord = await prisma.verificationToken.findUnique({
       where: { token },
     });
+
     if (!verificationRecord) {
       throw new AppError(
         404,
@@ -80,6 +84,7 @@ export const authService = {
 
     if (verificationRecord.expires < new Date()) {
       await prisma.verificationToken.deleteMany({ where: { token } });
+
       throw new AppError(
         400,
         AUTH_ERROR_CODES.TOKEN_EXPIRED,
@@ -92,9 +97,11 @@ export const authService = {
         where: { email: verificationRecord.identifier },
         data: { emailVerified: new Date() },
       });
+
       await tx.verificationToken.deleteMany({
         where: { identifier: verificationRecord.identifier },
       });
+
       return user;
     });
 
@@ -109,10 +116,13 @@ export const authService = {
     params: ResendVerificationFormValues
   ): Promise<{ message: string }> {
     const { email } = params;
+
     const user = await prisma.user.findUnique({ where: { email } });
+
     const secureSuccessResponse = { message: "Verification link sent." };
 
     if (!user) return secureSuccessResponse;
+
     if (user.emailVerified) {
       throw new ConflictError(
         AUTH_ERROR_CODES.EMAIL_ALREADY_VERIFIED,
@@ -121,22 +131,27 @@ export const authService = {
     }
 
     const token = crypto.randomUUID();
+
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
     await prisma.$transaction(async (tx) => {
       await tx.verificationToken.deleteMany({ where: { identifier: email } });
+
       await tx.verificationToken.create({
         data: { identifier: email, token, expires: expiresAt },
       });
     });
 
     await mailService.sendVerificationEmail({ email, token });
+
     return secureSuccessResponse;
   },
 
   async signInUser(credentials: SignInFormValues): Promise<SignInResponse> {
     const { email, password } = credentials;
+
     const user = await prisma.user.findUnique({ where: { email } });
+
     const invalidCredentialsError = new AppError(
       401,
       AUTH_ERROR_CODES.INVALID_CREDENTIALS,
@@ -146,6 +161,7 @@ export const authService = {
     if (!user || !user.passwordHash) throw invalidCredentialsError;
 
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+
     if (!isPasswordValid) throw invalidCredentialsError;
 
     if (!user.emailVerified) {
@@ -177,6 +193,7 @@ export const authService = {
     payload: GoogleOauthInput
   ): Promise<OAuthLoginResponse> {
     const { email, name, image } = payload;
+
     let user = await prisma.user.findUnique({ where: { email } });
 
     if (!user) {
@@ -211,10 +228,13 @@ export const authService = {
     payload: ForgotPasswordFormValues
   ): Promise<ForgotPasswordResponse> {
     const { email } = payload;
+
     const genericSuccessResponse = { message: "Password reset link sent." };
+
     const user = await prisma.user.findUnique({ where: { email } });
 
     if (!user) return genericSuccessResponse;
+
     if (!user.passwordHash) {
       throw new AppError(
         400,
@@ -224,16 +244,19 @@ export const authService = {
     }
 
     const token = crypto.randomUUID();
+
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
     await prisma.$transaction(async (tx) => {
       await tx.passwordResetToken.deleteMany({ where: { identifier: email } });
+
       await tx.passwordResetToken.create({
         data: { identifier: email, token, expires: expiresAt },
       });
     });
 
     await mailService.sendPasswordResetEmail({ email, token });
+
     return genericSuccessResponse;
   },
 
@@ -241,6 +264,7 @@ export const authService = {
     payload: ResetPasswordFormValues
   ): Promise<ResetPasswordResponse> {
     const { token, password } = payload;
+
     const resetRecord = await prisma.passwordResetToken.findUnique({
       where: { token },
     });
@@ -254,6 +278,7 @@ export const authService = {
 
     if (resetRecord.expires < new Date()) {
       await prisma.passwordResetToken.deleteMany({ where: { token } });
+
       throw new BadRequestError(
         AUTH_ERROR_CODES.PASSWORD_RESET_TOKEN_EXPIRED,
         "Reset link expired."
@@ -261,11 +286,13 @@ export const authService = {
     }
 
     const newHashedPassword = await bcrypt.hash(password, 10);
+
     await prisma.$transaction(async (tx) => {
       await tx.user.update({
         where: { email: resetRecord.identifier },
         data: { passwordHash: newHashedPassword },
       });
+
       await tx.passwordResetToken.deleteMany({
         where: { identifier: resetRecord.identifier },
       });

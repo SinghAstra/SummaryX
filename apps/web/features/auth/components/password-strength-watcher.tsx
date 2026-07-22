@@ -45,7 +45,9 @@ export const PasswordStrengthWatcher = ({
 
   const getProgressStyles = () => {
     if (rulesMetCount <= 2) return "bg-destructive";
+
     if (rulesMetCount <= 4) return "bg-amber-500";
+
     return "bg-green-400";
   };
 
@@ -65,8 +67,8 @@ export const PasswordStrengthWatcher = ({
             {rulesMetCount <= 2
               ? "Weak"
               : rulesMetCount <= 4
-              ? "Medium"
-              : "Strong"}
+                ? "Medium"
+                : "Strong"}
           </span>
         </div>
 

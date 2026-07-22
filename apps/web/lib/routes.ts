@@ -3,7 +3,7 @@ export const ROUTES = {
   SIGN_UP: "/sign-up",
   SIGN_IN: "/sign-in",
   DASHBOARD: "/dashboard",
-  REPO:"/repo",
+  REPO: "/repo",
   FORGOT_PASSWORD: "/forgot-password",
 } as const;
 

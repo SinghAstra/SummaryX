@@ -4,7 +4,7 @@ import { fileSummarizationQueue } from "@repo/shared/server";
 export async function queueSummarizationJobs(
   repoId: string,
   jobId: string,
-  fileIds: Array<{ id: string }>,
+  fileIds: Array<{ id: string }>
 ) {
   if (fileIds.length === 0) return;
 
@@ -17,6 +17,6 @@ export async function queueSummarizationJobs(
         jobId: jobId,
         runId: idx + 1,
       },
-    })),
+    }))
   );
 }

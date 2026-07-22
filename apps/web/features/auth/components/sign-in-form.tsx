@@ -15,6 +15,7 @@ import ContinueWithGoogle from "./continue-with-google";
 
 export function SignInForm() {
   const router = useRouter();
+
   const callbackUrl = ROUTES.DASHBOARD;
 
   const {
@@ -42,6 +43,7 @@ export function SignInForm() {
       }
 
       router.push(callbackUrl);
+
       return "Welcome back!";
     };
 

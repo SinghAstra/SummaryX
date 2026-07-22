@@ -22,8 +22,11 @@ import { Logo } from "./logo";
 
 export function DashboardHeader() {
   const { toggleSidebar } = useSidebar();
+
   const { data: session } = useSession();
+
   const router = useRouter();
+
   const pathname = usePathname();
 
   const isRootDashboard = pathname === ROUTES.DASHBOARD;
@@ -34,6 +37,7 @@ export function DashboardHeader() {
 
   const getUserInitials = () => {
     if (!session?.user?.name) return null;
+
     return session.user.name
       .split(" ")
       .map((word) => word[0])

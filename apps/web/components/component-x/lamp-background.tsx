@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 import type { CSSProperties } from "react";
 
 export type LampBackgroundPosition = "top" | "right" | "bottom" | "left";
+
 export type LampAngleSpan = "small" | "medium" | "large";
 
 interface LampBackgroundProps {
@@ -20,17 +21,24 @@ function LampBackground({
   angleSpan = "medium",
 }: LampBackgroundProps) {
   let maskImageStyle: CSSProperties["maskImage"];
+
   let containerFlexClass: string;
+
   let gradient1FromAt: string;
+
   let gradient2FromAt: string;
+
   let div1SizeClass: string;
+
   let div2SizeClass: string;
 
   let finalColorOne = colorOne;
+
   let finalColorTwo = colorTwo;
 
   if (position === "left" || position === "bottom") {
     finalColorOne = colorTwo;
+
     finalColorTwo = colorOne;
   }
 
@@ -38,56 +46,95 @@ function LampBackground({
     case "top":
       maskImageStyle =
         "linear-gradient(0deg, rgba(255, 255, 255,0), rgb(255, 255, 255,0.8))";
+
       containerFlexClass = "flex-row";
+
       gradient1FromAt = "from 90deg at 0% 0%";
+
       gradient2FromAt = "from 180deg at 100% 0%";
+
       div1SizeClass = "h-full flex-1";
+
       div2SizeClass = "flex-1 h-full";
+
       break;
+
     case "bottom":
       maskImageStyle =
         "linear-gradient(180deg, rgba(255, 255, 255,0), rgb(255, 255, 255,0.8))";
+
       containerFlexClass = "flex-row";
+
       gradient1FromAt = "from 0deg at 0% 100%";
+
       gradient2FromAt = "from 270deg at 100% 100%";
+
       div1SizeClass = "h-full flex-1";
+
       div2SizeClass = "flex-1 h-full";
+
       break;
+
     case "left":
       maskImageStyle =
         "linear-gradient(90deg, rgba(255, 255, 255), rgb(255, 255, 255,0.6))";
+
       containerFlexClass = "flex-col";
+
       gradient1FromAt = "from 90deg at 0% 0%";
+
       gradient2FromAt = "from 0deg at 0% 100%";
+
       div1SizeClass = "w-full flex-1";
+
       div2SizeClass = "flex-1 w-full";
+
       break;
+
     case "right":
       maskImageStyle =
         "linear-gradient(270deg, rgba(255, 255, 255), rgb(255, 255, 255,0.6))";
+
       containerFlexClass = "flex-col";
+
       gradient1FromAt = "from 180deg at 100% 0%";
+
       gradient2FromAt = "from 270deg at 100% 100%";
+
       div1SizeClass = "w-full flex-1";
+
       div2SizeClass = "flex-1 w-full";
+
       break;
   }
+
   let angleSpread: number;
+
   let angleOffset: number;
+
   switch (angleSpan) {
     case "small":
       angleSpread = 60;
+
       angleOffset = 30;
+
       break;
+
     case "medium":
       angleSpread = 80;
+
       angleOffset = 10;
+
       break;
+
     case "large":
       angleSpread = 100;
+
       angleOffset = 0;
+
       break;
   }
+
   return (
     <div
       className={cn(

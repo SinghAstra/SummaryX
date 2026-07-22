@@ -17,19 +17,17 @@ export function buildRepositoryTree(
 
   for (const file of files) {
     const normalizedPath = file.relativePath.replace(/\\/g, "/");
+
     const parts = normalizedPath.split("/");
 
     let currentElement = root;
 
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i];
-      const isLastPart = i === parts.length - 1;
-      const runningPath = parts.slice(0, i + 1).join("/");
 
-      // Check what items currently exist in the current folder tier
-      const currentChildrenNames = currentElement.children.map(
-        (c) => `${c.name} (${c.type})`
-      );
+      const isLastPart = i === parts.length - 1;
+
+      const runningPath = parts.slice(0, i + 1).join("/");
 
       let targetNode = currentElement.children.find(
         (child) => child.name === part
@@ -65,6 +63,7 @@ export function buildRepositoryTree(
       }))
       .sort((a, b) => {
         if (a.type !== b.type) return a.type === "folder" ? -1 : 1;
+
         return a.name.localeCompare(b.name);
       });
   };

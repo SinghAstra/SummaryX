@@ -32,9 +32,11 @@ export async function coolDownKey(
   durationMs: number
 ): Promise<void> {
   const redisKey = getCoolDownKeyPath(index);
+
   await redisConnection.set(redisKey, "COOL_DOWN_ACTIVE", "PX", durationMs);
 
   await recordCoolDownTriggered();
+
   console.log(
     `🔒 [Shared Key Registry] Index ${index} flagged as cool_down status across cluster.`
   );
@@ -45,24 +47,30 @@ export async function getNextKey(): Promise<RotatedKeyResult> {
 
   for (let i = 0; i < poolLength; i++) {
     const checkIndex = (currentRotationIndex + i) % poolLength;
+
     const key = apiKeysPool[checkIndex];
+
     const redisKey = getCoolDownKeyPath(checkIndex);
 
     const isCooledDown = await redisConnection.exists(redisKey);
 
     if (isCooledDown === 0 && key) {
       currentRotationIndex = (checkIndex + 1) % poolLength;
+
       return { key, index: checkIndex };
     }
   }
 
   const fallbackIndex = currentRotationIndex;
+
   currentRotationIndex = (currentRotationIndex + 1) % poolLength;
+
   console.log(
     `⚠️ [Shared Key Registry] All keys are cooling down globally. Falling back to Index ${fallbackIndex}.`
   );
 
   const fallbackKey = apiKeysPool[fallbackIndex];
+
   if (!fallbackKey)
     throw new Error(
       "GROQ_KEY_ERROR: Shared fallback tracking resolution failed."

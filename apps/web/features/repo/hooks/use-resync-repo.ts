@@ -21,6 +21,7 @@ export function useResyncRepository(repositoryId: string) {
         repoKeys.detail(repositoryId),
         (oldRepo: unknown) => {
           if (!oldRepo) return oldRepo;
+
           return {
             ...oldRepo,
             status: REPOSITORY_STATUS.PROCESSING,

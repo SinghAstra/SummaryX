@@ -25,8 +25,11 @@ export function MenuToggle({
 
   const toggleMenu = () => {
     if (disabled) return;
+
     const newState = !isOpen;
+
     setIsOpen(newState);
+
     onOpenChange?.(newState);
   };
 

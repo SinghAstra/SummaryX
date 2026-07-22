@@ -27,6 +27,7 @@ export default async function VerifyEmailPage({
     !result.success &&
     (result.error.code === AUTH_ERROR_CODES.EMAIL_ALREADY_VERIFIED ||
       result.error.code === AUTH_ERROR_CODES.TOKEN_NOT_FOUND);
+
   const isError = !result.success && !isAlreadyVerified;
 
   return (

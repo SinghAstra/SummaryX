@@ -4,7 +4,9 @@ import { getJobLogsAction } from "../actions/get-job-logs-action";
 
 export const getJobLogsQueryFn = async (jobId: string) => {
   const response = await getJobLogsAction(jobId);
+
   if (!response.success) throw new Error(response.error.message);
+
   return response.data;
 };
 

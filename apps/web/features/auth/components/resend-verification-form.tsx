@@ -34,7 +34,9 @@ export function ResendVerificationForm() {
         if (!result.success) {
           throw new Error(result.error.message);
         }
+
         setSent(true);
+
         return result.data.message;
       },
       error: (err: Error) => err.message,

@@ -13,7 +13,7 @@ export const repositoryIngestionWorker = new Worker<RepoIngestionJobData>(
   {
     connection: redisConnection,
     concurrency: 4,
-  },
+  }
 );
 
 repositoryIngestionWorker.on("failed", (job, error) => {

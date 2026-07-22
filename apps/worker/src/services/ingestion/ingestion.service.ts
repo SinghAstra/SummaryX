@@ -12,11 +12,13 @@ import { TraversalStats } from "./types";
 export const ingestionService = {
   async processRepositoryIngestion(jobId: string, isResync = false) {
     const job = await prisma.job.findUnique({ where: { id: jobId } });
+
     if (!job) return;
 
     const repo = await prisma.repository.findUnique({
       where: { id: job.repositoryId },
     });
+
     if (!repo) return;
 
     const workspacePath = getWorkspacePath(repo.id);
@@ -33,6 +35,7 @@ export const ingestionService = {
         status: JOB_STATUS.RUNNING,
         message: "Synchronizing workspace...",
       });
+
       await syncWorkspace(workspacePath, repo.githubUrl, isResync);
 
       await trackProgress({
@@ -41,6 +44,7 @@ export const ingestionService = {
         status: JOB_STATUS.RUNNING,
         message: "Scanning files...",
       });
+
       const stats: TraversalStats = {
         totalFiles: 0,
         supportedFiles: 0,
@@ -49,6 +53,7 @@ export const ingestionService = {
         totalSize: BigInt(0),
         collectedFiles: [],
       };
+
       await traverseDirectory(workspacePath, workspacePath, stats);
 
       const { addedCount, modifiedCount, deletedCount, targetsToQueue } =
@@ -107,6 +112,7 @@ export const ingestionService = {
       });
 
       logError(error);
+
       throw error;
     }
   },

@@ -28,6 +28,7 @@ export function SignUpForm() {
   });
 
   const [mailSent, setMailSent] = useState(false);
+
   const [showPasswordStrength, setShowPasswordStrength] = useState(false);
 
   const onSubmit = async (data: SignUpFormValues) => {
@@ -39,6 +40,7 @@ export function SignUpForm() {
         if (!result.success) {
           throw new Error(result.error.message);
         }
+
         setMailSent(true);
 
         return result.data.message;

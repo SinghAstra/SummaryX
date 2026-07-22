@@ -15,7 +15,9 @@ export function classifyError(error: unknown): ErrorClassification {
   };
 
   const errorMessage = apiError.message || String(error);
+
   const status = apiError.status;
+
   const errorCode = apiError.error?.code || "";
 
   const isTimeout =
@@ -30,9 +32,11 @@ export function classifyError(error: unknown): ErrorClassification {
   const isServerError = status !== undefined && status >= 500;
 
   const isRetryable = isTimeout || isRateLimit || isServerError;
+
   const isPermanent = !isRetryable;
 
   let label = "UNKNOWN_ERROR";
+
   if (isTimeout) label = "TIMEOUT";
   else if (isRateLimit) label = "RATE_LIMIT";
   else if (isServerError) label = `SERVER_ERROR_HTTP_${status}`;

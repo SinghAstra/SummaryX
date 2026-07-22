@@ -9,9 +9,11 @@ export function useDeleteMultipleRepositories() {
   return useMutation({
     mutationFn: async (ids: string[]) => {
       const response = await deleteMultipleRepositoriesAction(ids);
+
       if (!response.success) {
         throw new Error(response.error.message);
       }
+
       return response.data;
     },
     onSuccess: (data, ids) => {
@@ -20,6 +22,7 @@ export function useDeleteMultipleRepositories() {
       ids.forEach((id) => {
         queryClient.removeQueries({ queryKey: repoKeys.detail(id) });
       });
+
       queryClient.invalidateQueries({ queryKey: repoKeys.lists() });
     },
   });

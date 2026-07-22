@@ -12,6 +12,7 @@ const ALL_ERROR_CODES = [
 ] as [string, ...string[]];
 
 export const errorCodeSchema = z.enum(ALL_ERROR_CODES);
+
 export type ErrorCode = z.infer<typeof errorCodeSchema>;
 
 export const apiErrorSchema = z.object({

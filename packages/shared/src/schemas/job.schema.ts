@@ -30,7 +30,9 @@ export const fileSummarizationJobDataSchema = z.object({
 });
 
 export type JobStatus = z.infer<typeof jobStatusSchema>;
+
 export type RepoIngestionJobData = z.infer<typeof repoIngestionJobDataSchema>;
+
 export type FileSummarizationJobData = z.infer<
   typeof fileSummarizationJobDataSchema
 >;
