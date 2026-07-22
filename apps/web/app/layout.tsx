@@ -6,12 +6,18 @@ import NextTopLoader from "nextjs-toploader";
 import { Toaster } from "sonner";
 import "./globals.css";
 
-import { Space_Grotesk } from "next/font/google";
+import { Space_Grotesk, Geist_Mono } from "next/font/google";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-space",
+});
+
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-mono",
 });
 
 export const metadata: Metadata = {
@@ -62,7 +68,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={spaceGrotesk.variable}>
+    // Added geistMono.variable here to inject the CSS variable globally
+    <html
+      lang="en"
+      className={`${spaceGrotesk.variable} ${geistMono.variable}`}
+    >
       <body
         className={`${spaceGrotesk.className} font-sans antialiased min-h-screen bg-background`}
         suppressHydrationWarning
