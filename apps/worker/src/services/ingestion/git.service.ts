@@ -10,7 +10,14 @@ export async function syncWorkspace(workspacePath: string, githubUrl: string) {
 
   await fs.rm(workspacePath, { recursive: true, force: true }).catch(() => {});
 
-  await execAsync(`git clone --depth 1 ${githubUrl} ${workspacePath}`, {
-    timeout: 60000,
-  });
+  const result = await execAsync(
+    `git clone --depth 1 ${githubUrl} ${workspacePath}`,
+    {
+      timeout: 60000,
+    }
+  );
+
+  console.log("Git Clone ", result);
+
+  console.log(`✅ Successfully cloned: ${githubUrl} into ${workspacePath}`);
 }

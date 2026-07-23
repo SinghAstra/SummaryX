@@ -18,13 +18,12 @@ export const jobStatusSchema = z.enum([
 
 export const repoIngestionJobDataSchema = z.object({
   jobId: z.uuid(),
-  repositoryId: z.string().uuid(),
-  isResync: z.boolean(),
+  repositoryId: z.uuid(),
 });
 
 export const fileSummarizationJobDataSchema = z.object({
   fileId: z.uuid(),
-  repositoryId: z.string().uuid(),
+  repositoryId: z.uuid(),
   jobId: z.uuid(),
   runId: z.number().int().nonnegative(),
 });

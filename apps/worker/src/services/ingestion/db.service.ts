@@ -14,16 +14,19 @@ export async function syncDatabaseWithFiles(
     existingDBFiles.map((f) => [f.relativePath.replace(/\\/g, "/"), f])
   );
 
-  const fsPaths = new Set(
-    stats.collectedFiles.map((f) => f.relativePath.replace(/\\/g, "/"))
+  const scannedFiles = stats.collectedFiles.map((f) => ({
+    ...f,
+    normalizedPath: f.relativePath.replace(/\\/g, "/"),
+  }));
+
+  const fsPaths = new Set(scannedFiles.map((f) => f.normalizedPath));
+
+  const addedFiles = scannedFiles.filter(
+    (f) => !dbFileMap.has(f.normalizedPath)
   );
 
-  const addedFiles = stats.collectedFiles.filter(
-    (f) => !dbFileMap.has(f.relativePath.replace(/\\/g, "/"))
-  );
-
-  const modifiedFiles = stats.collectedFiles.filter((f) => {
-    const match = dbFileMap.get(f.relativePath.replace(/\\/g, "/"));
+  const modifiedFiles = scannedFiles.filter((f) => {
+    const match = dbFileMap.get(f.normalizedPath);
 
     return match && match.hash !== f.hash;
   });
@@ -32,7 +35,8 @@ export async function syncDatabaseWithFiles(
     (f) => !fsPaths.has(f.relativePath.replace(/\\/g, "/"))
   );
 
-  await prisma.$transaction([
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const transactionOperations: any[] = [
     prisma.repository.update({
       where: { id: repoId },
       data: {
@@ -44,49 +48,47 @@ export async function syncDatabaseWithFiles(
         totalSize: stats.totalSize,
       },
     }),
-    ...(deletedFiles.length > 0
-      ? [
-          prisma.repositoryFile.deleteMany({
-            where: { id: { in: deletedFiles.map((f) => f.id) } },
-          }),
-        ]
-      : []),
-    ...(addedFiles.length > 0
-      ? [
-          prisma.repositoryFile.createMany({
-            data: addedFiles.map((file) => ({
-              repositoryId: repoId,
-              relativePath: file.relativePath,
-              extension: file.extension,
-              size: file.size,
-              hash: file.hash,
-              summaryStatus: FILE_SUMMARY_STATUS.PENDING,
-            })),
-            skipDuplicates: true,
-          }),
-        ]
-      : []),
-  ]);
+  ];
 
-  const CHUNK_SIZE = 100;
-
-  for (let i = 0; i < modifiedFiles.length; i += CHUNK_SIZE) {
-    const chunk = modifiedFiles.slice(i, i + CHUNK_SIZE);
-
-    await Promise.all(
-      chunk.map((file) =>
-        prisma.repositoryFile.updateMany({
-          where: { repositoryId: repoId, relativePath: file.relativePath },
-          data: {
-            hash: file.hash,
-            size: file.size,
-            summary: null,
-            summaryStatus: FILE_SUMMARY_STATUS.PENDING,
-          },
-        })
-      )
+  if (deletedFiles.length > 0) {
+    transactionOperations.push(
+      prisma.repositoryFile.deleteMany({
+        where: { id: { in: deletedFiles.map((f) => f.id) } },
+      })
     );
   }
+
+  if (addedFiles.length > 0) {
+    transactionOperations.push(
+      prisma.repositoryFile.createMany({
+        data: addedFiles.map((file) => ({
+          repositoryId: repoId,
+          relativePath: file.relativePath,
+          extension: file.extension,
+          size: file.size,
+          hash: file.hash,
+          summaryStatus: FILE_SUMMARY_STATUS.PENDING,
+        })),
+        skipDuplicates: true,
+      })
+    );
+  }
+
+  modifiedFiles.forEach((file) => {
+    transactionOperations.push(
+      prisma.repositoryFile.updateMany({
+        where: { repositoryId: repoId, relativePath: file.relativePath },
+        data: {
+          hash: file.hash,
+          size: file.size,
+          summary: null,
+          summaryStatus: FILE_SUMMARY_STATUS.PENDING,
+        },
+      })
+    );
+  });
+
+  await prisma.$transaction(transactionOperations);
 
   const targetsToQueue = await prisma.repositoryFile.findMany({
     where: {

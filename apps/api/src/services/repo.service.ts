@@ -104,7 +104,6 @@ export const repositoryService = {
     await repositoryIngestionQueue.add(JOB_NAMES.ANALYZE_REPO, {
       jobId: job.id,
       repositoryId: newRepo.id,
-      isResync: false,
     });
 
     return { repositoryId: newRepo.id, isDuplicate: false };
@@ -255,7 +254,6 @@ export const repositoryService = {
     await repositoryIngestionQueue.add(JOB_NAMES.ANALYZE_REPO, {
       jobId: job.id,
       repositoryId: id,
-      isResync: true,
     });
 
     return { jobId: job.id };
@@ -327,29 +325,27 @@ export const repositoryService = {
       message: "Starting Repository Boost...",
     });
 
-    await prisma.$transaction([
-      ...(latestJob && latestJob.status === JOB_STATUS.RUNNING
-        ? [
-            prisma.job.update({
-              where: { id: latestJob.id },
-              data: { status: JOB_STATUS.CANCELLED, cancelledAt: new Date() },
-            }),
-          ]
-        : []),
-      prisma.repositoryFile.updateMany({
-        where: {
-          repositoryId: id,
-          summaryStatus: {
-            not: FILE_SUMMARY_STATUS.COMPLETED,
-          },
-        },
-        data: {
-          summaryStatus: FILE_SUMMARY_STATUS.PENDING,
-          retryCount: 0,
-          lastError: null,
-        },
-      }),
-    ]);
+    if (latestJob && latestJob.status === JOB_STATUS.RUNNING) {
+      await prisma.job.update({
+        where: { id: latestJob.id },
+        data: { status: JOB_STATUS.CANCELLED, cancelledAt: new Date() },
+      });
+    }
+
+    const fileIdsToBoost = incompleteFiles.map((f) => f.id);
+
+    console.log("fileIdsToBoost is ", fileIdsToBoost);
+
+    await prisma.repositoryFile.updateMany({
+      where: {
+        id: { in: fileIdsToBoost },
+      },
+      data: {
+        summaryStatus: FILE_SUMMARY_STATUS.PENDING,
+        retryCount: 0,
+        lastError: null,
+      },
+    });
 
     const runId = Math.floor(Math.random() * 100000);
 
