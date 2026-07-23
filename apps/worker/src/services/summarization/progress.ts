@@ -41,23 +41,17 @@ export async function syncProgress(repositoryId: string, jobId: string) {
     jobId,
     repositoryId,
     status: JOB_STATUS.RUNNING,
-    message: `Analyzing files... (${processedCount}/${totalCount})`,
+    message: `Analyzing files... (${completedCount}/${totalCount})`,
   });
 
-  // Complete job when all files have finished (passed or failed)
-  if (processedCount === totalCount) {
-    const finalRepoStatus =
-      failedCount > 0 && completedCount === 0
-        ? REPOSITORY_STATUS.FAILED
-        : REPOSITORY_STATUS.COMPLETED;
-
+  if (completedCount === totalCount) {
     console.log(
-      `⚙️ [Summarizer DB] All files processed. Updating repo ${repositoryId} status to ${finalRepoStatus}...`
+      `⚙️ [Summarizer DB] All files processed. Updating repo ${repositoryId} status to SUCCESS...`
     );
 
     await prisma.repository.update({
       where: { id: repositoryId },
-      data: { status: finalRepoStatus },
+      data: { status: REPOSITORY_STATUS.COMPLETED },
     });
 
     console.log(
@@ -73,10 +67,7 @@ export async function syncProgress(repositoryId: string, jobId: string) {
       jobId,
       repositoryId,
       status: JOB_STATUS.COMPLETED,
-      message:
-        failedCount > 0
-          ? `Analysis completed with ${failedCount} failed file(s).`
-          : "All done! Your project overview is completely ready.",
+      message: "All done! Your project overview is completely ready.",
     });
 
     console.log(`✅ [Summarizer DB] Repo & Job successfully finalized.`);

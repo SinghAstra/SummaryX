@@ -119,6 +119,25 @@ export async function syncFileIndex(repoId: string, stats: ScanStats) {
 
   console.log(`✅ [Indexer] Synchronization completed successfully.`);
 
+  // 1.Auto-recover previously failed files
+  // If a file failed in a previous run (e.g., API timeout), reset it so we try again.
+  const resetResult = await prisma.repositoryFile.updateMany({
+    where: {
+      repositoryId: repoId,
+      summaryStatus: FILE_SUMMARY_STATUS.FAILED,
+    },
+    data: {
+      summaryStatus: FILE_SUMMARY_STATUS.PENDING,
+    },
+  });
+
+  if (resetResult.count > 0) {
+    console.log(
+      `♻️ [Indexer] Auto-recovered ${resetResult.count} previously FAILED files back to PENDING for retry.`
+    );
+  }
+
+  // 2. Grab EVERYTHING that is pending (new additions, modified files, and auto-recovered files)
   const targetsToQueue = await prisma.repositoryFile.findMany({
     where: {
       repositoryId: repoId,
@@ -126,6 +145,10 @@ export async function syncFileIndex(repoId: string, stats: ScanStats) {
     },
     select: { id: true },
   });
+
+  console.log(
+    `🎯 [Indexer] Found ${targetsToQueue.length} total files requiring AI analysis.`
+  );
 
   return {
     addedCount: addedFiles.length,

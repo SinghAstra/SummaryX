@@ -264,6 +264,12 @@ export const repositoryService = {
 
     const repo = await prisma.repository.findFirst({
       where: { id, userId },
+      include: {
+        jobs: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+        },
+      },
     });
 
     if (!repo) {
@@ -273,12 +279,25 @@ export const repositoryService = {
       );
     }
 
+    const latestJob = repo.jobs[0] ?? null;
+
+    if (latestJob && latestJob.status === JOB_STATUS.RUNNING) {
+      console.log(
+        `⚙️ [Repository Service DB] Cancelling stale running job ${latestJob.id}...`
+      );
+
+      await prisma.job.update({
+        where: { id: latestJob.id },
+        data: { status: JOB_STATUS.CANCELLED, cancelledAt: new Date() },
+      });
+    }
+
     console.log(`⚙️ [Repository Service DB] Creating new resync job...`);
 
-    const job = await prisma.job.create({
+    const newJob = await prisma.job.create({
       data: {
         repositoryId: id,
-        status: JOB_STATUS.PENDING,
+        status: JOB_STATUS.RUNNING,
       },
     });
 
@@ -292,13 +311,13 @@ export const repositoryService = {
     });
 
     await repositoryIngestionQueue.add(JOB_NAMES.ANALYZE_REPO, {
-      jobId: job.id,
+      jobId: newJob.id,
       repositoryId: id,
     });
 
-    console.log(`✅ [Repository Service] Resync job queued: ${job.id}`);
+    console.log(`✅ [Repository Service] Resync job queued: ${newJob.id}`);
 
-    return { jobId: job.id };
+    return { jobId: newJob.id };
   },
 
   async boostRepository(id: string, userId: string) {
@@ -325,6 +344,17 @@ export const repositoryService = {
 
     const latestJob = repo.jobs[0] ?? null;
 
+    if (latestJob && latestJob.status === JOB_STATUS.RUNNING) {
+      console.log(
+        `⚙️ [Repository Service DB] Cancelling stale running job ${latestJob.id}...`
+      );
+
+      await prisma.job.update({
+        where: { id: latestJob.id },
+        data: { status: JOB_STATUS.CANCELLED, cancelledAt: new Date() },
+      });
+    }
+
     console.log(
       `⚙️ [Repository Service DB] Counting incomplete files for repo ${id}...`
     );
@@ -346,6 +376,8 @@ export const repositoryService = {
         data: { status: REPOSITORY_STATUS.COMPLETED },
       });
 
+      // If we cancelled a job above but actually everything was done, we flip it back to completed
+      // so the UI shows a success state instead of a cancelled state.
       if (latestJob) {
         await prisma.job.update({
           where: { id: latestJob.id },
@@ -356,7 +388,7 @@ export const repositoryService = {
           jobId: latestJob.id,
           repositoryId: id,
           status: JOB_STATUS.COMPLETED,
-          message: "Sync complete. No incomplete files found.",
+          message: "Boost complete. All files are already processed.",
         });
       }
 
@@ -364,7 +396,7 @@ export const repositoryService = {
     }
 
     console.log(
-      `⚙️ [Repository Service DB] Creating boost job for repo ${id}...`
+      `⚙️ [Repository Service DB] Creating new boost job for repo ${id}...`
     );
 
     const newJob = await prisma.job.create({
@@ -381,18 +413,7 @@ export const repositoryService = {
       message: "Starting Repository Boost...",
     });
 
-    if (latestJob && latestJob.status === JOB_STATUS.RUNNING) {
-      console.log(
-        `⚙️ [Repository Service DB] Cancelling stale running job ${latestJob.id}...`
-      );
-
-      await prisma.job.update({
-        where: { id: latestJob.id },
-        data: { status: JOB_STATUS.CANCELLED, cancelledAt: new Date() },
-      });
-    }
-
-    // Direct database query without passing array of IDs back into Postgres
+    // ✨ RESET ALL UNFINISHED FILES (Catches FAILED and any stuck in PROCESSING)
     console.log(
       `⚙️ [Repository Service DB] Resetting ${incompleteCount} incomplete files to PENDING...`
     );
