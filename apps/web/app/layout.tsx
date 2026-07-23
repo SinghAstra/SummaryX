@@ -6,13 +6,7 @@ import NextTopLoader from "nextjs-toploader";
 import { Toaster } from "sonner";
 import "./globals.css";
 
-import { Space_Grotesk, Geist_Mono } from "next/font/google";
-
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-space",
-});
+import { Geist_Mono } from "next/font/google";
 
 const geistMono = Geist_Mono({
   subsets: ["latin"],
@@ -68,13 +62,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    // Added geistMono.variable here to inject the CSS variable globally
-    <html
-      lang="en"
-      className={`${spaceGrotesk.variable} ${geistMono.variable}`}
-    >
+    <html lang="en" className={`${geistMono.variable}`}>
       <body
-        className={`${spaceGrotesk.className} font-sans antialiased min-h-screen bg-background`}
+        className={`${geistMono.className} font-sans antialiased min-h-screen bg-background`}
         suppressHydrationWarning
       >
         <Providers>
@@ -93,7 +83,7 @@ export default function RootLayout({
             richColors={true}
             toastOptions={{
               style: {
-                fontFamily: "var(--font-space), sans-serif",
+                fontFamily: "var(--font-mono), monospace",
                 color: "var(--foreground)",
                 letterSpacing: "0.05em",
                 fontSize: ".95rem",
