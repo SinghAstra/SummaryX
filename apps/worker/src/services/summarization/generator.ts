@@ -2,11 +2,13 @@ import { MODEL_CONFIG } from "../../ai/model-config";
 import { executeAIRequest } from "../../ai/request-manager";
 import { SYSTEM_PROMPT } from "./prompts";
 
-export async function generateSummaryDirectly(
+export async function summarizeDirectly(
   runId: number,
   relativePath: string,
   content: string
 ): Promise<string> {
+  console.log(`🤖 [Generator] Generating direct summary for: ${relativePath}`);
+
   const aiResponse = await executeAIRequest(runId, {
     model: MODEL_CONFIG.activeModel,
     messages: [
@@ -23,7 +25,7 @@ export async function generateSummaryDirectly(
   );
 }
 
-export async function generateChunkedSummary(
+export async function summarizeChunked(
   runId: number,
   relativePath: string,
   content: string
@@ -55,7 +57,7 @@ export async function generateChunkedSummary(
   const chunksToProcess = isTruncated ? chunks.slice(0, 2) : chunks;
 
   console.log(
-    `[Run ${runId}] 🧩 File: ${relativePath} split into ${totalOriginalChunks} chunks. Processing: ${chunksToProcess.length} (Truncated: ${isTruncated})`
+    `🧩 [Generator] [Run ${runId}] File: ${relativePath} split into ${totalOriginalChunks} chunks. Processing ${chunksToProcess.length} (Truncated: ${isTruncated})`
   );
 
   const intermediateSummaries: string[] = [];
@@ -67,9 +69,7 @@ export async function generateChunkedSummary(
         { role: "system", content: SYSTEM_PROMPT },
         {
           role: "user",
-          content: `Summary step (${i + 1}/${
-            chunksToProcess.length
-          }) for "${relativePath}":\n\nCode:\n${chunksToProcess[i]}`,
+          content: `Summary step (${i + 1}/${chunksToProcess.length}) for "${relativePath}":\n\nCode:\n${chunksToProcess[i]}`,
         },
       ],
     });

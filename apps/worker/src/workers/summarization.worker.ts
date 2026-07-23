@@ -1,7 +1,7 @@
 import { FileSummarizationJobData, logError, QUEUE_NAMES } from "@repo/shared";
 import { redisConnection } from "@repo/shared/server";
 import { Worker, type Job } from "bullmq";
-import { summarizationService } from "../services/summarization/summarization.service.js";
+import { summarizer } from "../services/summarization/summarizer";
 
 export const fileSummarizationWorker = new Worker<FileSummarizationJobData>(
   QUEUE_NAMES.FILE_SUMMARIZATION,
@@ -10,12 +10,7 @@ export const fileSummarizationWorker = new Worker<FileSummarizationJobData>(
 
     console.log("In SummarizationWorker");
 
-    await summarizationService.processFileSummary(
-      fileId,
-      repositoryId,
-      jobId,
-      runId
-    );
+    await summarizer.summarizeFile(fileId, repositoryId, jobId, runId);
   },
   {
     connection: redisConnection,
