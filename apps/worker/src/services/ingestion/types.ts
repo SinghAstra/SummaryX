@@ -5,7 +5,7 @@ export interface CollectedFile {
   hash: string;
 }
 
-export interface TraversalStats {
+export interface ScanStats {
   totalFiles: number;
   supportedFiles: number;
   ignoredFiles: number;

@@ -1,20 +1,20 @@
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
-import { TraversalStats } from "./types";
 import { IGNORED_DIRECTORIES, SUPPORTED_EXTENSIONS } from "./constants";
+import { ScanStats } from "./types";
 
-export async function traverseDirectory(
+export async function scanWorkspace(
   basePath: string,
   currentPath: string,
-  stats: TraversalStats
-): Promise<void> {
+  stats: ScanStats
+) {
   const entries = await fs.readdir(currentPath, { withFileTypes: true });
 
   for (const entry of entries) {
     const fullPath = path.join(currentPath, entry.name);
 
-    const relativePath = path.relative(basePath, fullPath);
+    const relativePath = path.relative(basePath, fullPath).replace(/\\/g, "/");
 
     if (entry.isDirectory()) {
       if (IGNORED_DIRECTORIES.has(entry.name)) {
@@ -25,7 +25,7 @@ export async function traverseDirectory(
 
       stats.totalFolders += 1;
 
-      await traverseDirectory(basePath, fullPath, stats);
+      await scanWorkspace(basePath, fullPath, stats);
     } else if (entry.isFile()) {
       stats.totalFiles += 1;
 
@@ -45,9 +45,11 @@ export async function traverseDirectory(
 
       stats.totalSize += BigInt(fileSize);
 
-      const rawContent = await fs.readFile(fullPath, "utf-8");
+      const rawBuffer = await fs.readFile(fullPath);
 
-      const normalizedContent = rawContent.replace(/\r\n/g, "\n");
+      const normalizedContent = rawBuffer
+        .toString("utf-8")
+        .replace(/\r\n/g, "\n");
 
       const hash = crypto
         .createHash("sha256")
