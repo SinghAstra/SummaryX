@@ -1,5 +1,5 @@
 import { prisma } from "@repo/db";
-import { FILE_SUMMARY_STATUS, logError } from "@repo/shared";
+import { FILE_SUMMARY_STATUS, JOB_STATUS, logError } from "@repo/shared";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { estimateTokenCount, MODEL_CONFIG } from "../../ai/model-config";
@@ -19,6 +19,25 @@ export const summarizer = {
     console.log(
       `\n📄 [Summarizer] [Run ${runId}] Processing File ID: ${fileId}`
     );
+
+    // ✨ KILL-SWITCH: Verifying parent job status before doing ANY expensive work
+    console.log(
+      `⚙️ [Summarizer DB] [Run ${runId}] Verifying parent job ${jobId} status...`
+    );
+
+    const activeJob = await prisma.job.findUnique({
+      where: { id: jobId },
+      select: { status: true },
+    });
+
+    if (!activeJob || activeJob.status === JOB_STATUS.CANCELLED) {
+      console.log(
+        `🛑 [Summarizer] [Run ${runId}] Job ${jobId} was CANCELLED. Bailing out instantly.`
+      );
+
+      // Exit silently. The newly spawned boost/resync job will pick this file up later.
+      return;
+    }
 
     // 1. Fetch File Record
     console.log(

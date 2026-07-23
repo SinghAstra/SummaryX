@@ -24,6 +24,15 @@ export const ingestor = {
       return;
     }
 
+    // ✨ KILL-SWITCH 1: Check if cancelled before we even start
+    if (job.status === JOB_STATUS.CANCELLED) {
+      console.log(
+        `🛑 [Ingestor] Job ${jobId} was already CANCELLED. Aborting before clone.`
+      );
+
+      return;
+    }
+
     // 2. Fetch Repository
     console.log(`⚙️ [Ingestor DB] Fetching repository ${job.repositoryId}...`);
 
@@ -83,9 +92,27 @@ export const ingestor = {
 
       await scanWorkspace(workspacePath, workspacePath, stats);
 
-      // 6. Sync File State to DB (Heavy logging is handled inside this function)
+      // 6. Sync File State to DB
       const { addedCount, modifiedCount, deletedCount, targetsToQueue } =
         await syncFileIndex(repo.id, stats);
+
+      // ✨ KILL-SWITCH 2: Check if cancelled during the clone/scan phase
+      console.log(
+        `⚙️ [Ingestor DB] Verifying job ${jobId} wasn't cancelled during processing...`
+      );
+
+      const currentJobState = await prisma.job.findUnique({
+        where: { id: jobId },
+        select: { status: true },
+      });
+
+      if (currentJobState?.status === JOB_STATUS.CANCELLED) {
+        console.log(
+          `🛑 [Ingestor] Job ${jobId} was CANCELLED while processing. Aborting dispatch.`
+        );
+
+        return; // Exit silently. The new job will take over from here.
+      }
 
       await trackProgress({
         jobId,
@@ -105,9 +132,8 @@ export const ingestor = {
           message: `Initializing AI analysis for ${targetsToQueue.length} files...`,
         });
       } else {
-        // No files to process, mark everything complete immediately
         console.log(
-          `⚙️ [Ingestor DB] No new files. Updating repo ${repo.id} to COMPLETED...`
+          `⚙️ [Ingestor DB] No files require analysis. Updating repo ${repo.id} to COMPLETED...`
         );
 
         await prisma.repository.update({
@@ -157,9 +183,7 @@ export const ingestor = {
         message: "Process failed. Please try again.",
       });
 
-      logError(error);
-
-      throw error; // Re-throw so BullMQ registers the job as failed
+      throw error;
     }
   },
 };
