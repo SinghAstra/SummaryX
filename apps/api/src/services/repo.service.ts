@@ -11,11 +11,7 @@ import {
   REPOSITORY_STATUS,
   RepositoryTreeNode,
 } from "@repo/shared";
-import {
-  fileSummarizationQueue,
-  repositoryIngestionQueue,
-  trackProgress,
-} from "@repo/shared/server";
+import { repositoryIngestionQueue, trackProgress } from "@repo/shared/server";
 import crypto from "node:crypto";
 import { BadRequestError, NotFoundError } from "../errors/api-errors.js";
 import { buildRepositoryTree } from "../lib/build-tree.js";
@@ -349,29 +345,16 @@ export const repositoryService = {
 
     console.log("updatedRepoFiles is ", updatedRepoFiles.count);
 
-    const runId = Math.floor(Math.random() * 100000);
-
-    const addedJobs = await fileSummarizationQueue.addBulk(
-      incompleteFiles.map((file, idx) => ({
-        name: JOB_NAMES.SUMMARIZE_FILE,
-        data: {
-          fileId: file.id,
-          repositoryId: id,
-          jobId: newJob.id,
-          runId: runId + idx,
-        },
-      }))
-    );
-
-    console.log(
-      `🚀 [Boost] Successfully added ${addedJobs.length} jobs to file-summarization-queue.`
-    );
+    await repositoryIngestionQueue.add(JOB_NAMES.ANALYZE_REPO, {
+      jobId: newJob.id,
+      repositoryId: id,
+    });
 
     await trackProgress({
       jobId: newJob.id,
       repositoryId: id,
       status: JOB_STATUS.RUNNING,
-      message: `Queued ${addedJobs.length} files for AI analysis...`,
+      message: `Re-syncing workspace and queueing ${updatedRepoFiles.count} files for AI analysis...`,
     });
 
     return { jobId: newJob.id };
