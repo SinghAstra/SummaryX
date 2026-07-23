@@ -126,10 +126,6 @@ export async function syncDatabaseWithFiles(
     `🎯 [SyncDB] Fetched ${targetsToQueue.length} files with PENDING status to queue.`
   );
 
-  if (targetsToQueue.length > 0) {
-    console.log(`   - Sample target to queue:`, targetsToQueue[0]);
-  }
-
   return {
     addedCount: addedFiles.length,
     modifiedCount: modifiedFiles.length,
