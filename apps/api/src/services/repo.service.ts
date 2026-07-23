@@ -314,7 +314,7 @@ export const repositoryService = {
     const newJob = await prisma.job.create({
       data: {
         repositoryId: id,
-        status: JOB_STATUS.PENDING,
+        status: JOB_STATUS.RUNNING,
       },
     });
 
@@ -351,7 +351,7 @@ export const repositoryService = {
 
     const runId = Math.floor(Math.random() * 100000);
 
-    const addBulkToSummarizationQueue = await fileSummarizationQueue.addBulk(
+    const addedJobs = await fileSummarizationQueue.addBulk(
       incompleteFiles.map((file, idx) => ({
         name: JOB_NAMES.SUMMARIZE_FILE,
         data: {
@@ -363,7 +363,16 @@ export const repositoryService = {
       }))
     );
 
-    console.log("addBulkToSummarizationQueue is ", addBulkToSummarizationQueue);
+    console.log(
+      `🚀 [Boost] Successfully added ${addedJobs.length} jobs to file-summarization-queue.`
+    );
+
+    await trackProgress({
+      jobId: newJob.id,
+      repositoryId: id,
+      status: JOB_STATUS.RUNNING,
+      message: `Queued ${addedJobs.length} files for AI analysis...`,
+    });
 
     return { jobId: newJob.id };
   },
