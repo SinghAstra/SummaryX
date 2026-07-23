@@ -45,9 +45,14 @@ export async function traverseDirectory(
 
       stats.totalSize += BigInt(fileSize);
 
-      const content = await fs.readFile(fullPath);
+      const rawContent = await fs.readFile(fullPath, "utf-8");
 
-      const hash = crypto.createHash("sha256").update(content).digest("hex");
+      const normalizedContent = rawContent.replace(/\r\n/g, "\n");
+
+      const hash = crypto
+        .createHash("sha256")
+        .update(normalizedContent)
+        .digest("hex");
 
       stats.collectedFiles.push({
         relativePath,

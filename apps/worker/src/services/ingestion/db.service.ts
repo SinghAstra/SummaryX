@@ -6,9 +6,15 @@ export async function syncDatabaseWithFiles(
   repoId: string,
   stats: TraversalStats
 ) {
+  console.log(`\n🔄 [SyncDB] Starting synchronization for repo: ${repoId}`);
+
   const existingDBFiles = await prisma.repositoryFile.findMany({
     where: { repositoryId: repoId },
   });
+
+  console.log(
+    `📊 [SyncDB] Found ${existingDBFiles.length} existing files in the database.`
+  );
 
   const dbFileMap = new Map(
     existingDBFiles.map((f) => [f.relativePath.replace(/\\/g, "/"), f])
@@ -18,6 +24,10 @@ export async function syncDatabaseWithFiles(
     ...f,
     normalizedPath: f.relativePath.replace(/\\/g, "/"),
   }));
+
+  console.log(
+    `📂 [SyncDB] Scanned ${scannedFiles.length} valid files from the filesystem.`
+  );
 
   const fsPaths = new Set(scannedFiles.map((f) => f.normalizedPath));
 
@@ -34,6 +44,14 @@ export async function syncDatabaseWithFiles(
   const deletedFiles = existingDBFiles.filter(
     (f) => !fsPaths.has(f.relativePath.replace(/\\/g, "/"))
   );
+
+  console.log(`🧮 [SyncDB] Diff Calculation Results:`);
+
+  console.log(`   - ➕ Added:    ${addedFiles.length}`);
+
+  console.log(`   - 📝 Modified: ${modifiedFiles.length}`);
+
+  console.log(`   - ❌ Deleted:  ${deletedFiles.length}`);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const transactionOperations: any[] = [
@@ -88,7 +106,13 @@ export async function syncDatabaseWithFiles(
     );
   });
 
+  console.log(
+    `⚙️ [SyncDB] Executing Prisma transaction with ${transactionOperations.length} queries...`
+  );
+
   await prisma.$transaction(transactionOperations);
+
+  console.log(`✅ [SyncDB] Transaction completed successfully.`);
 
   const targetsToQueue = await prisma.repositoryFile.findMany({
     where: {
@@ -97,6 +121,14 @@ export async function syncDatabaseWithFiles(
     },
     select: { id: true },
   });
+
+  console.log(
+    `🎯 [SyncDB] Fetched ${targetsToQueue.length} files with PENDING status to queue.`
+  );
+
+  if (targetsToQueue.length > 0) {
+    console.log(`   - Sample target to queue:`, targetsToQueue[0]);
+  }
 
   return {
     addedCount: addedFiles.length,

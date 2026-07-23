@@ -87,12 +87,12 @@ export const ingestionService = {
           status: JOB_STATUS.COMPLETED,
           message: "Workspace is up to date.",
         });
-      }
 
-      await prisma.job.update({
-        where: { id: jobId },
-        data: { status: JOB_STATUS.COMPLETED, completedAt: new Date() },
-      });
+        await prisma.job.update({
+          where: { id: jobId },
+          data: { status: JOB_STATUS.COMPLETED, completedAt: new Date() },
+        });
+      }
     } catch (error) {
       await prisma.job.update({
         where: { id: jobId },

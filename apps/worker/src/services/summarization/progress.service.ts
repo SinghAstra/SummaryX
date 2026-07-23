@@ -2,16 +2,13 @@ import { prisma } from "@repo/db";
 import {
   FILE_SUMMARY_STATUS,
   JOB_STATUS,
-  logError,
   REPOSITORY_STATUS,
 } from "@repo/shared";
 import { trackProgress } from "@repo/shared/server";
-import fs from "node:fs/promises";
 
 export async function updateGlobalProgress(
   repositoryId: string,
-  jobId: string,
-  diskPath: string
+  jobId: string
 ) {
   const totalCount = await prisma.repositoryFile.count({
     where: { repositoryId },
@@ -40,22 +37,5 @@ export async function updateGlobalProgress(
       status: JOB_STATUS.COMPLETED,
       message: "All done! Your project overview is completely ready.",
     });
-  }
-
-  if (completedCount === totalCount) {
-    try {
-      await fs.rm(diskPath, { recursive: true, force: true });
-
-      console.log(
-        `[CLEANUP] Successfully deleted repository from disk: ${diskPath}`
-      );
-    } catch (error) {
-      logError(error);
-
-      console.error(
-        `[CLEANUP ERROR] Failed to delete directory ${diskPath}:`,
-        error
-      );
-    }
   }
 }
