@@ -1,5 +1,5 @@
 import { prisma } from "@repo/db";
-import { FILE_SUMMARY_STATUS } from "@repo/shared";
+import { FILE_SUMMARY_STATUS, logError } from "@repo/shared";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { estimateTokenCount, MODEL_CONFIG } from "../../ai/model-config";
@@ -39,6 +39,8 @@ async function processFileSummary(
 
   const workspacePath = getWorkspacePath(repositoryId);
 
+  console.log("workspacePath is ", workspacePath);
+
   try {
     const absoluteFilePath = path.join(workspacePath, file.relativePath);
 
@@ -49,6 +51,8 @@ async function processFileSummary(
       path.basename(file.relativePath),
       fileContent
     );
+
+    console.log("classification is ", classification);
 
     let summaryText = "";
 
@@ -80,6 +84,8 @@ async function processFileSummary(
       }
     }
 
+    console.log("summaryText is ", summaryText);
+
     await prisma.repositoryFile.update({
       where: { id: fileId },
       data: {
@@ -89,7 +95,9 @@ async function processFileSummary(
     });
 
     await updateGlobalProgress(repositoryId, jobId, workspacePath);
-  } catch (error: unknown) {
+  } catch (error) {
+    logError(error);
+
     await prisma.repositoryFile.update({
       where: { id: fileId },
       data: { summaryStatus: FILE_SUMMARY_STATUS.FAILED },

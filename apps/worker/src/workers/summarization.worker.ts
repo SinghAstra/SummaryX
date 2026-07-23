@@ -8,6 +8,8 @@ export const fileSummarizationWorker = new Worker<FileSummarizationJobData>(
   async (job: Job<FileSummarizationJobData>) => {
     const { fileId, repositoryId, jobId, runId } = job.data;
 
+    console.log("In SummarizationWorker");
+
     await summarizationService.processFileSummary(
       fileId,
       repositoryId,

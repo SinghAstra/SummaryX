@@ -334,9 +334,9 @@ export const repositoryService = {
 
     const fileIdsToBoost = incompleteFiles.map((f) => f.id);
 
-    console.log("fileIdsToBoost is ", fileIdsToBoost);
+    console.log("fileIdsToBoost is ", fileIdsToBoost.length);
 
-    await prisma.repositoryFile.updateMany({
+    const updatedRepoFiles = await prisma.repositoryFile.updateMany({
       where: {
         id: { in: fileIdsToBoost },
       },
@@ -347,9 +347,11 @@ export const repositoryService = {
       },
     });
 
+    console.log("updatedRepoFiles is ", updatedRepoFiles.count);
+
     const runId = Math.floor(Math.random() * 100000);
 
-    await fileSummarizationQueue.addBulk(
+    const addBulkToSummarizationQueue = await fileSummarizationQueue.addBulk(
       incompleteFiles.map((file, idx) => ({
         name: JOB_NAMES.SUMMARIZE_FILE,
         data: {
@@ -360,6 +362,8 @@ export const repositoryService = {
         },
       }))
     );
+
+    console.log("addBulkToSummarizationQueue is ", addBulkToSummarizationQueue);
 
     return { jobId: newJob.id };
   },
