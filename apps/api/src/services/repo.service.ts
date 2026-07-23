@@ -369,9 +369,13 @@ export const repositoryService = {
   },
 
   async deleteRepository(id: string, userId: string) {
+    console.log("Inside deleteRepository");
+
     const repo = await prisma.repository.findFirst({
       where: { id, userId },
     });
+
+    console.log("repo is ", repo);
 
     if (!repo) {
       throw new NotFoundError(
@@ -380,9 +384,11 @@ export const repositoryService = {
       );
     }
 
-    await prisma.repository.delete({
+    const res = await prisma.repository.delete({
       where: { id },
     });
+
+    console.log("Delete Repo :", res);
 
     return { message: "Repository successfully removed." };
   },
