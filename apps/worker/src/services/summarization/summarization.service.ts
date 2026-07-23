@@ -17,7 +17,7 @@ async function processFileSummary(
   repositoryId: string,
   jobId: string,
   runId: number
-): Promise<void> {
+) {
   const file = await prisma.repositoryFile.findUnique({
     where: { id: fileId },
   });

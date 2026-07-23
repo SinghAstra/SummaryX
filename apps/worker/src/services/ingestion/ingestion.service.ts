@@ -10,7 +10,7 @@ import { queueSummarizationJobs } from "./queue.service";
 import { TraversalStats } from "./types";
 
 export const ingestionService = {
-  async processRepositoryIngestion(jobId: string, isResync = false) {
+  async processRepositoryIngestion(jobId: string) {
     const job = await prisma.job.findUnique({ where: { id: jobId } });
 
     if (!job) return;
@@ -36,7 +36,7 @@ export const ingestionService = {
         message: "Synchronizing workspace...",
       });
 
-      await syncWorkspace(workspacePath, repo.githubUrl, isResync);
+      await syncWorkspace(workspacePath, repo.githubUrl);
 
       await trackProgress({
         jobId,
