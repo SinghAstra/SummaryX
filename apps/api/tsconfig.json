@@ -1,13 +1,11 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
     "rootDir": "./src",
     "outDir": "./dist",
     "declaration": true,
-    "sourceMap": true,
-    "forceConsistentCasingInFileNames": true
+    "declarationMap": true,
+    "sourceMap": true
   },
   "include": ["src", "src/config"]
 }

@@ -13,6 +13,7 @@ export const repositoryIngestionWorker = new Worker<RepoIngestionJobData>(
   {
     connection: redisConnection,
     concurrency: 4,
+    lockDuration: 300000,
   }
 );
 
