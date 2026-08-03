@@ -5,9 +5,9 @@ import { getWorkspacePath } from "../../utils/workspace";
 
 import { cloneRepository } from "./git";
 import { scanWorkspace } from "./scanner";
-import { dispatchSummaryJobs } from "./dispatcher";
 import { syncFileIndex } from "./indexer";
 import { ScanStats } from "./types";
+import { dispatchSummaryJobs } from "./dispatcher";
 
 export const ingestor = {
   async run(jobId: string) {

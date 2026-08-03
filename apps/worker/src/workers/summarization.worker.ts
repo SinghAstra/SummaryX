@@ -12,7 +12,8 @@ export const fileSummarizationWorker = new Worker<FileSummarizationJobData>(
   },
   {
     connection: redisConnection,
-    concurrency: 10,
+    concurrency: 5,
+    lockDuration: 300000,
   }
 );
 
