@@ -38,7 +38,6 @@ export const summarizer = {
       return;
     }
 
-    // 1. Fetch File & Repo Records
     const file = await prisma.repositoryFile.findUnique({
       where: { id: fileId },
     });
@@ -57,7 +56,6 @@ export const summarizer = {
       );
     }
 
-    // 2. Mark File as Processing
     console.log(
       `⚙️ [Summarizer DB] [Run ${runId}] Setting status to PROCESSING for ${file.relativePath}...`
     );
@@ -70,7 +68,6 @@ export const summarizer = {
     try {
       const fileName = path.basename(file.relativePath);
 
-      // --- STAGE 1: PATH CLASSIFICATION (ZERO FILE I/O) ---
       const pathClassification = classifyByPath(file.relativePath, fileName);
 
       if (!pathClassification.shouldSummarizeWithAI) {
@@ -88,18 +85,15 @@ export const summarizer = {
 
         await syncProgress(repositoryId, jobId);
 
-        return; // Work complete, exit early.
+        return;
       }
 
-      // --- FILE I/O ---
-      // Only execute disk read if Stage 1 permitted AI summarization
       const workspacePath = getWorkspacePath(repositoryId);
 
       const absoluteFilePath = path.join(workspacePath, file.relativePath);
 
       const fileContent = await fs.readFile(absoluteFilePath, "utf8");
 
-      // --- STAGE 2: CONTENT CLASSIFICATION ---
       const contentClassification = classifyByContent(fileName, fileContent);
 
       if (!contentClassification.shouldSummarizeWithAI) {
@@ -117,10 +111,9 @@ export const summarizer = {
 
         await syncProgress(repositoryId, jobId);
 
-        return; // Work complete, exit early.
+        return;
       }
 
-      // --- STAGE 3: AI PROCESSING ---
       const contentTokens = estimateTokenCount(fileContent);
 
       const promptTokens = 350;
@@ -143,7 +136,6 @@ export const summarizer = {
         );
       }
 
-      // 4. Save Final AI Summary
       console.log(
         `⚙️ [Summarizer DB] [Run ${runId}] Saving COMPLETED summary for ${file.relativePath}...`
       );
@@ -160,7 +152,6 @@ export const summarizer = {
         `✅ [Summarizer DB] Summary successfully saved for ${file.relativePath}`
       );
 
-      // 5. Update Progress
       await syncProgress(repositoryId, jobId);
     } catch (error) {
       console.error(
@@ -170,7 +161,6 @@ export const summarizer = {
 
       logError(error);
 
-      // 6. Handle Failure State in DB
       console.log(
         `⚙️ [Summarizer DB] [Run ${runId}] Setting status to FAILED for ${file.relativePath}...`
       );
@@ -180,7 +170,6 @@ export const summarizer = {
         data: { summaryStatus: FILE_SUMMARY_STATUS.FAILED },
       });
 
-      // Still update progress so the overall job count advances and doesn't get stuck forever
       await syncProgress(repositoryId, jobId);
 
       throw error;
