@@ -1,7 +1,18 @@
 export type FileCategory =
-  "CODE" | "CONFIG" | "TRANSLATION" | "DATASET" | "STATIC" | "IGNORED";
+  | "CODE"
+  | "CONFIG"
+  | "TRANSLATION"
+  | "DATASET"
+  | "STATIC"
+  | "IGNORED"
+  | "TEST"
+  | "MEDIA"
+  | "OVERSIZED"
+  | "MINIFIED"
+  | "GENERATED"
+  | "DATA";
 
-interface ClassificationResult {
+export interface ClassificationResult {
   category: FileCategory;
   shouldSummarizeWithAI: boolean;
   staticSummary: string;
@@ -20,22 +31,58 @@ const IGNORED_DIRECTORIES = [
   "docs/generated",
 ];
 
+// Expanded to catch the specific configurations in your TS, Rust, Python, Go, PHP, and Java SDKs
 const FILENAME_CONFIGS = [
   "package.json",
   "tsconfig.json",
+  "tsconfig.base.json",
+  "tsconfig.app.json",
+  "tsconfig.node.json",
   "vite.config.ts",
   "next.config.js",
+  "next.config.ts",
   "tailwind.config.js",
   "postcss.config.js",
   "dockerfile",
   "docker-compose.yml",
+  "docker-compose.yaml",
+  "eslint.config.js",
+  "tsup.config.ts",
+  "pyproject.toml",
+  "requirements.txt",
+  "setup.py",
+  ".pylintrc",
+  "cargo.toml",
+  "go.mod",
+  "composer.json",
+  "phpstan.neon.dist",
+  "phpunit.xml.dist",
+  "gemfile",
+  "rakefile",
+  "mix.exs",
+  ".formatter.exs",
+  "build.gradle.kts",
+  "settings.gradle.kts",
+  "components.json",
+  "audit-ci.jsonc",
+  ".gitignore",
+  ".npmrc",
+  ".prettierrc",
+  ".env.example",
+  ".env.local",
+  ".env.template",
 ];
 
+// Expanded with cross-language lockfiles found in your repo
 const FILENAME_IGNORED = [
   "package-lock.json",
   "pnpm-lock.yaml",
   "yarn.lock",
   "bun.lockb",
+  "cargo.lock",
+  "go.sum",
+  "mix.lock",
+  "gemfile.lock",
   "license",
   "license.md",
   "changelog.md",
@@ -59,10 +106,29 @@ const PATH_STATIC_ASSETS = [
   "/sprites/",
 ];
 
-export function classifyFile(
+const MEDIA_EXTENSIONS = [
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".webp",
+  ".svg",
+  ".ico",
+  ".woff",
+  ".pdf",
+  ".docx",
+  ".xlsx",
+  ".rtf",
+  ".odt",
+  ".jar",
+];
+
+/**
+ * STAGE 1: Classify by path and extension.
+ * Execute this BEFORE reading the file from the disk.
+ */
+export function classifyByPath(
   relativePath: string,
-  fileName: string,
-  content: string
+  fileName: string
 ): ClassificationResult {
   const normalizedPath = relativePath.toLowerCase().replace(/\\/g, "/");
 
@@ -84,12 +150,36 @@ export function classifyFile(
     };
   }
 
-  // --- LAYER 2: Filename Filters ---
-  if (FILENAME_IGNORED.includes(normalizedName)) {
+  // --- LAYER 2: Test & Mock Suites (Saves massive token waste) ---
+  const isTestDir = /(?:^|\/)(?:__tests__|tests?|mocks?|e2e|unit)\//.test(
+    normalizedPath
+  );
+
+  const isTestFile =
+    /\.test\.(?:ts|js|tsx|jsx)$/.test(normalizedName) || // TS/JS
+    /^test_.*\.py$/.test(normalizedName) || // Python
+    /_test\.go$/.test(normalizedName) || // Go
+    /_test\.rb$/.test(normalizedName) || // Ruby
+    /test\.php$/.test(normalizedName) || // PHP
+    /test\.java$/.test(normalizedName) || // Java
+    /test_.*\.exs?$/.test(normalizedName); // Elixir
+
+  if (isTestDir || isTestFile) {
+    return {
+      category: "TEST",
+      shouldSummarizeWithAI: false,
+      staticSummary: `Test suite or verification file for ${fileName}. Primary responsibility is to assert the correctness and stability of the corresponding application logic.`,
+    };
+  }
+
+  // --- LAYER 3: Filename & Lockfile Filters ---
+  if (
+    FILENAME_IGNORED.includes(normalizedName) ||
+    normalizedPath.includes(".pnpm-store/")
+  ) {
     return {
       category: "IGNORED",
       shouldSummarizeWithAI: false,
-      // 🟢 Fix 1: Friendly static summaries instead of tech jargon
       staticSummary: `Automated project manifest or metadata log (${fileName}) skipped to keep the workspace summary clear and concise.`,
     };
   }
@@ -102,7 +192,36 @@ export function classifyFile(
     };
   }
 
-  // --- LAYER 3: Path Pattern Filters ---
+  // --- LAYER 4: Jupyter Notebooks (.ipynb) ---
+  if (normalizedName.endsWith(".ipynb")) {
+    return {
+      category: "DATASET",
+      shouldSummarizeWithAI: false,
+      staticSummary:
+        "Jupyter Notebook file containing execution state, base64 outputs, and data exploration logic.",
+    };
+  }
+
+  // --- LAYER 5: Data Dumps & Queries (.sql, .http) ---
+  if (normalizedName.endsWith(".sql")) {
+    return {
+      category: "DATA",
+      shouldSummarizeWithAI: false,
+      staticSummary:
+        "SQL file containing database schema definitions, queries, or data dumps.",
+    };
+  }
+
+  if (normalizedName.endsWith(".http")) {
+    return {
+      category: "DATA",
+      shouldSummarizeWithAI: false,
+      staticSummary:
+        "HTTP request definitions used for local API testing or REST client tooling.",
+    };
+  }
+
+  // --- LAYER 6: Path Pattern & Media Filters ---
   if (PATH_TRANSLATIONS.some((pattern) => normalizedPath.includes(pattern))) {
     const localeMatch = fileName.match(/^([a-zA-Z]{2,3}([-_][a-zA-Z]{2,4})?)/);
 
@@ -115,7 +234,10 @@ export function classifyFile(
     };
   }
 
-  if (PATH_STATIC_ASSETS.some((pattern) => normalizedPath.includes(pattern))) {
+  if (
+    PATH_STATIC_ASSETS.some((pattern) => normalizedPath.includes(pattern)) ||
+    MEDIA_EXTENSIONS.some((ext) => normalizedName.endsWith(ext))
+  ) {
     return {
       category: "STATIC",
       shouldSummarizeWithAI: false,
@@ -124,7 +246,79 @@ export function classifyFile(
     };
   }
 
-  // --- LAYER 4: Content Heuristics ---
+  // --- LAYER 7: CI/CD & GitHub Actions ---
+  if (
+    normalizedPath.includes(".github/workflows/") ||
+    normalizedPath.includes(".github/actions/")
+  ) {
+    return {
+      category: "CONFIG",
+      shouldSummarizeWithAI: false,
+      staticSummary:
+        "GitHub Actions workflow configuration. Primary responsibility is automating CI/CD pipelines and repository checks.",
+    };
+  }
+
+  // --- FALL THROUGH: Needs content classification ---
+  return {
+    category: "CODE",
+    shouldSummarizeWithAI: true,
+    staticSummary: "",
+  };
+}
+
+/**
+ * STAGE 2: Classify by file content.
+ * Execute this ONLY if classifyByPath returns shouldSummarizeWithAI = true.
+ */
+export function classifyByContent(
+  fileName: string,
+  content: string
+): ClassificationResult {
+  const normalizedName = fileName.toLowerCase();
+
+  // --- LAYER 1: Hard Size Limit (Catch massive datasets that bypassed extension checks) ---
+  // 50,000 characters is roughly 12k-15k tokens. Code files rarely exceed this natively.
+  if (content.length > 50000) {
+    return {
+      category: "OVERSIZED",
+      shouldSummarizeWithAI: false,
+      staticSummary:
+        "Large file exceeding summarization thresholds. Likely contains bundled code, extensive static datasets, or generated output.",
+    };
+  }
+
+  // --- LAYER 2: Minified Code Check ---
+  // If the average line length is massive, it's minified, bundled, or heavily serialized data
+  const lines = content.split("\n");
+
+  const averageLineLength = content.length / (lines.length || 1);
+
+  if (averageLineLength > 300) {
+    return {
+      category: "MINIFIED",
+      shouldSummarizeWithAI: false,
+      staticSummary:
+        "Minified, bundled, or heavily serialized data file. Not suitable for semantic summarization.",
+    };
+  }
+
+  // --- LAYER 3: Auto-Generated Headers ---
+  const generatedRegex = /@generated|auto-generated|do not edit|generated by/i;
+
+  // Only check the first 500 characters to keep this regex fast
+  const header = content.slice(0, 500);
+
+  if (generatedRegex.test(header)) {
+    return {
+      category: "GENERATED",
+      shouldSummarizeWithAI: false,
+      staticSummary:
+        "Auto-generated file created by a build tool, ORM, or compiler. Should not be manually edited.",
+    };
+  }
+
+  // --- LAYER 4: Existing JSON Dictionary Heuristic ---
   if (normalizedName.endsWith(".json")) {
     const trimmed = content.trim();
 
@@ -145,7 +339,7 @@ export function classifyFile(
     }
   }
 
-  // --- LAYER 5: Fall through to standard source code context parsing ---
+  // --- FINAL FALL THROUGH: Approved for AI Summarization ---
   return {
     category: "CODE",
     shouldSummarizeWithAI: true,

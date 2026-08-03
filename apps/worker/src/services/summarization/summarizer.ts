@@ -3,7 +3,7 @@ import { FILE_SUMMARY_STATUS, JOB_STATUS, logError } from "@repo/shared";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { estimateTokenCount, MODEL_CONFIG } from "../../ai/model-config";
-import { classifyFile } from "../../utils/file-classifier";
+import { classifyByPath, classifyByContent } from "../../utils/file-classifier";
 import { getWorkspacePath } from "../../utils/workspace";
 
 import { summarizeChunked, summarizeDirectly } from "./generator";
@@ -35,23 +35,13 @@ export const summarizer = {
         `🛑 [Summarizer] [Run ${runId}] Job ${jobId} was CANCELLED. Bailing out instantly.`
       );
 
-      // Exit silently. The newly spawned boost/resync job will pick this file up later.
       return;
     }
 
-    // 1. Fetch File Record
-    console.log(
-      `⚙️ [Summarizer DB] [Run ${runId}] Fetching file record ${fileId}...`
-    );
-
+    // 1. Fetch File & Repo Records
     const file = await prisma.repositoryFile.findUnique({
       where: { id: fileId },
     });
-
-    // 2. Fetch Repo Record
-    console.log(
-      `⚙️ [Summarizer DB] [Run ${runId}] Fetching repo record ${repositoryId}...`
-    );
 
     const repo = await prisma.repository.findUnique({
       where: { id: repositoryId },
@@ -67,7 +57,7 @@ export const summarizer = {
       );
     }
 
-    // 3. Mark File as Processing
+    // 2. Mark File as Processing
     console.log(
       `⚙️ [Summarizer DB] [Run ${runId}] Setting status to PROCESSING for ${file.relativePath}...`
     );
@@ -77,50 +67,83 @@ export const summarizer = {
       data: { summaryStatus: FILE_SUMMARY_STATUS.PROCESSING },
     });
 
-    const workspacePath = getWorkspacePath(repositoryId);
-
     try {
+      const fileName = path.basename(file.relativePath);
+
+      // --- STAGE 1: PATH CLASSIFICATION (ZERO FILE I/O) ---
+      const pathClassification = classifyByPath(file.relativePath, fileName);
+
+      if (!pathClassification.shouldSummarizeWithAI) {
+        console.log(
+          `⚡ [Summarizer] [Run ${runId}] FAST-TRACK | Bypassed read & AI for ${pathClassification.category}: ${file.relativePath}`
+        );
+
+        await prisma.repositoryFile.update({
+          where: { id: fileId },
+          data: {
+            summary: pathClassification.staticSummary,
+            summaryStatus: FILE_SUMMARY_STATUS.COMPLETED,
+          },
+        });
+
+        await syncProgress(repositoryId, jobId);
+
+        return; // Work complete, exit early.
+      }
+
+      // --- FILE I/O ---
+      // Only execute disk read if Stage 1 permitted AI summarization
+      const workspacePath = getWorkspacePath(repositoryId);
+
       const absoluteFilePath = path.join(workspacePath, file.relativePath);
 
       const fileContent = await fs.readFile(absoluteFilePath, "utf8");
 
-      const classification = classifyFile(
-        file.relativePath,
-        path.basename(file.relativePath),
-        fileContent
-      );
+      // --- STAGE 2: CONTENT CLASSIFICATION ---
+      const contentClassification = classifyByContent(fileName, fileContent);
+
+      if (!contentClassification.shouldSummarizeWithAI) {
+        console.log(
+          `⚡ [Summarizer] [Run ${runId}] FAST-TRACK | Bypassed AI overhead for ${contentClassification.category}: ${file.relativePath}`
+        );
+
+        await prisma.repositoryFile.update({
+          where: { id: fileId },
+          data: {
+            summary: contentClassification.staticSummary,
+            summaryStatus: FILE_SUMMARY_STATUS.COMPLETED,
+          },
+        });
+
+        await syncProgress(repositoryId, jobId);
+
+        return; // Work complete, exit early.
+      }
+
+      // --- STAGE 3: AI PROCESSING ---
+      const contentTokens = estimateTokenCount(fileContent);
+
+      const promptTokens = 350;
+
+      const totalEstimatedTokens = contentTokens + promptTokens;
 
       let summaryText = "";
 
-      if (!classification.shouldSummarizeWithAI) {
-        summaryText = classification.staticSummary;
-
-        console.log(
-          `⚡ [Summarizer] [Run ${runId}] FAST-TRACK | Bypassed AI overhead for ${classification.category}: ${file.relativePath}`
+      if (totalEstimatedTokens > MODEL_CONFIG.maxInputTokens) {
+        summaryText = await summarizeChunked(
+          runId,
+          file.relativePath,
+          fileContent
         );
       } else {
-        const contentTokens = estimateTokenCount(fileContent);
-
-        const promptTokens = 350;
-
-        const totalEstimatedTokens = contentTokens + promptTokens;
-
-        if (totalEstimatedTokens > MODEL_CONFIG.maxInputTokens) {
-          summaryText = await summarizeChunked(
-            runId,
-            file.relativePath,
-            fileContent
-          );
-        } else {
-          summaryText = await summarizeDirectly(
-            runId,
-            file.relativePath,
-            fileContent
-          );
-        }
+        summaryText = await summarizeDirectly(
+          runId,
+          file.relativePath,
+          fileContent
+        );
       }
 
-      // 4. Save Final Summary
+      // 4. Save Final AI Summary
       console.log(
         `⚙️ [Summarizer DB] [Run ${runId}] Saving COMPLETED summary for ${file.relativePath}...`
       );
@@ -157,7 +180,7 @@ export const summarizer = {
         data: { summaryStatus: FILE_SUMMARY_STATUS.FAILED },
       });
 
-      // Still update progress so the overall job count advances
+      // Still update progress so the overall job count advances and doesn't get stuck forever
       await syncProgress(repositoryId, jobId);
 
       throw error;
